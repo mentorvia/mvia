@@ -1,0 +1,34 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Audit log — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Admin audit log</h1>
+  <p>Append-only record of admin actions. Entries are never edited or deleted.</p>
+</div>
+<div class="panel">
+  <h2>{{ page.paginator.count }} entr{{ page.paginator.count|pluralize:"y,ies" }}</h2>
+  {% if page.object_list %}
+  <table>
+    <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead>
+    <tbody>
+      {% for log in page.object_list %}
+      <tr>
+        <td>{{ log.created_at|date:"d M Y, H:i" }}</td>
+        <td>{{ log.actor.email|default:"system" }}</td>
+        <td><span class="badge neutral">{{ log.action }}</span></td>
+        <td>{{ log.target }}</td>
+        <td style="color:var(--muted);">{{ log.reason|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No admin actions recorded yet.</div>{% endif %}
+</div>
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+  <span class="cur">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

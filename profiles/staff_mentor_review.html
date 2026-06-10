@@ -1,0 +1,46 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Review {{ mentor.user.full_name }} — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:mentor_queue' %}" class="back">← Back to queue</a>
+<div class="page-head">
+  <h1>{{ mentor.user.full_name }}</h1>
+  <p>{{ mentor.user.email }} · applied {{ mentor.created_at|date:"d M Y" }}</p>
+</div>
+
+<div class="panel">
+  <h2>Application</h2>
+  <div style="padding:1.25rem;">
+    <dl class="detail-grid">
+      <dt>Current role</dt><dd>{{ mentor.current_role }}</dd>
+      <dt>Company</dt><dd>{{ mentor.company }}</dd>
+      <dt>Experience</dt><dd>{{ mentor.years_experience }} years</dd>
+      <dt>Rate</dt><dd>₹{{ mentor.hourly_rate }} / session</dd>
+      <dt>Specializations</dt><dd>{% for s in specializations %}<span class="badge neutral">{{ s.interest.name }}</span> {% empty %}—{% endfor %}</dd>
+      <dt>Bio</dt><dd style="white-space:pre-wrap;">{{ mentor.bio }}</dd>
+      <dt>Status</dt><dd><span class="badge {% if mentor.status == 'approved' %}yes{% elif mentor.status == 'rejected' %}no{% else %}pending{% endif %}">{{ mentor.get_status_display }}</span></dd>
+    </dl>
+  </div>
+</div>
+
+{% if mentor.status == 'pending' %}
+<div class="panel">
+  <h2>Decision</h2>
+  <div style="padding:1.25rem;">
+    <form method="post">
+      {% csrf_token %}
+      <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Reason (required if rejecting)</label>
+      <textarea name="reason" rows="3" style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;"></textarea>
+      <div style="margin-top:1rem; display:flex; gap:0.75rem;">
+        <button type="submit" name="action" value="approve" style="padding:0.65rem 1.4rem; background:#1a7f37; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Approve</button>
+        <button type="submit" name="action" value="reject" style="padding:0.65rem 1.4rem; background:var(--deep-red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="panel"><div style="padding:1.25rem; color:var(--muted);">
+  Reviewed by {{ mentor.reviewed_by.email|default:"—" }} on {{ mentor.reviewed_at|date:"d M Y, H:i" }}.
+  {% if mentor.rejection_reason %}<br>Reason: {{ mentor.rejection_reason }}{% endif %}
+</div></div>
+{% endif %}
+{% endblock %}

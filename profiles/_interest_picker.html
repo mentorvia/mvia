@@ -1,0 +1,10 @@
+{# Reusable interest checklist. Expects: interest_rows, selected_ids (may be empty) #}
+<div style="border:1px solid rgba(15,15,16,0.15); border-radius:9px; max-height:280px; overflow-y:auto; padding:0.5rem 0.75rem; background:#fff;">
+  {% for row in interest_rows %}
+    <label style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; padding-left:{{ row.depth }}.5rem; font-weight:400; cursor:pointer;">
+      <input type="checkbox" name="interests" value="{{ row.node.id }}"
+        {% if row.node.id in selected_ids %}checked{% endif %}>
+      <span style="{% if not row.node.parent_id %}font-weight:600;{% endif %}">{{ row.node.name }}</span>
+    </label>
+  {% endfor %}
+</div>

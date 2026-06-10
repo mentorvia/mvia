@@ -1,0 +1,28 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Mentor approvals — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Mentor approvals</h1>
+  <p>Review and decide on mentor applications.</p>
+</div>
+<div class="panel">
+  <h2>{{ pending.count }} application{{ pending.count|pluralize }} pending</h2>
+  {% if pending %}
+  <table>
+    <thead><tr><th>Applicant</th><th>Role</th><th>Experience</th><th>Rate</th><th>Applied</th><th></th></tr></thead>
+    <tbody>
+      {% for m in pending %}
+      <tr>
+        <td><strong>{{ m.user.full_name }}</strong><br><span style="color:var(--muted); font-size:0.82rem;">{{ m.user.email }}</span></td>
+        <td>{{ m.current_role }}<br><span style="color:var(--muted); font-size:0.82rem;">{{ m.company }}</span></td>
+        <td>{{ m.years_experience }} yrs</td>
+        <td>₹{{ m.hourly_rate }}</td>
+        <td>{{ m.created_at|date:"d M Y" }}</td>
+        <td><a href="{% url 'staff:mentor_review' m.id %}">Review →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No pending applications. 🎉</div>{% endif %}
+</div>
+{% endblock %}
