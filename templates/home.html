@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mVia — Where clarity meets acceleration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red: #D71920;
+      --deep-red: #A8121A;
+      --beige: #F5EFE6;
+      --ink: #0F0F10;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--beige);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Geist', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--red);
+      letter-spacing: -0.02em;
+    }
+    .nav-status {
+      font-size: 0.85rem;
+      color: var(--ink);
+      opacity: 0.6;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-family: 'Geist', sans-serif;
+      font-weight: 700;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      max-width: 14ch;
+      margin-bottom: 1.25rem;
+    }
+    h1 .accent { color: var(--red); }
+    .tagline {
+      font-size: 1.15rem;
+      opacity: 0.7;
+      max-width: 40ch;
+      margin-bottom: 2.5rem;
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(215, 25, 32, 0.08);
+      color: var(--deep-red);
+      font-weight: 500;
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 2rem;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red);
+    }
+    footer {
+      padding: 1.5rem 2rem;
+      font-size: 0.8rem;
+      opacity: 0.5;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">mVia</div>
+    <div class="nav-status">Coming soon</div>
+  </header>
+  <main>
+    <div class="badge"><span class="dot"></span> Platform is live &amp; deploying</div>
+    <h1>Where clarity meets <span class="accent">acceleration</span>.</h1>
+    <p class="tagline">Premium career mentorship. To dream it's human — to pursue it's mVia.</p>
+  </main>
+  <footer>
+    &copy; mVia &middot; Confidential &middot; Build in progress
+  </footer>
+</body>
+</html>
