@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign up — mVia{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Create your account</h1>
+  <p class="sub">Start as a mentee. Become a mentor anytime.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% endfor %}
+    <button type="submit" class="btn">Sign up</button>
+  </form>
+  <p class="muted">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</div>
+{% endblock %}

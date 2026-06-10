@@ -65,8 +65,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Our own apps:
+    "accounts",
     "core",
 ]
+
+# Use our email-based User model instead of Django's default.
+AUTH_USER_MODEL = "accounts.User"
+
+# Where @login_required sends people, and where login/logout land.
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "home"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

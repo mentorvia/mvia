@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Log in — mVia{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Welcome back</h1>
+  <p class="sub">Log in to your mVia account.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}{% for e in form.non_field_errors %}<div class="nonfield">{{ e }}</div>{% endfor %}{% endif %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% endfor %}
+    <button type="submit" class="btn">Log in</button>
+  </form>
+  <p class="muted"><a href="{% url 'password_reset_request' %}">Forgot password?</a></p>
+  <p class="muted">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}mVia{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --red:#D71920; --deep-red:#A8121A; --beige:#F5EFE6; --ink:#0F0F10; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--beige); color:var(--ink); min-height:100vh; display:flex; flex-direction:column; }
+    a { color:var(--deep-red); }
+    header { padding:1.25rem 2rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(15,15,16,0.08); }
+    .logo { font-family:'Geist',sans-serif; font-weight:700; font-size:1.4rem; color:var(--red); letter-spacing:-0.02em; text-decoration:none; }
+    nav a { margin-left:1.25rem; font-size:0.9rem; text-decoration:none; color:var(--ink); opacity:0.8; }
+    nav a:hover { opacity:1; color:var(--red); }
+    main { flex:1; display:flex; flex-direction:column; align-items:center; padding:2.5rem 1.5rem; }
+    .card { background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:420px; box-shadow:0 4px 24px rgba(15,15,16,0.06); }
+    .card h1 { font-family:'Geist',sans-serif; font-size:1.6rem; margin-bottom:0.4rem; letter-spacing:-0.02em; }
+    .card .sub { opacity:0.6; font-size:0.92rem; margin-bottom:1.5rem; }
+    label { display:block; font-size:0.85rem; font-weight:500; margin:0.9rem 0 0.35rem; }
+    input[type=text], input[type=email], input[type=password] {
+      width:100%; padding:0.7rem 0.85rem; border:1px solid rgba(15,15,16,0.15);
+      border-radius:9px; font-size:0.95rem; font-family:inherit; background:#fff;
+    }
+    input:focus { outline:none; border-color:var(--red); }
+    .btn { display:inline-block; width:100%; margin-top:1.4rem; padding:0.8rem; background:var(--red);
+      color:#fff; border:none; border-radius:9px; font-size:0.97rem; font-weight:600; font-family:inherit; cursor:pointer; }
+    .btn:hover { background:var(--deep-red); }
+    .muted { font-size:0.88rem; opacity:0.7; margin-top:1.2rem; text-align:center; }
+    .errorlist { list-style:none; color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem; }
+    .messages { width:100%; max-width:420px; margin-bottom:1.2rem; }
+    .msg { padding:0.75rem 1rem; border-radius:9px; font-size:0.9rem; margin-bottom:0.5rem; }
+    .msg.success { background:#e7f6ec; color:#1a7f37; }
+    .msg.error { background:#fdeaea; color:var(--deep-red); }
+    .msg.info { background:#eef2fb; color:#2b4a8b; word-break:break-all; }
+    .nonfield { color:var(--deep-red); font-size:0.86rem; margin-bottom:0.5rem; }
+    footer { padding:1.5rem; font-size:0.8rem; opacity:0.5; text-align:center; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="{% url 'home' %}" class="logo">mVia</a>
+    <nav>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'logout' %}">Log out</a>
+      {% else %}
+        <a href="{% url 'login' %}">Log in</a>
+        <a href="{% url 'signup' %}">Sign up</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>&copy; mVia &middot; Confidential &middot; Build in progress</footer>
+</body>
+</html>
