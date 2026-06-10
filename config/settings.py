@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     # Our own apps:
     "accounts",
     "core",
+    "dashboard",
 ]
 
 # Use our email-based User model instead of Django's default.

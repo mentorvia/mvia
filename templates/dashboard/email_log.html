@@ -1,0 +1,46 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Email log — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Email log</h1>
+  <p>Audit trail of every email mVia attempts to send.</p>
+</div>
+
+<form method="get" class="toolbar">
+  <select name="status" onchange="this.form.submit()">
+    <option value="">All statuses</option>
+    {% for val, lbl in status_choices %}
+      <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+<div class="panel">
+  <h2>{{ page.paginator.count }} email{{ page.paginator.count|pluralize }}</h2>
+  {% if page.object_list %}
+  <table>
+    <thead><tr><th>Recipient</th><th>Template</th><th>Subject</th><th>Status</th><th>When</th></tr></thead>
+    <tbody>
+      {% for e in page.object_list %}
+      <tr>
+        <td>{{ e.recipient }}</td>
+        <td>{{ e.template }}</td>
+        <td>{{ e.subject }}</td>
+        <td><span class="badge {{ e.status }}">{{ e.get_status_display }}</span></td>
+        <td>{{ e.created_at|date:"d M Y, H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No emails recorded yet.</div>{% endif %}
+</div>
+
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a href="?status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+  <span class="cur">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a href="?status={{ status }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

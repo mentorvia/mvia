@@ -1,0 +1,46 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Users — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Users</h1>
+  <p>Search and manage every mVia account.</p>
+</div>
+
+<form method="get" class="toolbar">
+  <input type="text" name="q" value="{{ query }}" placeholder="Search by name or email…">
+  <button type="submit">Search</button>
+  {% if query %}<a href="{% url 'staff:users' %}" class="clear">Clear</a>{% endif %}
+</form>
+
+<div class="panel">
+  <h2>{{ page.paginator.count }} user{{ page.paginator.count|pluralize }}{% if query %} matching “{{ query }}”{% endif %}</h2>
+  {% if page.object_list %}
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Verified</th><th>Joined</th></tr></thead>
+    <tbody>
+      {% for u in page.object_list %}
+      <tr>
+        <td><a href="{% url 'staff:user_detail' u.id %}">{{ u.full_name }}</a></td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.is_mentor %}<span class="badge neutral">Mentor</span>{% endif %}
+          {% if u.is_mentee %}<span class="badge neutral">Mentee</span>{% endif %}
+          {% if u.is_staff %}<span class="badge no">Staff</span>{% endif %}
+        </td>
+        <td>{% if u.is_email_verified %}<span class="badge yes">Yes</span>{% else %}<span class="badge no">No</span>{% endif %}</td>
+        <td>{{ u.date_joined|date:"d M Y" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No users found.</div>{% endif %}
+</div>
+
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a href="?q={{ query }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+  <span class="cur">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a href="?q={{ query }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

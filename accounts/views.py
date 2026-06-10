@@ -76,6 +76,9 @@ def login_view(request):
         if form.is_valid():
             auth_login(request, form.user)
             messages.success(request, f"Welcome back, {form.user.get_short_name()}!")
+            # Staff land in the staff console; everyone else in the member dashboard.
+            if form.user.is_staff:
+                return redirect("staff:overview")
             return redirect("dashboard")
     else:
         form = LoginForm(request=request)

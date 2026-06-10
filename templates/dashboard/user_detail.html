@@ -1,0 +1,45 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}{{ target.full_name }} — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:users' %}" class="back">← Back to users</a>
+<div class="page-head">
+  <h1>{{ target.full_name }}</h1>
+  <p>{{ target.email }}</p>
+</div>
+
+<div class="panel">
+  <h2>Account</h2>
+  <div style="padding:1.25rem;">
+    <dl class="detail-grid">
+      <dt>Full name</dt><dd>{{ target.full_name }}</dd>
+      <dt>Email</dt><dd>{{ target.email }}</dd>
+      <dt>Email verified</dt><dd>{% if target.is_email_verified %}<span class="badge yes">Yes</span>{% else %}<span class="badge no">No</span>{% endif %}</dd>
+      <dt>Mentee</dt><dd>{{ target.is_mentee|yesno:"Yes,No" }}</dd>
+      <dt>Mentor</dt><dd>{{ target.is_mentor|yesno:"Yes,No" }}</dd>
+      <dt>Staff</dt><dd>{{ target.is_staff|yesno:"Yes,No" }}</dd>
+      <dt>Active</dt><dd>{{ target.is_active|yesno:"Yes,No" }}</dd>
+      <dt>Joined</dt><dd>{{ target.date_joined|date:"d M Y, H:i" }}</dd>
+      <dt>Last login</dt><dd>{{ target.last_login|date:"d M Y, H:i"|default:"Never" }}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Email history</h2>
+  {% if emails %}
+  <table>
+    <thead><tr><th>Template</th><th>Subject</th><th>Status</th><th>Sent</th></tr></thead>
+    <tbody>
+      {% for e in emails %}
+      <tr>
+        <td>{{ e.template }}</td>
+        <td>{{ e.subject }}</td>
+        <td><span class="badge {{ e.status }}">{{ e.get_status_display }}</span></td>
+        <td>{{ e.created_at|date:"d M Y, H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No emails recorded for this user.</div>{% endif %}
+</div>
+{% endblock %}

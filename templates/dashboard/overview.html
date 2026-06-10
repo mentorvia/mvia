@@ -1,0 +1,44 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Overview — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Overview</h1>
+  <p>A live snapshot of mVia. More metrics arrive as features ship.</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><div class="num">{{ total_users }}</div><div class="label">Total users</div></div>
+  <div class="stat"><div class="num">{{ total_mentors }}</div><div class="label">Mentors</div></div>
+  <div class="stat"><div class="num">{{ verified_users }}</div><div class="label">Verified accounts</div></div>
+  <div class="stat"><div class="num">{{ unverified_users }}</div><div class="label">Unverified accounts</div></div>
+</div>
+
+<div class="stat-grid">
+  {% for label, note in coming_soon_stats %}
+    <div class="stat soon">
+      <div class="num">—</div>
+      <div class="label">{{ label }}</div>
+      <span class="tag">{{ note }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <h2>Recent signups</h2>
+  {% if recent_users %}
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Joined</th></tr></thead>
+    <tbody>
+      {% for u in recent_users %}
+      <tr>
+        <td><a href="{% url 'staff:user_detail' u.id %}">{{ u.full_name }}</a></td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.is_email_verified %}<span class="badge yes">Yes</span>{% else %}<span class="badge no">No</span>{% endif %}</td>
+        <td>{{ u.date_joined|date:"d M Y, H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No users yet.</div>{% endif %}
+</div>
+{% endblock %}
