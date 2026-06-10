@@ -1,0 +1,39 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Custom interests — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:interests' %}" class="back">← Back to interests</a>
+<div class="page-head">
+  <h1>Custom submissions</h1>
+  <p>Interests typed by users. Promote good ones into the managed tree, or reject.</p>
+</div>
+
+<div class="panel">
+  <h2>{{ pending.count }} awaiting review</h2>
+  {% if pending %}
+  <table>
+    <thead><tr><th>Interest</th><th>Submitted by</th><th>When</th><th style="width:340px;">Action</th></tr></thead>
+    <tbody>
+      {% for c in pending %}
+      <tr>
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.submitted_by.email|default:"—" }}</td>
+        <td>{{ c.created_at|date:"d M Y" }}</td>
+        <td>
+          <form method="post" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            {% csrf_token %}
+            <input type="hidden" name="interest_id" value="{{ c.id }}">
+            <select name="parent" style="padding:0.4rem; border:1px solid var(--line); border-radius:6px; font-family:inherit; font-size:0.82rem;">
+              <option value="">Top-level</option>
+              {% for p in all_for_parent %}<option value="{{ p.id }}">{{ p.breadcrumb }}</option>{% endfor %}
+            </select>
+            <button type="submit" name="action" value="approve" style="padding:0.4rem 0.8rem; background:#1a7f37; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.82rem; font-family:inherit;">Promote</button>
+            <button type="submit" name="action" value="reject" style="padding:0.4rem 0.8rem; background:var(--deep-red); color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.82rem; font-family:inherit;">Reject</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No custom submissions to review. 🎉</div>{% endif %}
+</div>
+{% endblock %}

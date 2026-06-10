@@ -1,0 +1,18 @@
+{% load interest_extras %}
+{% for item in nodes %}
+  <div class="tree-row" style="padding:0.5rem 1.25rem; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+    <div style="padding-left:{{ item.node.depth|times:1.5 }}rem;">
+      {% if item.node.parent_id %}<span style="color:var(--muted);">›</span> {% endif %}
+      <strong style="font-weight:{% if item.node.is_category %}700{% else %}500{% endif %};">{{ item.node.name }}</strong>
+      {% if item.node.is_category %}<span class="badge neutral" style="margin-left:0.4rem;">Category</span>{% endif %}
+      {% if not item.node.is_approved %}<span class="badge pending" style="margin-left:0.4rem;">Unapproved</span>{% endif %}
+    </div>
+    <div style="display:flex; gap:0.75rem; font-size:0.85rem;">
+      <a href="{% url 'staff:interest_edit' item.node.id %}">Edit</a>
+      <a href="{% url 'staff:interest_delete' item.node.id %}" style="color:var(--deep-red);">Delete</a>
+    </div>
+  </div>
+  {% if item.children %}
+    {% include "interests/_tree_nodes.html" with nodes=item.children %}
+  {% endif %}
+{% endfor %}

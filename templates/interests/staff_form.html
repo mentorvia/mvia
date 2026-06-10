@@ -1,0 +1,31 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}{{ title }} — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:interests' %}" class="back">← Back to interests</a>
+<div class="page-head"><h1>{{ title }}</h1></div>
+
+<div class="panel">
+  <div style="padding:1.5rem; max-width:520px;">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin:1rem 0 0.35rem;">{{ field.label }}</label>
+        {% if field.name == 'is_approved' %}
+          <label style="font-weight:400; display:flex; gap:0.5rem; align-items:center;">{{ field }} <span style="font-size:0.85rem; color:var(--muted);">Selectable by users</span></label>
+        {% else %}
+          {{ field }}
+        {% endif %}
+        {% if field.help_text %}<div style="font-size:0.8rem; color:var(--muted); margin-top:0.25rem;">{{ field.help_text }}</div>{% endif %}
+        {% if field.errors %}<div style="color:var(--deep-red); font-size:0.83rem; margin-top:0.25rem;">{{ field.errors|striptags }}</div>{% endif %}
+      {% endfor %}
+      <div style="margin-top:1.5rem;">
+        <button type="submit" style="padding:0.65rem 1.4rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Save</button>
+        <a href="{% url 'staff:interests' %}" style="margin-left:0.75rem; color:var(--muted); text-decoration:none;">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<style>
+  .panel form input[type=text], .panel form select { width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem; }
+</style>
+{% endblock %}

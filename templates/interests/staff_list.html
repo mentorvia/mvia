@@ -1,0 +1,26 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Interests — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Interests</h1>
+  <p>The master taxonomy. Mentees and mentors choose from these.</p>
+</div>
+
+<div class="toolbar">
+  <a href="{% url 'staff:interest_add' %}"><button type="button">+ Add interest</button></a>
+  <a href="{% url 'staff:custom_review' %}" class="clear">
+    Review custom submissions{% if pending_custom %} ({{ pending_custom }} pending){% endif %}
+  </a>
+</div>
+
+<div class="panel">
+  <h2>{{ total }} interest{{ total|pluralize }} across the tree</h2>
+  {% if tree %}
+    <div style="padding:0.5rem 0;">
+      {% include "interests/_tree_nodes.html" with nodes=tree %}
+    </div>
+  {% else %}
+    <div class="empty">No interests yet. Click “Add interest” to begin.</div>
+  {% endif %}
+</div>
+{% endblock %}

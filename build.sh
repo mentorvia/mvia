@@ -10,5 +10,7 @@ python manage.py collectstatic --no-input
 python manage.py reset_schema
 
 python manage.py migrate
+# Seed the starter interest taxonomy (safe to run every deploy).
+python manage.py seed_interests
 # Create the admin account once, from environment variables (no-op if it exists).
 python manage.py bootstrap_admin

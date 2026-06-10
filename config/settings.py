@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "accounts",
     "core",
     "dashboard",
+    "interests",
 ]
 
 # Use our email-based User model instead of Django's default.
