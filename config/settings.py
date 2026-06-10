@@ -69,6 +69,8 @@ INSTALLED_APPS = [
     "core",
     "dashboard",
     "interests",
+    "profiles",
+    "auditlog",
 ]
 
 # Use our email-based User model instead of Django's default.
@@ -103,6 +105,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "dashboard.context_processors.staff_badges",
             ],
         },
     },

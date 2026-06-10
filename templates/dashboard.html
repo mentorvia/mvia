@@ -3,12 +3,20 @@
 {% block content %}
 <div class="card" style="max-width:560px;">
   <h1>Hi, {{ user.get_short_name }} 👋</h1>
-  <p class="sub">This is your mVia dashboard. More features are on the way.</p>
-  <div style="margin-top:1rem; font-size:0.92rem; line-height:1.8;">
-    <div><strong>Email:</strong> {{ user.email }}</div>
-    <div><strong>Mentee:</strong> {{ user.is_mentee|yesno:"Yes,No" }}</div>
-    <div><strong>Mentor:</strong> {{ user.is_mentor|yesno:"Yes,No" }}</div>
-    <div><strong>Email verified:</strong> {{ user.is_email_verified|yesno:"Yes,No" }}</div>
+  <p class="sub">Your mVia dashboard.</p>
+  <div style="margin-top:1rem; display:flex; flex-direction:column; gap:0.6rem;">
+    <a href="{% url 'mentee_profile' %}" style="display:block; padding:0.9rem 1rem; background:var(--beige); border-radius:9px; text-decoration:none; color:var(--ink); font-weight:500;">
+      ✏️ Edit my profile &amp; interests
+    </a>
+    {% if user.is_mentor %}
+      <a href="{% url 'become_mentor' %}" style="display:block; padding:0.9rem 1rem; background:var(--beige); border-radius:9px; text-decoration:none; color:var(--ink); font-weight:500;">
+        ⭐ My mentor profile
+      </a>
+    {% else %}
+      <a href="{% url 'become_mentor' %}" style="display:block; padding:0.9rem 1rem; background:var(--beige); border-radius:9px; text-decoration:none; color:var(--ink); font-weight:500;">
+        ⭐ Become a mentor
+      </a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
