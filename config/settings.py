@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "interests",
     "profiles",
     "auditlog",
+    "directory",
 ]
 
 # Use our email-based User model instead of Django's default.
