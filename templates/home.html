@@ -1,108 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>mVia — Where clarity meets acceleration</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist:wght@500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --red: #D71920;
-      --deep-red: #A8121A;
-      --beige: #F5EFE6;
-      --ink: #0F0F10;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--beige);
-      color: var(--ink);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header {
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo {
-      font-family: 'Geist', sans-serif;
-      font-weight: 700;
-      font-size: 1.5rem;
-      color: var(--red);
-      letter-spacing: -0.02em;
-    }
-    .nav-status {
-      font-size: 0.85rem;
-      color: var(--ink);
-      opacity: 0.6;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 2rem;
-    }
-    h1 {
-      font-family: 'Geist', sans-serif;
-      font-weight: 700;
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      max-width: 14ch;
-      margin-bottom: 1.25rem;
-    }
-    h1 .accent { color: var(--red); }
-    .tagline {
-      font-size: 1.15rem;
-      opacity: 0.7;
-      max-width: 40ch;
-      margin-bottom: 2.5rem;
-      line-height: 1.5;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(215, 25, 32, 0.08);
-      color: var(--deep-red);
-      font-weight: 500;
-      font-size: 0.8rem;
-      padding: 0.5rem 1rem;
-      border-radius: 999px;
-      margin-bottom: 2rem;
-    }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--red);
-    }
-    footer {
-      padding: 1.5rem 2rem;
-      font-size: 0.8rem;
-      opacity: 0.5;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="logo">mVia</div>
-    <div class="nav-status">Coming soon</div>
-  </header>
-  <main>
-    <div class="badge"><span class="dot"></span> Platform is live &amp; deploying</div>
-    <h1>Where clarity meets <span class="accent">acceleration</span>.</h1>
-    <p class="tagline">Premium career mentorship. To dream it's human — to pursue it's mVia.</p>
-  </main>
-  <footer>
-    &copy; mVia &middot; Confidential &middot; Build in progress
-  </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}mVia — Where clarity meets acceleration{% endblock %}
+{% block content %}
+<div class="hero">
+  {% if user.is_authenticated %}
+    <div class="hero-badge"><span class="dot"></span> Welcome back, {{ user.get_short_name }}</div>
+  {% else %}
+    <div class="hero-badge"><span class="dot"></span> Premium career mentorship</div>
+  {% endif %}
+
+  <h1 class="hero-title">Where clarity meets <span class="accent">acceleration</span>.</h1>
+  <p class="hero-tagline">To dream it's human — to pursue it's mVia. Connect with mentors who've walked the path you're on.</p>
+
+  <div class="hero-actions">
+    {% if user.is_authenticated %}
+      <a href="{% url 'directory' %}" class="btn-primary">Find a mentor</a>
+      <a href="{% url 'dashboard' %}" class="btn-secondary">Go to dashboard</a>
+    {% else %}
+      <a href="{% url 'signup' %}" class="btn-primary">Get started — it's free</a>
+      <a href="{% url 'login' %}" class="btn-secondary">Log in</a>
+    {% endif %}
+  </div>
+
+  <div class="hero-how">
+    <div class="how-step"><span class="how-num">1</span> Sign up &amp; tell us your interests</div>
+    <div class="how-step"><span class="how-num">2</span> Find a mentor who fits</div>
+    <div class="how-step"><span class="how-num">3</span> Book a session &amp; grow</div>
+  </div>
+
+  <p class="hero-mentor-cta">
+    Want to guide others? <a href="{% if user.is_authenticated %}{% url 'become_mentor' %}{% else %}{% url 'signup' %}{% endif %}">Become a mentor →</a>
+  </p>
+</div>
+
+<style>
+  main { justify-content:center; }
+  .hero { text-align:center; max-width:760px; margin:0 auto; padding:2rem 1rem 3rem; display:flex; flex-direction:column; align-items:center; }
+  .hero-badge { display:inline-flex; align-items:center; gap:0.5rem; background:rgba(215,25,32,0.08); color:var(--deep-red); font-weight:500; font-size:0.8rem; padding:0.5rem 1rem; border-radius:999px; margin-bottom:1.75rem; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--red); }
+  .hero-title { font-family:'Geist',sans-serif; font-weight:700; font-size:clamp(2.4rem,6vw,4.2rem); line-height:1.05; letter-spacing:-0.03em; max-width:15ch; margin-bottom:1.25rem; }
+  .hero-title .accent { color:var(--red); }
+  .hero-tagline { font-size:1.12rem; opacity:0.7; max-width:42ch; margin-bottom:2.25rem; line-height:1.55; }
+  .hero-actions { display:flex; gap:0.85rem; flex-wrap:wrap; justify-content:center; margin-bottom:3rem; }
+  .btn-primary { background:var(--red); color:#fff; padding:0.85rem 1.8rem; border-radius:10px; text-decoration:none; font-weight:600; font-size:1rem; }
+  .btn-primary:hover { background:var(--deep-red); }
+  .btn-secondary { background:transparent; color:var(--ink); padding:0.85rem 1.8rem; border-radius:10px; border:1px solid rgba(15,15,16,0.2); text-decoration:none; font-weight:600; font-size:1rem; }
+  .btn-secondary:hover { border-color:var(--red); color:var(--red); }
+  .hero-how { display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center; margin-bottom:2.5rem; }
+  .how-step { display:flex; align-items:center; gap:0.6rem; font-size:0.95rem; opacity:0.8; }
+  .how-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; font-size:0.85rem; font-weight:600; }
+  .hero-mentor-cta { font-size:0.95rem; opacity:0.8; }
+  .hero-mentor-cta a { color:var(--deep-red); font-weight:600; text-decoration:none; }
+  .hero-mentor-cta a:hover { text-decoration:underline; }
+</style>
+{% endblock %}

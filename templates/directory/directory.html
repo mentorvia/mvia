@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Find a mentor — mVia{% endblock %}
+{% block content %}
+<div class="dir-wrap">
+  <div class="dir-head">
+    <h1>Find a mentor</h1>
+    <p>Browse approved mentors. {% if has_recommendations %}Mentors matching your interests are marked <span class="rec-badge">Recommended</span>.{% endif %}</p>
+  </div>
+
+  <form method="get" class="dir-filters">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search name, role, company…">
+    <select name="interest">
+      <option value="">All interests</option>
+      {% for i in interests %}
+        <option value="{{ i.id }}" {% if interest_id == i.id|stringformat:'s' %}selected{% endif %}>{{ i.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="number" name="max_rate" value="{{ max_rate }}" placeholder="Max ₹" min="0">
+    <button type="submit">Filter</button>
+    {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}" class="dir-clear">Clear</a>{% endif %}
+  </form>
+
+  {% if mentor_cards %}
+    <div class="dir-grid">
+      {% for card in mentor_cards %}
+        <a href="{% url 'mentor_profile' card.mentor.user_id %}" class="mentor-card">
+          {% if card.recommended %}<span class="rec-badge">Recommended</span>{% endif %}
+          <div class="mc-avatar">{{ card.mentor.user.get_short_name|first|upper }}</div>
+          <div class="mc-name">{{ card.mentor.user.full_name }}</div>
+          <div class="mc-role">{{ card.mentor.current_role }}{% if card.mentor.company %} · {{ card.mentor.company }}{% endif %}</div>
+          <div class="mc-specs">
+            {% for s in card.specs|slice:":3" %}<span class="chip">{{ s.name }}</span>{% endfor %}
+            {% if card.specs|length > 3 %}<span class="chip more">+{{ card.specs|length|add:"-3" }}</span>{% endif %}
+          </div>
+          <div class="mc-rate">₹{{ card.mentor.hourly_rate }} <span>/ session</span></div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="dir-empty">
+      <p>No mentors found{% if query or interest_id or max_rate %} for these filters{% endif %}.</p>
+      {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}">Clear filters</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  main { align-items:stretch; }
+  .dir-wrap { width:100%; max-width:980px; margin:0 auto; }
+  .dir-head h1 { font-family:'Geist',sans-serif; font-size:2rem; letter-spacing:-0.02em; margin-bottom:0.3rem; }
+  .dir-head p { opacity:0.65; margin-bottom:1.5rem; }
+  .rec-badge { background:#1a7f37; color:#fff; font-size:0.68rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:99px; }
+  .dir-filters { display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.75rem; align-items:center; }
+  .dir-filters input[type=text] { flex:1; min-width:200px; }
+  .dir-filters input, .dir-filters select { padding:0.6rem 0.8rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; font-family:inherit; font-size:0.92rem; background:#fff; }
+  .dir-filters button { padding:0.6rem 1.3rem; background:var(--ink); color:#fff; border:none; border-radius:9px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .dir-filters button:hover { background:#000; }
+  .dir-clear { color:var(--muted); text-decoration:none; font-size:0.9rem; opacity:0.7; }
+  .dir-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.1rem; }
+  .mentor-card { position:relative; background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; padding:1.5rem; text-decoration:none; color:var(--ink); transition:transform 0.12s, box-shadow 0.12s; display:flex; flex-direction:column; }
+  .mentor-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(15,15,16,0.08); border-color:rgba(215,25,32,0.3); }
+  .mentor-card .rec-badge { position:absolute; top:1rem; right:1rem; }
+  .mc-avatar { width:52px; height:52px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Geist',sans-serif; font-weight:700; font-size:1.4rem; margin-bottom:0.9rem; }
+  .mc-name { font-family:'Geist',sans-serif; font-weight:600; font-size:1.15rem; }
+  .mc-role { opacity:0.65; font-size:0.88rem; margin-bottom:0.9rem; }
+  .mc-specs { display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1rem; flex:1; align-content:flex-start; }
+  .chip { background:rgba(15,15,16,0.06); font-size:0.74rem; padding:0.2rem 0.55rem; border-radius:99px; }
+  .chip.more { background:transparent; opacity:0.55; }
+  .mc-rate { font-family:'Geist',sans-serif; font-weight:700; font-size:1.15rem; }
+  .mc-rate span { font-family:'Inter',sans-serif; font-weight:400; font-size:0.82rem; opacity:0.55; }
+  .dir-empty { text-align:center; padding:3rem; opacity:0.6; }
+  .dir-empty a { color:var(--deep-red); }
+</style>
+{% endblock %}
