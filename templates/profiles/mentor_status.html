@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Mentor application — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <h1>Mentor application</h1>
+  {% if mentor.status == 'pending' %}
+    <div class="msg info">Your application is <strong>pending review</strong>. We'll email you once it's decided.</div>
+  {% elif mentor.status == 'approved' %}
+    <div class="msg success">You're an approved mentor! 🎉 Your profile can now receive bookings.</div>
+  {% elif mentor.status == 'rejected' %}
+    <div class="msg error">Your application was not approved.{% if mentor.rejection_reason %} Reason: {{ mentor.rejection_reason }}{% endif %}</div>
+  {% endif %}
+  <div style="margin-top:1rem; font-size:0.92rem; line-height:1.8;">
+    <div><strong>Role:</strong> {{ mentor.current_role }} at {{ mentor.company }}</div>
+    <div><strong>Experience:</strong> {{ mentor.years_experience }} years</div>
+    <div><strong>Rate:</strong> ₹{{ mentor.hourly_rate }} / session</div>
+  </div>
+</div>
+{% endblock %}

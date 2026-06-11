@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My profile — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <h1>My profile</h1>
+  <p class="sub">Complete this so you can book sessions with mentors.</p>
+
+  {% if not profile.is_complete %}
+    <div class="msg info" style="margin-bottom:1rem;">
+      To book, please add: {{ profile.missing_fields|join:", " }}.
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% endfor %}
+
+    <label style="margin-top:1.2rem;">Your interests</label>
+    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">Pick what you want guidance on. This powers mentor recommendations.</p>
+    {% include "profiles/_interest_picker.html" %}
+
+    <label style="margin-top:1rem;">Don't see your interest? Add one</label>
+    <input type="text" name="custom_interest" placeholder="e.g. Robotics (sent for review)">
+
+    <button type="submit" class="btn">Save profile</button>
+  </form>
+</div>
+<style>
+  .card textarea, .card input[type=number] { width:100%; padding:0.7rem 0.85rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; font-size:0.95rem; font-family:inherit; }
+</style>
+{% endblock %}

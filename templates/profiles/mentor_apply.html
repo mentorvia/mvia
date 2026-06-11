@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Become a mentor — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <h1>Become a mentor</h1>
+  <p class="sub">Share your experience and earn by guiding others. Applications are reviewed before going live.</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}{% for e in form.non_field_errors %}<div class="nonfield">{{ e }}</div>{% endfor %}{% endif %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% endfor %}
+
+    <label style="margin-top:1.2rem;">Your specializations</label>
+    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">Select at least one — these are what mentees find you by.</p>
+    {% include "profiles/_interest_picker.html" with selected_ids=selected_ids|default:'' %}
+
+    <button type="submit" class="btn">Submit application</button>
+  </form>
+</div>
+<style>
+  .card textarea, .card input[type=number] { width:100%; padding:0.7rem 0.85rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; font-size:0.95rem; font-family:inherit; }
+</style>
+{% endblock %}
