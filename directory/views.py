@@ -94,6 +94,12 @@ def mentor_profile(request, user_id):
         MentorProfile, user=user, status=MentorProfile.STATUS_APPROVED)
     specs = [mi.interest for mi in
              MentorInterest.objects.filter(user=user).select_related("interest")]
+    # Open, future slots the mentee can book.
+    from bookings.models import AvailabilitySlot
+    from django.utils import timezone
+    slots = [s for s in AvailabilitySlot.objects.filter(
+        mentor=user, start__gt=timezone.now()).order_by("start") if s.is_bookable]
     return render(request, "directory/mentor_profile.html", {
         "mentor": mentor, "mentor_user": user, "specs": specs,
+        "bookable_slots": slots,
     })
