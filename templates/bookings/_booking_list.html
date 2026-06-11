@@ -1,0 +1,42 @@
+{% if bookings %}
+  <div style="display:flex; flex-direction:column; gap:0.6rem;">
+    {% for b in bookings %}
+      <div style="background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:12px; padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div>
+          <div style="font-weight:600;">
+            {% if role == 'mentor' %}{{ b.mentee.full_name }}{% else %}{{ b.mentor.full_name }}{% endif %}
+          </div>
+          <div style="font-size:0.85rem; opacity:0.65;">{{ b.slot.start|date:"D, d M Y · H:i" }} · ₹{{ b.amount }}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          {% if b.status == 'pending_payment' %}<span class="badge pending">Pending payment</span>
+          {% elif b.status == 'confirmed' %}<span class="badge yes">Confirmed</span>
+          {% elif b.status == 'completed' %}<span class="badge neutral">Completed</span>
+          {% elif b.status == 'cancelled' %}<span class="badge no">Cancelled</span>
+          {% elif b.status == 'expired' %}<span class="badge neutral">Expired</span>{% endif %}
+
+          {% if b.status == 'pending_payment' and role == 'mentee' %}
+            <a href="{% url 'pay_booking' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">Pay now</a>
+          {% endif %}
+          {% if b.status == 'confirmed' %}
+            <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('Cancel this booking?');">
+              {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">Cancel</button>
+            </form>
+            {% if b.slot.start < now %}
+              <form method="post" action="{% url 'complete_booking' b.id %}" style="display:inline;">
+                {% csrf_token %}<button type="submit" style="background:none; border:none; color:#1a7f37; cursor:pointer; font-size:0.85rem; font-weight:600;">Mark complete</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p style="opacity:0.6;">Nothing here yet.</p>
+{% endif %}
+<style>
+  .badge { font-size:0.72rem; font-weight:600; padding:0.2rem 0.55rem; border-radius:99px; }
+  .badge.yes { background:#e7f6ec; color:#1a7f37; } .badge.no { background:#fdeaea; color:var(--deep-red); }
+  .badge.pending { background:#fff4e5; color:#9a5b00; } .badge.neutral { background:rgba(15,15,16,0.08); color:rgba(15,15,16,0.55); }
+</style>

@@ -26,16 +26,25 @@
 
     <aside class="mp-side">
       <div class="mp-rate">₹{{ mentor.hourly_rate }}<span> / session</span></div>
-      {% if user.is_authenticated %}
-        {% if user.id == mentor_user.id %}
-          <p class="mp-note">This is your mentor profile.</p>
-        {% else %}
-          <a href="#" class="mp-book btn-disabled" title="Booking coming soon">Book a session</a>
-          <p class="mp-note">Booking opens soon.</p>
-        {% endif %}
+      {% if user.is_authenticated and user.id == mentor_user.id %}
+        <p class="mp-note">This is your mentor profile.</p>
+      {% elif bookable_slots %}
+        <div class="mp-slots-label">Available times</div>
+        <div class="mp-slots">
+          {% for slot in bookable_slots %}
+            {% if user.is_authenticated %}
+              <form method="post" action="{% url 'book_slot' slot.id %}">
+                {% csrf_token %}
+                <button type="submit" class="mp-slot">{{ slot.start|date:"D d M" }} · {{ slot.start|date:"H:i" }}</button>
+              </form>
+            {% else %}
+              <a href="{% url 'login' %}" class="mp-slot">{{ slot.start|date:"D d M" }} · {{ slot.start|date:"H:i" }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if not user.is_authenticated %}<p class="mp-note">Log in to book.</p>{% endif %}
       {% else %}
-        <a href="{% url 'signup' %}" class="mp-book">Sign up to book</a>
-        <p class="mp-note">Free to join.</p>
+        <p class="mp-note">No open slots right now. Check back soon.</p>
       {% endif %}
     </aside>
   </div>
@@ -64,6 +73,10 @@
   .mp-book:hover { background:var(--deep-red); }
   .mp-book.btn-disabled { background:rgba(15,15,16,0.15); color:rgba(15,15,16,0.5); cursor:not-allowed; }
   .mp-note { font-size:0.8rem; opacity:0.55; margin-top:0.6rem; }
+  .mp-slots-label { font-size:0.8rem; font-weight:600; opacity:0.6; margin-bottom:0.6rem; text-transform:uppercase; letter-spacing:0.05em; }
+  .mp-slots { display:flex; flex-direction:column; gap:0.45rem; }
+  .mp-slot { display:block; width:100%; background:var(--beige); border:1px solid rgba(15,15,16,0.1); border-radius:8px; padding:0.6rem; font-size:0.88rem; font-family:inherit; cursor:pointer; text-decoration:none; color:var(--ink); text-align:center; }
+  .mp-slot:hover { border-color:var(--red); color:var(--red); }
   @media (max-width:680px) { .mp-body { grid-template-columns:1fr; } .mp-side { position:static; } }
 </style>
 {% endblock %}

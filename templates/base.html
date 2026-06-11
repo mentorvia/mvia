@@ -49,6 +49,9 @@
       {% if user.is_authenticated %}
         {% if user.is_staff %}<a href="{% url 'staff:overview' %}">Staff console</a>{% endif %}
         <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'directory' %}">Find a mentor</a>
+        <a href="{% url 'my_bookings' %}">My bookings</a>
+        {% if user.is_mentor %}<a href="{% url 'my_availability' %}">Availability</a>{% endif %}
         <a href="{% url 'mentee_profile' %}">My profile</a>
         <a href="{% url 'logout' %}">Log out</a>
       {% else %}

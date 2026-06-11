@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}My bookings — mVia{% endblock %}
+{% block content %}
+<div style="width:100%; max-width:780px; margin:0 auto;">
+  <h1 style="font-family:'Geist',sans-serif; font-size:1.9rem; margin-bottom:1.5rem;">My bookings</h1>
+
+  {% if as_mentor is not None %}
+    <h2 style="font-family:'Geist',sans-serif; font-size:1.15rem; margin:1rem 0 0.75rem;">Sessions I'm mentoring</h2>
+    {% include "bookings/_booking_list.html" with bookings=as_mentor role="mentor" %}
+  {% endif %}
+
+  <h2 style="font-family:'Geist',sans-serif; font-size:1.15rem; margin:1.75rem 0 0.75rem;">Sessions I booked</h2>
+  {% include "bookings/_booking_list.html" with bookings=as_mentee role="mentee" %}
+</div>
+{% endblock %}

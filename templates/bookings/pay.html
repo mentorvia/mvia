@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Confirm & pay — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:460px;">
+  <h1>Confirm &amp; pay</h1>
+  <p class="sub">Review your session details.</p>
+
+  <div style="background:var(--beige); border-radius:11px; padding:1.25rem; margin:1rem 0; line-height:1.9;">
+    <div><strong>Mentor:</strong> {{ booking.mentor.full_name }}</div>
+    <div><strong>When:</strong> {{ booking.slot.start|date:"D, d M Y" }} · {{ booking.slot.start|date:"H:i" }}–{{ booking.slot.end|date:"H:i" }}</div>
+    <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700; margin-top:0.5rem;">₹{{ booking.amount }}</div>
+  </div>
+
+  {% if simulated %}
+    <div class="msg info" style="margin-bottom:1rem;">
+      💡 Test mode: no real payment will be taken. Clicking below simulates a successful payment so you can test the flow.
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn">{% if simulated %}Simulate payment &amp; confirm{% else %}Pay ₹{{ booking.amount }}{% endif %}</button>
+  </form>
+  <p class="muted"><a href="{% url 'mentor_profile' booking.mentor_id %}">Cancel</a></p>
+</div>
+{% endblock %}
