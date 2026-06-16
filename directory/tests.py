@@ -70,5 +70,6 @@ class DirectoryTest(TestCase):
     def test_homepage_loads_with_nav(self):
         r = self.client.get("/")
         self.assertEqual(r.status_code, 200)
-        self.assertIn(b"Get started", r.content)  # signup CTA for anon
-        self.assertIn(b"Find a mentor", r.content)
+        self.assertIn(b"Apply", r.content)  # signup CTA for anon
+        self.assertIn(b"Mentors", r.content)
+        self.assertIn(b"Where clarity meets", r.content)  # new hero headline
