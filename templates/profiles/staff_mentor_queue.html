@@ -28,4 +28,32 @@
   </table>
   {% else %}<div class="empty">No pending applications. 🎉</div>{% endif %}
 </div>
+
+<div class="panel">
+  <h2>{{ approved.count }} active mentor{{ approved.count|pluralize }}</h2>
+  {% if approved %}
+  <table>
+    <thead><tr><th>Mentor</th><th>Role</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for m in approved %}
+      <tr>
+        <td>
+          <strong>{{ m.user.full_name }}</strong>
+          {% if m.user.is_placeholder %}<span class="badge neutral" style="margin-left:0.4rem;">No email yet</span>{% endif %}
+          <br><span style="color:var(--muted); font-size:0.82rem;">{{ m.current_role }} · {{ m.company }}</span>
+        </td>
+        <td>{{ m.current_role }}</td>
+        <td>₹{{ m.hourly_rate }}</td>
+        <td>{% if m.is_available %}<span class="badge yes">Live</span>{% else %}<span class="badge no">Hidden</span>{% endif %}</td>
+        <td style="white-space:nowrap;">
+          <a href="{% url 'staff:edit_mentor_profile' m.id %}">Edit profile</a>
+          &nbsp;·&nbsp;
+          <a href="{% url 'mentor_profile' m.user_id %}" target="_blank">View ↗</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No active mentors yet.</div>{% endif %}
+</div>
 {% endblock %}

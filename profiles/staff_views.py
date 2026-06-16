@@ -16,9 +16,13 @@ def staff_required(view):
 
 @staff_required
 def mentor_queue(request):
-    pending = MentorProfile.objects.filter(status=MentorProfile.STATUS_PENDING).select_related("user").order_by("created_at")
+    pending = MentorProfile.objects.filter(
+        status=MentorProfile.STATUS_PENDING).select_related("user").order_by("created_at")
+    # All approved/active mentors, so staff can find and edit any of them.
+    approved = MentorProfile.objects.filter(
+        status=MentorProfile.STATUS_APPROVED).select_related("user").order_by("user__full_name")
     return render(request, "profiles/staff_mentor_queue.html", {
-        "pending": pending, "active_nav": "mentors",
+        "pending": pending, "approved": approved, "active_nav": "mentors",
     })
 
 
