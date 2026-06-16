@@ -81,16 +81,26 @@ def user_detail(request, user_id):
 @staff_required
 def email_log(request):
     """The email audit log (requirement 7)."""
+    from core.pagination import paginate, querystring_without_page
+    from django.db.models import Q
+
     status = request.GET.get("status", "").strip()
+    q = request.GET.get("q", "").strip()
     logs = EmailLog.objects.all()
+    if q:
+        logs = logs.filter(Q(recipient__icontains=q) | Q(subject__icontains=q))
     if status:
         logs = logs.filter(status=status)
     logs = logs.order_by("-created_at")
 
-    paginator = Paginator(logs, 30)
-    page = paginator.get_page(request.GET.get("page"))
-
+    status_opts = [{"value": v, "label": l, "selected": status == v}
+                   for v, l in EmailLog.STATUS_CHOICES]
+    page_obj = paginate(request, logs)
     return render(request, "dashboard/email_log.html", {
-        "page": page, "status": status,
+        "page": page_obj, "page_obj": page_obj, "status": status,
+        "qs": querystring_without_page(request),
+        "search_value": q, "search_placeholder": "Search recipient or subject…",
+        "filters": [{"name": "status", "label": "Status", "options": status_opts}],
+        "has_active": bool(q or status),
         "status_choices": EmailLog.STATUS_CHOICES, "active_nav": "emails",
     })

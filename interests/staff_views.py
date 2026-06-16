@@ -32,11 +32,23 @@ def _tree():
 
 @staff_required
 def interests_list(request):
-    tree = _tree()
+    q = request.GET.get("q", "").strip()
     pending_custom = Interest.objects.filter(is_custom=True, is_approved=False).count()
     total = Interest.objects.count()
+
+    search_results = None
+    tree = None
+    if q:
+        # Flat, filtered results with their parent shown for context.
+        search_results = Interest.objects.filter(
+            name__icontains=q).select_related("parent").order_by("name")
+    else:
+        tree = _tree()
+
     return render(request, "interests/staff_list.html", {
-        "tree": tree, "pending_custom": pending_custom, "total": total,
+        "tree": tree, "search_results": search_results, "search_value": q,
+        "pending_custom": pending_custom, "total": total,
+        "has_active": bool(q),
         "active_nav": "interests",
     })
 

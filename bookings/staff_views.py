@@ -18,9 +18,33 @@ def staff_required(view):
 
 @staff_required
 def bookings_list(request):
+    from core.pagination import paginate, querystring_without_page
+    from django.db.models import Q
+
     bookings = Booking.objects.select_related("mentee", "mentor", "slot").order_by("-created_at")
+
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "").strip()
+    if q:
+        bookings = bookings.filter(
+            Q(mentee__full_name__icontains=q) | Q(mentor__full_name__icontains=q))
+    if status == "refunded":
+        bookings = bookings.filter(is_refunded=True)
+    elif status:
+        bookings = bookings.filter(status=status)
+
+    status_opts = [{"value": v, "label": l, "selected": status == v}
+                   for v, l in Booking.STATUS_CHOICES]
+    status_opts.append({"value": "refunded", "label": "Refunded", "selected": status == "refunded"})
+
+    page_obj = paginate(request, bookings)
     return render(request, "bookings/staff_bookings.html", {
-        "bookings": bookings, "active_nav": "bookings",
+        "bookings": page_obj, "page_obj": page_obj,
+        "qs": querystring_without_page(request),
+        "search_value": q, "search_placeholder": "Search mentee or mentor…",
+        "filters": [{"name": "status", "label": "Status", "options": status_opts}],
+        "has_active": bool(q or status),
+        "active_nav": "bookings",
     })
 
 
@@ -51,9 +75,22 @@ def booking_detail(request, booking_id):
 
 @staff_required
 def ledger(request):
+    from core.pagination import paginate, querystring_without_page
+    from django.db.models import Q
+
     entries = LedgerEntry.objects.select_related("booking", "booking__mentee", "booking__mentor").all()
 
-    # Summary totals.
+    q = request.GET.get("q", "").strip()
+    etype = request.GET.get("type", "").strip()
+    if q:
+        entries = entries.filter(
+            Q(booking__mentor__full_name__icontains=q) |
+            Q(booking__mentee__full_name__icontains=q) |
+            Q(external_reference__icontains=q))
+    if etype:
+        entries = entries.filter(entry_type=etype)
+
+    # Summary totals (over ALL entries, not just current filter/page).
     def total(t):
         return LedgerEntry.objects.filter(entry_type=t).aggregate(s=Sum("amount"))["s"] or Decimal("0")
 
@@ -61,12 +98,20 @@ def ledger(request):
         "collected": total(LedgerEntry.TYPE_BOOKING_PAYMENT),
         "platform_fee": total(LedgerEntry.TYPE_PLATFORM_FEE),
         "mentor_earning": total(LedgerEntry.TYPE_MENTOR_EARNING),
-        "refunded": total(LedgerEntry.TYPE_REFUND),  # negative
+        "refunded": total(LedgerEntry.TYPE_REFUND),
     }
     summary["net_revenue"] = summary["platform_fee"] + summary["refunded"]
 
+    type_opts = [{"value": v, "label": l, "selected": etype == v}
+                 for v, l in LedgerEntry.TYPE_CHOICES]
+    page_obj = paginate(request, entries)
     return render(request, "bookings/staff_ledger.html", {
-        "entries": entries, "summary": summary, "active_nav": "ledger",
+        "entries": page_obj, "page_obj": page_obj, "summary": summary,
+        "qs": querystring_without_page(request),
+        "search_value": q, "search_placeholder": "Search mentor, mentee, or reference…",
+        "filters": [{"name": "type", "label": "Type", "options": type_opts}],
+        "has_active": bool(q or etype),
+        "active_nav": "ledger",
     })
 
 
