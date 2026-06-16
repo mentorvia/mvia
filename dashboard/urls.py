@@ -20,6 +20,7 @@ urlpatterns = [
     path("interests/custom/", interest_views.custom_review, name="custom_review"),
     # Mentors
     path("mentors/", profile_views.mentor_queue, name="mentor_queue"),
+    path("mentors/add-placeholder/", profile_views.add_placeholder_mentor, name="add_placeholder_mentor"),
     path("mentors/<int:mentor_id>/", profile_views.mentor_review, name="mentor_review"),
     # Audit log
     path("audit/", profile_views.audit_log, name="audit"),

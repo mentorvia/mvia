@@ -1,0 +1,43 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Add mentor — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:mentor_queue' %}" class="back">← Back to mentors</a>
+<div class="page-head">
+  <h1>Add a mentor (no email needed)</h1>
+  <p>Create a display-only mentor for the directory. They can't log in or take bookings until an email is added later.</p>
+</div>
+
+<div class="panel">
+  <div style="padding:1.5rem; max-width:620px;">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div style="color:var(--deep-red); margin-bottom:0.75rem;">{{ form.non_field_errors|striptags }}</div>{% endif %}
+      {% for field in form %}
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin:0.9rem 0 0.35rem;">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div style="color:var(--deep-red); font-size:0.83rem;">{{ field.errors|striptags }}</div>{% endif %}
+      {% endfor %}
+
+      <label style="display:block; font-size:0.85rem; font-weight:600; margin:1.1rem 0 0.35rem;">Specializations</label>
+      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:0.5rem;">Pick at least one.</p>
+      <div style="border:1px solid var(--line); border-radius:8px; max-height:240px; overflow-y:auto; padding:0.5rem 0.75rem;">
+        {% for i in interests %}
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; font-weight:400;">
+            <input type="checkbox" name="interests" value="{{ i.id }}"> {{ i.breadcrumb }}
+          </label>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <button type="submit" style="padding:0.7rem 1.5rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Add mentor</button>
+        <a href="{% url 'staff:mentor_queue' %}" style="margin-left:0.75rem; color:var(--muted); text-decoration:none;">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<style>
+  .panel form input[type=text], .panel form input[type=number], .panel form textarea {
+    width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem;
+  }
+</style>
+{% endblock %}

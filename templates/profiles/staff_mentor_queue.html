@@ -5,6 +5,9 @@
   <h1>Mentor approvals</h1>
   <p>Review and decide on mentor applications.</p>
 </div>
+<div class="toolbar" style="margin-bottom:1rem;">
+  <a href="{% url 'staff:add_placeholder_mentor' %}"><button type="button">+ Add mentor (no email)</button></a>
+</div>
 <div class="panel">
   <h2>{{ pending.count }} application{{ pending.count|pluralize }} pending</h2>
   {% if pending %}

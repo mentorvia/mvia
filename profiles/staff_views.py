@@ -70,3 +70,70 @@ def audit_log(request):
     return render(request, "profiles/staff_audit_log.html", {
         "page": page, "active_nav": "audit",
     })
+
+
+# ---------- Staff: add a placeholder (display-only) mentor ----------
+
+from django import forms
+from accounts.models import User
+from interests.models import Interest, MentorInterest
+
+
+class PlaceholderMentorForm(forms.Form):
+    full_name = forms.CharField(max_length=150)
+    current_role = forms.CharField(max_length=120)
+    company = forms.CharField(max_length=120)
+    years_experience = forms.IntegerField(min_value=0)
+    bio = forms.CharField(widget=forms.Textarea(attrs={"rows": 4}))
+    hourly_rate = forms.DecimalField(min_value=0, decimal_places=2, max_digits=10,
+                                     label="Rate per session (₹)")
+
+    def clean_hourly_rate(self):
+        r = self.cleaned_data["hourly_rate"]
+        if r < 0:
+            raise forms.ValidationError("Rate can't be negative.")
+        return r
+
+
+@staff_required
+def add_placeholder_mentor(request):
+    from profiles.models import MentorProfile
+    from django.utils import timezone
+
+    interests = Interest.objects.filter(is_approved=True).order_by("name")
+
+    if request.method == "POST":
+        form = PlaceholderMentorForm(request.POST)
+        chosen = set(int(x) for x in request.POST.getlist("interests"))
+        if form.is_valid() and not chosen:
+            form.add_error(None, "Select at least one specialization.")
+        if form.is_valid() and chosen:
+            cd = form.cleaned_data
+            user = User.objects.create_placeholder_mentor(full_name=cd["full_name"])
+            MentorProfile.objects.create(
+                user=user,
+                current_role=cd["current_role"],
+                company=cd["company"],
+                years_experience=cd["years_experience"],
+                bio=cd["bio"],
+                hourly_rate=cd["hourly_rate"],
+                status=MentorProfile.STATUS_APPROVED,   # admin-added → directly approved
+                is_available=True,
+                reviewed_by=request.user,
+                reviewed_at=timezone.now(),
+            )
+            for iid in chosen:
+                MentorInterest.objects.get_or_create(user=user, interest_id=iid)
+
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.placeholder_add",
+                target=f"{cd['full_name']} (placeholder, no email)")
+            messages.success(request, f"Added placeholder mentor “{cd['full_name']}”. They appear in the directory now; add their email later to enable login.")
+            return redirect("staff:mentor_queue")
+    else:
+        form = PlaceholderMentorForm()
+
+    return render(request, "profiles/staff_add_placeholder.html", {
+        "form": form, "interests": interests, "active_nav": "mentors",
+    })
