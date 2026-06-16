@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 from interests import staff_views as interest_views
 from profiles import staff_views as profile_views
+from profiles import profile_editor
 
 app_name = "staff"
 
@@ -22,6 +23,7 @@ urlpatterns = [
     path("mentors/", profile_views.mentor_queue, name="mentor_queue"),
     path("mentors/add-placeholder/", profile_views.add_placeholder_mentor, name="add_placeholder_mentor"),
     path("mentors/<int:mentor_id>/", profile_views.mentor_review, name="mentor_review"),
+    path("mentors/<int:mentor_id>/edit-profile/", profile_editor.edit_mentor_profile, name="edit_mentor_profile"),
     # Audit log
     path("audit/", profile_views.audit_log, name="audit"),
 ]

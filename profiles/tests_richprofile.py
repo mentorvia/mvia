@@ -1,6 +1,6 @@
 from django.test import TestCase
 from accounts.models import User
-from profiles.models import MentorProfile, ProfileSection, ProfileSectionItem
+from profiles.models import MentorProfile, ProfilePoint
 
 
 class RichProfileTest(TestCase):
@@ -11,33 +11,47 @@ class RichProfileTest(TestCase):
             years_experience=34, bio="Bio here.", hourly_rate=3000, status="approved",
             headline="34+ years", gst_note="Exclusive of 18% GST")
 
-    def test_rich_fields_render_on_public_page(self):
+    def test_rich_fields_render(self):
         r = self.client.get(f"/mentors/{self.u.id}/")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"34+ years", r.content)
         self.assertIn(b"Exclusive of 18% GST", r.content)
+        self.assertIn(b"About the Mentor", r.content)
 
-    def test_sections_and_items_render(self):
-        sec = ProfileSection.objects.create(mentor=self.m, heading="Core Expertise", order=0)
-        ProfileSectionItem.objects.create(section=sec, title="Cloud and AI", description="Deep expertise.")
+    def test_expertise_and_focus_render_in_right_sections(self):
+        ProfilePoint.objects.create(mentor=self.m, category="expertise", title="Cloud Solutions", description="Deep cloud expertise.")
+        ProfilePoint.objects.create(mentor=self.m, category="focus", title="Career Guidance", description="Helping mentees.")
         r = self.client.get(f"/mentors/{self.u.id}/")
-        self.assertIn(b"Core Expertise", r.content)
-        self.assertIn(b"Cloud and AI", r.content)
-        self.assertIn(b"Deep expertise.", r.content)
+        c = r.content.decode()
+        self.assertIn("Core Industry Expertise", c)
+        self.assertIn("Cloud Solutions", c)
+        self.assertIn("Mentorship Focus Areas", c)
+        self.assertIn("Career Guidance", c)
+        # expertise heading appears before focus heading
+        self.assertLess(c.index("Core Industry Expertise"), c.index("Mentorship Focus Areas"))
 
-    def test_staff_can_add_section_and_item(self):
+    def test_staff_add_expertise_point(self):
         self.client.login(username="admin@mvia.in", password="Admin!2345")
-        # add section
         self.client.post(f"/staff/mentors/{self.m.id}/edit-profile/", {
-            "action": "add_section", "heading": "Focus Areas", "intro": "intro text"})
-        sec = ProfileSection.objects.get(mentor=self.m, heading="Focus Areas")
-        self.assertEqual(sec.intro, "intro text")
-        # add item
-        self.client.post(f"/staff/mentors/{self.m.id}/edit-profile/", {
-            "action": "add_item", "section_id": sec.id, "title": "Leadership", "description": "Guiding leaders."})
-        self.assertTrue(sec.items.filter(title="Leadership").exists())
+            "action": "add_point", "category": "expertise",
+            "title": "Enterprise Sales", "description": "Scaling businesses."})
+        self.assertTrue(self.m.points.filter(category="expertise", title="Enterprise Sales").exists())
 
-    def test_staff_can_edit_profile_fields(self):
+    def test_staff_add_focus_point(self):
+        self.client.login(username="admin@mvia.in", password="Admin!2345")
+        self.client.post(f"/staff/mentors/{self.m.id}/edit-profile/", {
+            "action": "add_point", "category": "focus",
+            "title": "Leadership", "description": "Guiding leaders."})
+        self.assertTrue(self.m.points.filter(category="focus", title="Leadership").exists())
+
+    def test_staff_delete_point(self):
+        p = ProfilePoint.objects.create(mentor=self.m, category="expertise", title="Temp")
+        self.client.login(username="admin@mvia.in", password="Admin!2345")
+        self.client.post(f"/staff/mentors/{self.m.id}/edit-profile/", {
+            "action": "delete_point", "point_id": p.id})
+        self.assertFalse(ProfilePoint.objects.filter(id=p.id).exists())
+
+    def test_staff_edit_profile_fields(self):
         self.client.login(username="admin@mvia.in", password="Admin!2345")
         self.client.post(f"/staff/mentors/{self.m.id}/edit-profile/", {
             "action": "save_profile", "headline": "New headline", "bio": "New bio",

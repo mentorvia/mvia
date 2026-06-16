@@ -102,4 +102,6 @@ def mentor_profile(request, user_id):
     return render(request, "directory/mentor_profile.html", {
         "mentor": mentor, "mentor_user": user, "specs": specs,
         "bookable_slots": slots,
+        "expertise_points": mentor.expertise_points,
+        "focus_points": mentor.focus_points,
     })

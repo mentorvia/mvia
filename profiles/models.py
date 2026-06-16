@@ -108,41 +108,41 @@ class MentorProfile(models.Model):
                 pass
         return self.photo_url or None
 
+    @property
+    def expertise_points(self):
+        return self.points.filter(category="expertise")
+
+    @property
+    def focus_points(self):
+        return self.points.filter(category="focus")
+
     def __str__(self):
         return f"Mentor: {self.user.email} ({self.status})"
 
 
-class ProfileSection(models.Model):
+class ProfilePoint(models.Model):
     """
-    A flexible, repeatable content section on a mentor's profile — e.g.
-    "Core Industry Expertise" or "Mentorship Focus Areas". Each section holds
-    a list of title+description items. Mentors/admins can add any number of
-    sections in any order, so the profile structure isn't hard-coded.
+    A single title+description point belonging to one of the two fixed profile
+    sections: Core Industry Expertise, or Mentorship Focus Areas. (The "About"
+    section is the MentorProfile.bio field.) This gives every mentor profile a
+    uniform, modern structure.
     """
+    CATEGORY_EXPERTISE = "expertise"
+    CATEGORY_FOCUS = "focus"
+    CATEGORY_CHOICES = [
+        (CATEGORY_EXPERTISE, "Core Industry Expertise"),
+        (CATEGORY_FOCUS, "Mentorship Focus Areas"),
+    ]
+
     mentor = models.ForeignKey(
-        MentorProfile, on_delete=models.CASCADE, related_name="sections")
-    heading = models.CharField(max_length=150)
-    intro = models.TextField(
-        blank=True, help_text="Optional sentence shown under the heading.")
+        MentorProfile, on_delete=models.CASCADE, related_name="points")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0, help_text="Lower numbers show first.")
 
     class Meta:
         ordering = ["order", "id"]
 
     def __str__(self):
-        return f"{self.mentor.user.get_short_name()} · {self.heading}"
-
-
-class ProfileSectionItem(models.Model):
-    """A single point within a section: a bold title + a description."""
-    section = models.ForeignKey(
-        ProfileSection, on_delete=models.CASCADE, related_name="items")
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ["order", "id"]
-
-    def __str__(self):
-        return self.title
+        return f"{self.get_category_display()}: {self.title}"
