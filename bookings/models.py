@@ -93,6 +93,17 @@ class Booking(models.Model):
         related_name="bookings_cancelled")
     cancellation_reason = models.TextField(blank=True)
 
+    # Refund tracking. mVia records the refund; the actual money is returned by
+    # ops via the Razorpay dashboard, then the reference is entered here.
+    is_refunded = models.BooleanField(default=False)
+    refund_reason = models.TextField(blank=True)
+    refund_reference = models.CharField(
+        max_length=120, blank=True, help_text="Razorpay refund reference, entered after refunding there.")
+    refunded_at = models.DateTimeField(null=True, blank=True)
+    refunded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="bookings_refunded")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)

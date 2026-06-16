@@ -88,7 +88,37 @@ def confirm_payment(*, booking_id, simulated=True, razorpay_payment_id="", razor
     except IntegrityError:
         # The unique constraint caught a concurrent confirm — treat as clash.
         raise BookingError("That slot was confirmed by someone else first.")
+
+    # Write the money ledger entries for this confirmed payment.
+    # Our fee model: mentor keeps their full rate; mVia's fee is added on top.
+    # booking.amount is the mentor's rate (what we snapshotted at booking time).
+    _write_booking_ledger(booking)
     return booking
+
+
+def _write_booking_ledger(booking):
+    """
+    Append the immutable money entries for a confirmed booking.
+    mentor rate = booking.amount; platform fee = 20% added on top;
+    mentee paid = rate + fee.
+    """
+    from payments.models import LedgerEntry
+    from decimal import Decimal
+
+    fee_rate = Decimal(str(getattr(settings, "PLATFORM_FEE_RATE", 0.20)))
+    mentor_earning = booking.amount
+    platform_fee = (mentor_earning * fee_rate).quantize(Decimal("0.01"))
+    mentee_paid = mentor_earning + platform_fee
+
+    LedgerEntry.objects.create(
+        booking=booking, entry_type=LedgerEntry.TYPE_BOOKING_PAYMENT,
+        amount=mentee_paid, note="Mentee payment received (booking confirmed).")
+    LedgerEntry.objects.create(
+        booking=booking, entry_type=LedgerEntry.TYPE_PLATFORM_FEE,
+        amount=platform_fee, note="mVia platform fee.")
+    LedgerEntry.objects.create(
+        booking=booking, entry_type=LedgerEntry.TYPE_MENTOR_EARNING,
+        amount=mentor_earning, note="Amount owed to mentor.")
 
 
 @transaction.atomic
@@ -113,4 +143,44 @@ def complete_booking(*, booking_id):
     booking.status = Booking.STATUS_COMPLETED
     booking.completed_at = timezone.now()
     booking.save(update_fields=["status", "completed_at"])
+    return booking
+
+
+@transaction.atomic
+def record_refund(*, booking_id, actor, reason, reference=""):
+    """
+    Record a refund for a paid booking. This does NOT move money — the ops team
+    performs the actual refund in the Razorpay dashboard. This writes the refund
+    to the ledger and marks the booking, with an optional Razorpay reference.
+
+    Allowed only on confirmed or completed bookings (where money was collected).
+    """
+    from payments.models import LedgerEntry
+    from decimal import Decimal
+
+    booking = Booking.objects.select_for_update().get(pk=booking_id)
+
+    if booking.status not in (Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED):
+        raise BookingError("Refunds apply only to paid (confirmed or completed) bookings.")
+    if booking.is_refunded:
+        raise BookingError("This booking has already been refunded.")
+    if not reason.strip():
+        raise BookingError("A refund reason is required.")
+
+    fee_rate = Decimal(str(getattr(settings, "PLATFORM_FEE_RATE", 0.20)))
+    mentee_paid = booking.amount + (booking.amount * fee_rate).quantize(Decimal("0.01"))
+
+    # Negative amount = money out of mVia's books (returned to mentee).
+    LedgerEntry.objects.create(
+        booking=booking, entry_type=LedgerEntry.TYPE_REFUND,
+        amount=-mentee_paid, note=f"Refund: {reason.strip()}",
+        external_reference=reference.strip(), created_by=actor)
+
+    booking.is_refunded = True
+    booking.refund_reason = reason.strip()
+    booking.refund_reference = reference.strip()
+    booking.refunded_at = timezone.now()
+    booking.refunded_by = actor
+    booking.save(update_fields=["is_refunded", "refund_reason", "refund_reference",
+                                "refunded_at", "refunded_by"])
     return booking

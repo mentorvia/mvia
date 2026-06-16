@@ -149,6 +149,10 @@ USE_TZ = True
 CURRENCY_CODE = "INR"
 CURRENCY_SYMBOL = "\u20b9"  # ₹
 
+# Platform fee: mVia's commission, ADDED on top of the mentor's rate.
+# e.g. 0.20 means a ₹2000 mentor session costs the mentee ₹2400; mVia keeps ₹400.
+PLATFORM_FEE_RATE = float(env("PLATFORM_FEE_RATE", "0.20"))
+
 
 # --- Static files (CSS, JavaScript, images) ---
 STATIC_URL = "static/"
