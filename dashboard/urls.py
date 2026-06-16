@@ -19,6 +19,7 @@ urlpatterns = [
     path("bookings/<int:booking_id>/", booking_views.booking_detail, name="booking_detail"),
     path("ledger/", booking_views.ledger, name="ledger"),
     path("earnings/", booking_views.mentor_earnings_report, name="earnings_report"),
+    path("payouts/", booking_views.payout_history, name="payout_history"),
     # Interests
     path("interests/", interest_views.interests_list, name="interests"),
     path("interests/add/", interest_views.interest_add, name="interest_add"),

@@ -91,8 +91,44 @@ class LedgerEntry(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
         related_name="ledger_entries_created")
 
+    # For mentor-earning entries: which payout run cleared this (null = unpaid).
+    payout = models.ForeignKey(
+        "payments.Payout", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="ledger_entries")
+
     class Meta:
         ordering = ["-created_at", "-id"]
 
     def __str__(self):
         return f"{self.get_entry_type_display()} ₹{self.amount} (booking #{self.booking_id})"
+
+
+class Payout(models.Model):
+    """
+    A record of a manual mentor payout run. mVia does NOT move money — the ops
+    team pays the mentor (bank transfer/UPI/etc.) and records it here so the
+    earnings are marked paid and can't be paid again. Each payout is linked to
+    the specific mentor-earning ledger entries it covered.
+    """
+    mentor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="payouts")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    sessions_count = models.PositiveIntegerField(default=0)
+
+    period_start = models.DateField(null=True, blank=True)
+    period_end = models.DateField(null=True, blank=True)
+
+    reference = models.CharField(
+        max_length=120, blank=True, help_text="Bank/UPI reference, entered by ops.")
+    note = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="payouts_created")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Payout ₹{self.amount} to {self.mentor.get_short_name()} ({self.created_at:%d %b %Y})"
