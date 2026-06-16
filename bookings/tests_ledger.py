@@ -115,6 +115,9 @@ class StaffRefundViewTest(TestCase):
         self.assertIn(b"Platform fee", r.content)
 
     def test_earnings_report_loads(self):
+        # Earnings only appear after completion (per payout design).
+        from bookings.services import complete_booking
+        complete_booking(booking_id=self.b.id)
         r = self.client.get("/staff/earnings/")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"Men Tor", r.content)

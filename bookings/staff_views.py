@@ -6,10 +6,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 
 from .models import Booking
 from .services import record_refund, BookingError
-from payments.models import LedgerEntry
+from payments.models import LedgerEntry, Payout
 
 
 def staff_required(view):
@@ -115,25 +116,100 @@ def ledger(request):
     })
 
 
-@staff_required
-def mentor_earnings_report(request):
-    """Per-mentor earnings from completed/confirmed, non-refunded bookings — the
-    report the ops team uses to pay mentors manually."""
-    rows = {}
-    qs = LedgerEntry.objects.filter(
+def _unpaid_earnings_qs():
+    """Mentor-earning ledger entries that are: from COMPLETED sessions,
+    not refunded, and not yet part of a payout."""
+    return LedgerEntry.objects.filter(
         entry_type=LedgerEntry.TYPE_MENTOR_EARNING,
+        payout__isnull=True,
         booking__is_refunded=False,
+        booking__status=Booking.STATUS_COMPLETED,
     ).select_related("booking", "booking__mentor")
 
+
+def _build_earnings_rows(qs):
+    rows = {}
     for e in qs:
         mentor = e.booking.mentor
         r = rows.setdefault(mentor.id, {
-            "mentor": mentor, "sessions": 0, "total": Decimal("0")})
+            "mentor": mentor, "sessions": 0, "total": Decimal("0"),
+            "earliest": e.created_at, "latest": e.created_at})
         r["sessions"] += 1
         r["total"] += e.amount
+        r["earliest"] = min(r["earliest"], e.created_at)
+        r["latest"] = max(r["latest"], e.created_at)
+    return sorted(rows.values(), key=lambda r: r["total"], reverse=True)
 
-    report = sorted(rows.values(), key=lambda r: r["total"], reverse=True)
+
+@staff_required
+def mentor_earnings_report(request):
+    """Weekly payout report: UNPAID earnings from completed, non-refunded
+    sessions, per mentor. Ops ticks mentors, pays them, marks them paid."""
+    import csv
+    from django.http import HttpResponse
+
+    qs = _unpaid_earnings_qs()
+
+    # CSV export of the current unpaid report.
+    if request.GET.get("export") == "csv":
+        report = _build_earnings_rows(qs)
+        resp = HttpResponse(content_type="text/csv")
+        resp["Content-Disposition"] = f'attachment; filename="mentor_earnings_{timezone.now():%Y%m%d}.csv"'
+        w = csv.writer(resp)
+        w.writerow(["Mentor", "Email", "Sessions", "Amount (INR)", "Earliest", "Latest"])
+        for r in report:
+            w.writerow([r["mentor"].full_name, r["mentor"].email if r["mentor"].has_real_email() else "",
+                        r["sessions"], r["total"],
+                        r["earliest"].strftime("%Y-%m-%d"), r["latest"].strftime("%Y-%m-%d")])
+        return resp
+
+    # Mark selected mentors as paid -> create payout runs.
+    if request.method == "POST" and request.POST.get("action") == "mark_paid":
+        mentor_ids = request.POST.getlist("mentor_ids")
+        reference = request.POST.get("reference", "").strip()
+        paid_count = 0
+        for mid in mentor_ids:
+            entries = list(_unpaid_earnings_qs().filter(booking__mentor_id=mid))
+            if not entries:
+                continue
+            total = sum((e.amount for e in entries), Decimal("0"))
+            dates = [e.created_at.date() for e in entries]
+            payout = Payout.objects.create(
+                mentor_id=mid, amount=total, sessions_count=len(entries),
+                period_start=min(dates), period_end=max(dates),
+                reference=reference, created_by=request.user)
+            # Link those specific entries to this payout (marks them paid).
+            LedgerEntry.objects.filter(id__in=[e.id for e in entries]).update(payout=payout)
+            paid_count += 1
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.payout_recorded",
+                target=f"₹{total} to mentor #{mid} ({len(entries)} sessions)")
+        if paid_count:
+            messages.success(request, f"Recorded payout for {paid_count} mentor(s). They're cleared from the report.")
+        else:
+            messages.info(request, "No mentors selected (or nothing unpaid).")
+        return redirect("staff:earnings_report")
+
+    report = _build_earnings_rows(qs)
     grand_total = sum((r["total"] for r in report), Decimal("0"))
+    # Overall date span of unpaid earnings, for sanity-checking the week.
+    span_start = min((r["earliest"] for r in report), default=None)
+    span_end = max((r["latest"] for r in report), default=None)
     return render(request, "bookings/staff_earnings_report.html", {
-        "report": report, "grand_total": grand_total, "active_nav": "ledger",
+        "report": report, "grand_total": grand_total,
+        "span_start": span_start, "span_end": span_end,
+        "active_nav": "ledger",
+    })
+
+
+@staff_required
+def payout_history(request):
+    """Past payout runs, for the record."""
+    from core.pagination import paginate, querystring_without_page
+    payouts = Payout.objects.select_related("mentor", "created_by").all()
+    page_obj = paginate(request, payouts)
+    return render(request, "bookings/staff_payout_history.html", {
+        "payouts": page_obj, "page_obj": page_obj,
+        "qs": querystring_without_page(request), "active_nav": "ledger",
     })
