@@ -6,6 +6,9 @@
   <h1>{{ mentor.user.full_name }}</h1>
   <p>{{ mentor.user.email }} · applied {{ mentor.created_at|date:"d M Y" }}</p>
 </div>
+<div class="toolbar" style="margin-bottom:1rem;">
+  <a href="{% url 'staff:edit_mentor_profile' mentor.id %}"><button type="button">✏️ Edit rich profile</button></a>
+</div>
 
 <div class="panel">
   <h2>Application</h2>

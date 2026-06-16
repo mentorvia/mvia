@@ -61,7 +61,23 @@ class MentorProfile(models.Model):
     bio = models.TextField()
     hourly_rate = models.DecimalField(
         max_digits=10, decimal_places=2,
-        help_text="Mentor's rate per session, in INR.")
+        help_text="Mentor's rate per session, in INR (exclusive of GST).")
+
+    # --- Rich profile content (for the modern public profile page) ---
+    headline = models.CharField(
+        max_length=200, blank=True,
+        help_text="Short tagline shown under the name, e.g. 'Technology & business leader, 34+ years'.")
+    photo = models.ImageField(
+        upload_to="mentor_photos/", blank=True, null=True,
+        help_text="Profile photo. (On free hosting, prefer photo_url until persistent storage is set up.)")
+    photo_url = models.URLField(
+        blank=True,
+        help_text="Alternative: a hosted image link. Used if no uploaded photo is present.")
+    linkedin_url = models.URLField(blank=True)
+    website_url = models.URLField(blank=True)
+    gst_note = models.CharField(
+        max_length=120, blank=True, default="Exclusive of 18% GST",
+        help_text="Shown next to the price, e.g. 'Exclusive of 18% GST'.")
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
     is_available = models.BooleanField(
@@ -82,5 +98,51 @@ class MentorProfile(models.Model):
         """Appears in the directory only if approved and available."""
         return self.status == self.STATUS_APPROVED and self.is_available
 
+    @property
+    def display_photo(self):
+        """Prefer an uploaded photo, fall back to a pasted URL, else None."""
+        if self.photo:
+            try:
+                return self.photo.url
+            except ValueError:
+                pass
+        return self.photo_url or None
+
     def __str__(self):
         return f"Mentor: {self.user.email} ({self.status})"
+
+
+class ProfileSection(models.Model):
+    """
+    A flexible, repeatable content section on a mentor's profile — e.g.
+    "Core Industry Expertise" or "Mentorship Focus Areas". Each section holds
+    a list of title+description items. Mentors/admins can add any number of
+    sections in any order, so the profile structure isn't hard-coded.
+    """
+    mentor = models.ForeignKey(
+        MentorProfile, on_delete=models.CASCADE, related_name="sections")
+    heading = models.CharField(max_length=150)
+    intro = models.TextField(
+        blank=True, help_text="Optional sentence shown under the heading.")
+    order = models.PositiveIntegerField(default=0, help_text="Lower numbers show first.")
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.mentor.user.get_short_name()} · {self.heading}"
+
+
+class ProfileSectionItem(models.Model):
+    """A single point within a section: a bold title + a description."""
+    section = models.ForeignKey(
+        ProfileSection, on_delete=models.CASCADE, related_name="items")
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.title
