@@ -4,13 +4,12 @@
 <a href="{% url 'staff:mentor_review' mentor.id %}" class="back">← Back to mentor</a>
 <div class="page-head">
   <h1>Edit profile: {{ mentor.user.full_name }}</h1>
-  <p>Update the rich profile content. This drives the public profile page.
-     <a href="{% url 'mentor_profile' mentor.user_id %}" target="_blank">View public page ↗</a></p>
+  <p>Three sections make up every profile. <a href="{% url 'mentor_profile' mentor.user_id %}" target="_blank">View public page ↗</a></p>
 </div>
 
-<!-- Main profile fields -->
+<!-- Section 1: About + details -->
 <div class="panel">
-  <h2>Profile details</h2>
+  <h2>1 · About the Mentor &amp; details</h2>
   <div style="padding:1.5rem; max-width:680px;">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
@@ -32,64 +31,19 @@
   </div>
 </div>
 
-<!-- Flexible content sections -->
+<!-- Section 2: Core Industry Expertise -->
 <div class="panel">
-  <h2>Content sections</h2>
+  <h2>2 · Core Industry Expertise</h2>
   <div style="padding:1.25rem;">
-    <p style="color:var(--muted); font-size:0.88rem; margin-bottom:1rem;">
-      Add sections like “Core Industry Expertise” or “Mentorship Focus Areas”, each with title + description points.
-    </p>
+    {% include "profiles/_point_editor.html" with points=expertise_points category="expertise" %}
+  </div>
+</div>
 
-    {% for section in sections %}
-      <div style="border:1px solid var(--line); border-radius:10px; padding:1rem 1.25rem; margin-bottom:1rem;">
-        <div style="display:flex; justify-content:space-between; align-items:start;">
-          <div>
-            <strong style="font-size:1.05rem;">{{ section.heading }}</strong>
-            {% if section.intro %}<div style="font-size:0.85rem; color:var(--muted); margin-top:0.2rem;">{{ section.intro }}</div>{% endif %}
-          </div>
-          <form method="post" onsubmit="return confirm('Delete this whole section?');">
-            {% csrf_token %}<input type="hidden" name="action" value="delete_section">
-            <input type="hidden" name="section_id" value="{{ section.id }}">
-            <button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.82rem;">Delete section</button>
-          </form>
-        </div>
-
-        <!-- items -->
-        <div style="margin:0.75rem 0;">
-          {% for item in section.items.all %}
-            <div style="display:flex; justify-content:space-between; gap:1rem; padding:0.45rem 0; border-top:1px solid var(--line);">
-              <div><strong>{{ item.title }}</strong>{% if item.description %} — <span style="color:var(--muted);">{{ item.description }}</span>{% endif %}</div>
-              <form method="post">
-                {% csrf_token %}<input type="hidden" name="action" value="delete_item">
-                <input type="hidden" name="item_id" value="{{ item.id }}">
-                <button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.78rem; white-space:nowrap;">Remove</button>
-              </form>
-            </div>
-          {% empty %}
-            <div style="font-size:0.84rem; color:var(--muted); padding:0.4rem 0;">No points yet.</div>
-          {% endfor %}
-        </div>
-
-        <!-- add item -->
-        <form method="post" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:start; margin-top:0.5rem;">
-          {% csrf_token %}<input type="hidden" name="action" value="add_item">
-          <input type="hidden" name="section_id" value="{{ section.id }}">
-          <input type="text" name="title" placeholder="Point title (e.g. Cloud, Data & AI)" style="flex:1; min-width:180px; padding:0.45rem 0.6rem; border:1px solid var(--line); border-radius:6px; font-family:inherit;">
-          <input type="text" name="description" placeholder="Description" style="flex:2; min-width:200px; padding:0.45rem 0.6rem; border:1px solid var(--line); border-radius:6px; font-family:inherit;">
-          <button type="submit" style="padding:0.45rem 0.9rem; background:var(--ink); color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:inherit;">Add point</button>
-        </form>
-      </div>
-    {% empty %}
-      <p style="color:var(--muted);">No sections yet. Add your first below.</p>
-    {% endfor %}
-
-    <!-- add section -->
-    <form method="post" style="border-top:2px solid var(--line); padding-top:1rem; margin-top:0.5rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:start;">
-      {% csrf_token %}<input type="hidden" name="action" value="add_section">
-      <input type="text" name="heading" placeholder="New section heading (e.g. Core Industry Expertise)" style="flex:1; min-width:240px; padding:0.5rem 0.7rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;">
-      <input type="text" name="intro" placeholder="Optional intro line" style="flex:1; min-width:200px; padding:0.5rem 0.7rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;">
-      <button type="submit" style="padding:0.5rem 1.1rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Add section</button>
-    </form>
+<!-- Section 3: Mentorship Focus Areas -->
+<div class="panel">
+  <h2>3 · Mentorship Focus Areas</h2>
+  <div style="padding:1.25rem;">
+    {% include "profiles/_point_editor.html" with points=focus_points category="focus" %}
   </div>
 </div>
 <style>

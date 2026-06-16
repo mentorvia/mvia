@@ -35,17 +35,16 @@
     <div class="mp-content">
       {% if mentor.bio %}
         <section class="mp-section">
-          <h2>About</h2>
+          <h2>About the Mentor</h2>
           <div class="mp-prose">{{ mentor.bio|linebreaks }}</div>
         </section>
       {% endif %}
 
-      {% for section in sections %}
+      {% if expertise_points %}
         <section class="mp-section">
-          <h2>{{ section.heading }}</h2>
-          {% if section.intro %}<p class="mp-intro">{{ section.intro }}</p>{% endif %}
+          <h2>Core Industry Expertise</h2>
           <div class="mp-items">
-            {% for item in section.items.all %}
+            {% for item in expertise_points %}
               <div class="mp-item">
                 <div class="mp-item-title">{{ item.title }}</div>
                 {% if item.description %}<div class="mp-item-desc">{{ item.description }}</div>{% endif %}
@@ -53,7 +52,21 @@
             {% endfor %}
           </div>
         </section>
-      {% endfor %}
+      {% endif %}
+
+      {% if focus_points %}
+        <section class="mp-section">
+          <h2>Mentorship Focus Areas</h2>
+          <div class="mp-items">
+            {% for item in focus_points %}
+              <div class="mp-item">
+                <div class="mp-item-title">{{ item.title }}</div>
+                {% if item.description %}<div class="mp-item-desc">{{ item.description }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
 
       {% if specs %}
         <section class="mp-section">
