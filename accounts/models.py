@@ -12,6 +12,7 @@ Key design decisions (from the requirements):
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.utils import timezone
+import secrets
 
 
 class UserManager(BaseUserManager):
@@ -45,6 +46,27 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
         return self._create_user(email, password, **extra_fields)
 
+    def create_placeholder_mentor(self, full_name):
+        """
+        Create a DISPLAY-ONLY mentor account with no real email and no usable
+        password. Used by staff to seed the directory before a mentor has
+        onboarded. They cannot log in until a real email is attached later.
+        """
+        # Internal, non-deliverable placeholder email keeps the unique
+        # constraint satisfied without claiming a real address.
+        placeholder_email = f"placeholder+{secrets.token_hex(8)}@mvia.invalid"
+        user = self.model(
+            email=placeholder_email,
+            full_name=full_name,
+            is_mentee=False,
+            is_mentor=True,
+            is_email_verified=False,
+            is_placeholder=True,
+        )
+        user.set_unusable_password()  # Django: no password can ever authenticate
+        user.save(using=self._db)
+        return user
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     """The core account. One per person."""
@@ -58,6 +80,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Email verification. Login is blocked until this is True.
     is_email_verified = models.BooleanField(default=False)
+
+    # Placeholder mentors are staff-created, display-only accounts with no real
+    # email and no login. They appear in the directory but can't be booked or
+    # logged into until a real email is attached and the account is activated.
+    is_placeholder = models.BooleanField(default=False)
 
     # Django admin / permissions plumbing.
     is_active = models.BooleanField(default=True)   # set False to disable an account
@@ -79,8 +106,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.full_name.split(" ")[0] if self.full_name else self.email
 
-
-import secrets
+    def has_real_email(self):
+        """False for placeholder accounts that don't yet have a real email."""
+        return not self.is_placeholder and not self.email.endswith("@mvia.invalid")
 
 
 def _make_token():

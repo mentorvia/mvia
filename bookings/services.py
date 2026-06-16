@@ -31,6 +31,8 @@ def create_booking(*, mentee, slot_id):
         raise BookingError("That time slot is in the past.")
     if slot.mentor_id == mentee.id:
         raise BookingError("You can't book your own slot.")
+    if getattr(slot.mentor, "is_placeholder", False):
+        raise BookingError("This mentor isn't accepting bookings yet.")
     if slot.is_taken:
         raise BookingError("Sorry, that slot was just booked by someone else.")
 
