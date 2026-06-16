@@ -1,0 +1,61 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Booking #{{ booking.id }} — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:bookings' %}" class="back">← All bookings</a>
+<div class="page-head"><h1>Booking #{{ booking.id }}</h1>
+  <p>{{ booking.mentee.full_name }} → {{ booking.mentor.full_name }} · {{ booking.slot.start|date:"d M Y · H:i" }}</p>
+</div>
+
+<div class="panel">
+  <h2>Details</h2>
+  <div style="padding:1.25rem; line-height:2;">
+    <div><strong>Status:</strong> {{ booking.get_status_display }}{% if booking.is_refunded %} · <span style="color:var(--deep-red);">Refunded</span>{% endif %}</div>
+    <div><strong>Mentor rate:</strong> ₹{{ booking.amount }}</div>
+    <div><strong>Created:</strong> {{ booking.created_at|date:"d M Y H:i" }}</div>
+    {% if booking.cancellation_reason %}<div><strong>Cancellation reason:</strong> {{ booking.cancellation_reason }}</div>{% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Money ledger for this booking</h2>
+  <div style="padding:1rem 1.25rem;">
+    {% for e in ledger %}
+      <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--line);">
+        <span>{{ e.get_entry_type_display }}{% if e.note %} <span style="color:var(--muted); font-size:0.85rem;">— {{ e.note }}</span>{% endif %}</span>
+        <span style="font-weight:600; {% if e.amount < 0 %}color:var(--deep-red);{% endif %}">₹{{ e.amount }}</span>
+      </div>
+    {% empty %}<div class="empty">No ledger entries (booking not paid).</div>{% endfor %}
+  </div>
+</div>
+
+{% if booking.is_refunded %}
+  <div class="panel">
+    <h2>Refund record</h2>
+    <div style="padding:1.25rem; line-height:2;">
+      <div><strong>Reason:</strong> {{ booking.refund_reason }}</div>
+      <div><strong>Razorpay reference:</strong> {{ booking.refund_reference|default:"— not entered —" }}</div>
+      <div><strong>Recorded:</strong> {{ booking.refunded_at|date:"d M Y H:i" }} by {{ booking.refunded_by.full_name }}</div>
+    </div>
+  </div>
+{% elif booking.status == 'confirmed' or booking.status == 'completed' %}
+  <div class="panel">
+    <h2>Record a refund</h2>
+    <div style="padding:1.25rem; max-width:560px;">
+      <div class="msg info" style="margin-bottom:1rem;">
+        ⚠️ This only <strong>records</strong> the refund in mVia. You must perform the actual refund in your Razorpay dashboard, then paste the reference number below.
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="record_refund">
+        <label style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:0.35rem;">Reason for refund (required)</label>
+        <textarea name="reason" rows="3" required style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;"></textarea>
+        <label style="display:block; font-weight:600; font-size:0.85rem; margin:0.9rem 0 0.35rem;">Razorpay refund reference (optional, can add later)</label>
+        <input type="text" name="reference" style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;">
+        <div style="margin-top:1.2rem;">
+          <button type="submit" onclick="return confirm('Record this refund? This cannot be undone.');" style="padding:0.65rem 1.4rem; background:var(--deep-red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Record refund</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

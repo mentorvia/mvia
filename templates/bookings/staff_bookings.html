@@ -1,0 +1,32 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Bookings — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Bookings</h1><p>All sessions booked on the platform.</p></div>
+<div class="panel">
+  {% if bookings %}
+  <table>
+    <thead><tr><th>#</th><th>Mentee</th><th>Mentor</th><th>When</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.id }}</td>
+        <td>{{ b.mentee.full_name }}</td>
+        <td>{{ b.mentor.full_name }}</td>
+        <td>{{ b.slot.start|date:"d M Y · H:i" }}</td>
+        <td>₹{{ b.amount }}</td>
+        <td>
+          {% if b.is_refunded %}<span class="badge no">Refunded</span>
+          {% elif b.status == 'confirmed' %}<span class="badge yes">Confirmed</span>
+          {% elif b.status == 'completed' %}<span class="badge neutral">Completed</span>
+          {% elif b.status == 'pending_payment' %}<span class="badge pending">Pending</span>
+          {% elif b.status == 'cancelled' %}<span class="badge no">Cancelled</span>
+          {% else %}<span class="badge neutral">{{ b.get_status_display }}</span>{% endif %}
+        </td>
+        <td><a href="{% url 'staff:booking_detail' b.id %}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No bookings yet.</div>{% endif %}
+</div>
+{% endblock %}

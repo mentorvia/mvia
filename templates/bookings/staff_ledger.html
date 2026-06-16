@@ -1,0 +1,37 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Money & ledger — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Money &amp; ledger</h1><p>Immutable record of every transaction. mVia records money; refunds &amp; payouts are done manually.</p></div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin-bottom:1.5rem;">
+  <div class="panel" style="padding:1.25rem;"><div style="font-size:0.8rem; color:var(--muted);">Total collected (GMV)</div><div style="font-family:'Geist',sans-serif; font-size:1.6rem; font-weight:700;">₹{{ summary.collected }}</div></div>
+  <div class="panel" style="padding:1.25rem;"><div style="font-size:0.8rem; color:var(--muted);">Platform fee (mVia)</div><div style="font-family:'Geist',sans-serif; font-size:1.6rem; font-weight:700; color:var(--red);">₹{{ summary.platform_fee }}</div></div>
+  <div class="panel" style="padding:1.25rem;"><div style="font-size:0.8rem; color:var(--muted);">Owed to mentors</div><div style="font-family:'Geist',sans-serif; font-size:1.6rem; font-weight:700;">₹{{ summary.mentor_earning }}</div></div>
+  <div class="panel" style="padding:1.25rem;"><div style="font-size:0.8rem; color:var(--muted);">Refunded</div><div style="font-family:'Geist',sans-serif; font-size:1.6rem; font-weight:700; color:var(--deep-red);">₹{{ summary.refunded }}</div></div>
+  <div class="panel" style="padding:1.25rem;"><div style="font-size:0.8rem; color:var(--muted);">Net mVia revenue</div><div style="font-family:'Geist',sans-serif; font-size:1.6rem; font-weight:700; color:var(--red);">₹{{ summary.net_revenue }}</div></div>
+</div>
+
+<div class="panel">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>All entries</h2>
+    <a href="{% url 'staff:earnings_report' %}" style="font-size:0.88rem;">Mentor earnings report →</a>
+  </div>
+  {% if entries %}
+  <table>
+    <thead><tr><th>Date</th><th>Type</th><th>Booking</th><th>Mentor</th><th>Amount</th><th>Reference</th></tr></thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td>{{ e.created_at|date:"d M Y H:i" }}</td>
+        <td>{{ e.get_entry_type_display }}</td>
+        <td><a href="{% url 'staff:booking_detail' e.booking_id %}">#{{ e.booking_id }}</a></td>
+        <td>{{ e.booking.mentor.full_name }}</td>
+        <td style="font-weight:600; {% if e.amount < 0 %}color:var(--deep-red);{% endif %}">₹{{ e.amount }}</td>
+        <td style="color:var(--muted); font-size:0.85rem;">{{ e.external_reference|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No ledger entries yet. They appear when bookings are paid.</div>{% endif %}
+</div>
+{% endblock %}
