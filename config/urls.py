@@ -1,7 +1,9 @@
 """Top-level URL routing for the whole project."""
 
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve as static_serve
 
 urlpatterns = [
     # Our custom, branded staff admin:
@@ -13,4 +15,10 @@ urlpatterns = [
     path("profile/", include("profiles.urls")),
     path("", include("directory.urls")),
     path("", include("bookings.urls")),
+]
+
+# Serve user-uploaded media (mentor photos). Safe here: media is public profile
+# imagery. Files live on the persistent disk (MEDIA_ROOT) on Render.
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", static_serve, {"document_root": settings.MEDIA_ROOT}),
 ]

@@ -153,6 +153,13 @@ CURRENCY_SYMBOL = "\u20b9"  # ₹
 # --- Static files (CSS, JavaScript, images) ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Media (user-uploaded files, e.g. mentor photos).
+# MEDIA_ROOT points to a persistent location. On Render (paid), attach a disk
+# and set MEDIA_ROOT to its mount path (e.g. /var/data/media) so uploads survive
+# redeploys. Locally it defaults to a "media" folder in the project.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = env("MEDIA_ROOT", str(BASE_DIR / "media"))
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
