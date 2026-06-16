@@ -13,14 +13,37 @@
   </a>
 </div>
 
+{% include "partials/_filter_bar.html" %}
+
 <div class="panel">
-  <h2>{{ total }} interest{{ total|pluralize }} across the tree</h2>
-  {% if tree %}
-    <div style="padding:0.5rem 0;">
-      {% include "interests/_tree_nodes.html" with nodes=tree %}
-    </div>
+  {% if search_results is not None %}
+    <h2>Search results <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ search_results.count }})</span></h2>
+    {% if search_results %}
+    <table>
+      <thead><tr><th>Interest</th><th>Parent</th><th></th></tr></thead>
+      <tbody>
+        {% for i in search_results %}
+        <tr>
+          <td><strong>{{ i.name }}</strong>{% if i.is_custom and not i.is_approved %} <span class="badge pending">Pending</span>{% endif %}</td>
+          <td style="color:var(--muted);">{{ i.parent.name|default:"— top level —" }}</td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'staff:interest_edit' i.id %}">Edit</a> &nbsp;·&nbsp;
+            <a href="{% url 'staff:interest_delete' i.id %}" style="color:var(--deep-red);">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No interests match “{{ search_value }}”.</div>{% endif %}
   {% else %}
-    <div class="empty">No interests yet. Click “Add interest” to begin.</div>
+    <h2>{{ total }} interest{{ total|pluralize }} across the tree</h2>
+    {% if tree %}
+      <div style="padding:0.5rem 0;">
+        {% include "interests/_tree_nodes.html" with nodes=tree %}
+      </div>
+    {% else %}
+      <div class="empty">No interests yet. Click “Add interest” to begin.</div>
+    {% endif %}
   {% endif %}
 </div>
 {% endblock %}

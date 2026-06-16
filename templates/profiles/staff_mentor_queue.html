@@ -30,7 +30,8 @@
 </div>
 
 <div class="panel">
-  <h2>{{ approved.count }} active mentor{{ approved.count|pluralize }}</h2>
+  <h2>Active mentors{% if page_obj %} <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page_obj.paginator.count }})</span>{% endif %}</h2>
+  <div style="padding:0 0 0.5rem;">{% include "partials/_filter_bar.html" %}</div>
   {% if approved %}
   <table>
     <thead><tr><th>Mentor</th><th>Role</th><th>Rate</th><th>Status</th><th></th></tr></thead>
@@ -54,6 +55,7 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<div class="empty">No active mentors yet.</div>{% endif %}
+  {% else %}<div class="empty">No active mentors found.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
 </div>
 {% endblock %}

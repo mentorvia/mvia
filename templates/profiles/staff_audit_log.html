@@ -6,7 +6,8 @@
   <p>Append-only record of admin actions. Entries are never edited or deleted.</p>
 </div>
 <div class="panel">
-  <h2>{{ page.paginator.count }} entr{{ page.paginator.count|pluralize:"y,ies" }}</h2>
+  <h2>Audit log <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page.paginator.count }})</span></h2>
+  <div style="padding:0 0 0.5rem;">{% include "partials/_filter_bar.html" %}</div>
   {% if page.object_list %}
   <table>
     <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead>
@@ -22,13 +23,7 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<div class="empty">No admin actions recorded yet.</div>{% endif %}
+  {% else %}<div class="empty">No admin actions found.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
 </div>
-{% if page.has_other_pages %}
-<div class="pager">
-  {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Prev</a>{% endif %}
-  <span class="cur">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
-  {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Next →</a>{% endif %}
-</div>
-{% endif %}
 {% endblock %}

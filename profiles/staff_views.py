@@ -16,13 +16,38 @@ def staff_required(view):
 
 @staff_required
 def mentor_queue(request):
+    from core.pagination import paginate, querystring_without_page
+    from django.db.models import Q
+
     pending = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_PENDING).select_related("user").order_by("created_at")
-    # All approved/active mentors, so staff can find and edit any of them.
+
     approved = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_APPROVED).select_related("user").order_by("user__full_name")
+
+    q = request.GET.get("q", "").strip()
+    only = request.GET.get("only", "").strip()
+    if q:
+        approved = approved.filter(
+            Q(user__full_name__icontains=q) | Q(current_role__icontains=q) |
+            Q(company__icontains=q))
+    if only == "placeholder":
+        approved = approved.filter(user__is_placeholder=True)
+    elif only == "live":
+        approved = approved.filter(is_available=True)
+
+    only_opts = [
+        {"value": "live", "label": "Live only", "selected": only == "live"},
+        {"value": "placeholder", "label": "No-email only", "selected": only == "placeholder"},
+    ]
+    page_obj = paginate(request, approved)
     return render(request, "profiles/staff_mentor_queue.html", {
-        "pending": pending, "approved": approved, "active_nav": "mentors",
+        "pending": pending, "approved": page_obj, "page_obj": page_obj,
+        "qs": querystring_without_page(request),
+        "search_value": q, "search_placeholder": "Search name, role, company…",
+        "filters": [{"name": "only", "label": "Show", "options": only_opts}],
+        "has_active": bool(q or only),
+        "active_nav": "mentors",
     })
 
 
@@ -68,11 +93,31 @@ def mentor_review(request, mentor_id):
 
 @staff_required
 def audit_log(request):
+    from core.pagination import paginate, querystring_without_page
+    from django.db.models import Q
+
     logs = AdminAuditLog.objects.select_related("actor").all()
-    paginator = Paginator(logs, 40)
-    page = paginator.get_page(request.GET.get("page"))
+    q = request.GET.get("q", "").strip()
+    action = request.GET.get("action", "").strip()
+    if q:
+        logs = logs.filter(
+            Q(actor__full_name__icontains=q) | Q(target__icontains=q) |
+            Q(action__icontains=q))
+    if action:
+        logs = logs.filter(action=action)
+
+    # Distinct actions present, for the filter dropdown.
+    actions = AdminAuditLog.objects.values_list("action", flat=True).distinct().order_by("action")
+    action_opts = [{"value": a, "label": a, "selected": action == a} for a in actions]
+
+    page_obj = paginate(request, logs)
     return render(request, "profiles/staff_audit_log.html", {
-        "page": page, "active_nav": "audit",
+        "page": page_obj, "page_obj": page_obj,
+        "qs": querystring_without_page(request),
+        "search_value": q, "search_placeholder": "Search actor, target, action…",
+        "filters": [{"name": "action", "label": "Action", "options": action_opts}],
+        "has_active": bool(q or action),
+        "active_nav": "audit",
     })
 
 

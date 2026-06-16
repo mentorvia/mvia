@@ -1,0 +1,27 @@
+{% comment %}
+Reusable search + filter bar. Pass:
+  search_value: current search text
+  filters: list of {name, label, options:[{value,label,selected}], current}
+Renders a GET form that submits search + filters together.
+{% endcomment %}
+<form method="get" class="filter-bar">
+  <input type="text" name="q" value="{{ search_value|default:'' }}" placeholder="{{ search_placeholder|default:'Search…' }}" class="fb-search">
+  {% for f in filters %}
+    <select name="{{ f.name }}" class="fb-select">
+      <option value="">{{ f.label }}: All</option>
+      {% for opt in f.options %}
+        <option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+  {% endfor %}
+  <button type="submit" class="fb-btn">Apply</button>
+  {% if has_active %}<a href="{{ request.path }}" class="fb-clear">Clear</a>{% endif %}
+</form>
+<style>
+  .filter-bar{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;}
+  .fb-search{flex:1;min-width:200px;padding:0.55rem 0.8rem;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;}
+  .fb-select{padding:0.55rem 0.7rem;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.88rem;background:#fff;}
+  .fb-btn{padding:0.55rem 1.1rem;background:var(--ink);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:0.88rem;}
+  .fb-clear{padding:0.55rem 0.9rem;color:var(--muted);font-size:0.88rem;align-self:center;}
+  .fb-clear:hover{color:var(--red);}
+</style>

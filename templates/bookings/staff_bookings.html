@@ -2,6 +2,7 @@
 {% block title %}Bookings — mVia Staff{% endblock %}
 {% block content %}
 <div class="page-head"><h1>Bookings</h1><p>All sessions booked on the platform.</p></div>
+{% include "partials/_filter_bar.html" %}
 <div class="panel">
   {% if bookings %}
   <table>
@@ -27,6 +28,7 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<div class="empty">No bookings yet.</div>{% endif %}
+  {% else %}<div class="empty">No bookings found.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
 </div>
 {% endblock %}
