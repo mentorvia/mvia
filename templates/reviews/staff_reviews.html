@@ -1,0 +1,27 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Reviews — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Reviews</h1><p>All mentee feedback. Written reviews and private notes are admin-only.</p></div>
+{% include "partials/_filter_bar.html" %}
+<div class="panel">
+  <h2>Feedback <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page_obj.paginator.count }})</span></h2>
+  {% if reviews %}
+  <table>
+    <thead><tr><th>When</th><th>Mentor</th><th>Mentee</th><th>Rating</th><th>Review</th><th>Private note</th></tr></thead>
+    <tbody>
+      {% for r in reviews %}
+      <tr>
+        <td style="white-space:nowrap;">{{ r.created_at|date:"d M Y" }}</td>
+        <td>{{ r.mentor.full_name }}</td>
+        <td>{{ r.mentee.full_name }}</td>
+        <td style="white-space:nowrap; color:var(--deep-red); font-weight:600;">{{ r.rating }}★</td>
+        <td style="max-width:260px;">{{ r.review_text|default:"—" }}</td>
+        <td style="max-width:240px; {% if r.private_note %}color:var(--deep-red);{% else %}color:var(--muted);{% endif %}">{{ r.private_note|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No reviews found.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

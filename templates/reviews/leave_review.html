@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Leave a review — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;">
+  <h1>Review your session</h1>
+  <p class="sub">with {{ booking.mentor.full_name }} · {{ booking.slot.start|date:"d M Y" }}</p>
+
+  <form method="post" novalidate style="margin-top:1rem;">
+    {% csrf_token %}
+    <div style="margin-bottom:1.25rem;">
+      <label style="display:block; font-weight:600; margin-bottom:0.5rem;">{{ form.rating.label }}</label>
+      <div class="rating-opts">
+        {% for radio in form.rating %}
+          <label class="rating-opt">{{ radio.tag }} <span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      {% if form.rating.errors %}<div class="err">{{ form.rating.errors|striptags }}</div>{% endif %}
+    </div>
+
+    <div style="margin-bottom:1.25rem;">
+      <label style="display:block; font-weight:600; margin-bottom:0.35rem;">{{ form.review_text.label }}</label>
+      {{ form.review_text }}
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <label style="display:block; font-weight:600; margin-bottom:0.35rem;">{{ form.private_note.label }}</label>
+      {{ form.private_note }}
+      <div style="font-size:0.78rem; color:var(--ink); opacity:0.5; margin-top:0.25rem;">Only the mVia team can see this.</div>
+    </div>
+
+    <button type="submit" class="btn">Submit review</button>
+    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; color:var(--ink); opacity:0.6;">Cancel</a>
+  </form>
+</div>
+<style>
+  .card textarea { width:100%; padding:0.6rem 0.75rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; font-family:inherit; font-size:0.92rem; }
+  .rating-opts { display:flex; flex-direction:column; gap:0.4rem; }
+  .rating-opt { display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.75rem; border:1px solid rgba(15,15,16,0.12); border-radius:9px; cursor:pointer; }
+  .rating-opt:hover { border-color:var(--red); }
+  .rating-opt span { font-size:0.92rem; }
+  .err { color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem; }
+</style>
+{% endblock %}

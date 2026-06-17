@@ -33,6 +33,13 @@
             {% if card.specs|length > 3 %}<span class="chip more">+{{ card.specs|length|add:"-3" }}</span>{% endif %}
           </div>
           <div class="mc-rate">₹{{ card.mentor.hourly_rate }} <span>/ session</span></div>
+          <div class="mc-rating">
+            {% if card.mentor.review_count %}
+              ★ {{ card.mentor.rating_display }} <span style="opacity:0.55;">({{ card.mentor.review_count }})</span>
+            {% else %}
+              <span style="opacity:0.55;">New mentor</span>
+            {% endif %}
+          </div>
         </a>
       {% endfor %}
     </div>
@@ -67,6 +74,7 @@
   .chip { background:rgba(15,15,16,0.06); font-size:0.74rem; padding:0.2rem 0.55rem; border-radius:99px; }
   .chip.more { background:transparent; opacity:0.55; }
   .mc-rate { font-family:'Geist',sans-serif; font-weight:700; font-size:1.15rem; }
+  .mc-rating { font-size:0.85rem; color:var(--deep-red); font-weight:600; margin-top:0.35rem; }
   .mc-rate span { font-family:'Inter',sans-serif; font-weight:400; font-size:0.82rem; opacity:0.55; }
   .dir-empty { text-align:center; padding:3rem; opacity:0.6; }
   .dir-empty a { color:var(--deep-red); }

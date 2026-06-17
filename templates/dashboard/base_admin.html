@@ -106,6 +106,7 @@
       <a href="{% url 'staff:mentor_queue' %}" class="{% if active_nav == 'mentors' %}active{% endif %}">Mentors{% if pending_mentor_count %} <span style="background:var(--red); color:#fff; border-radius:99px; padding:0 0.4rem; font-size:0.72rem;">{{ pending_mentor_count }}</span>{% endif %}</a>
       <a href="{% url 'staff:bookings' %}" class="{% if active_nav == 'bookings' %}active{% endif %}">Bookings</a>
       <a href="{% url 'staff:ledger' %}" class="{% if active_nav == 'ledger' %}active{% endif %}">Money &amp; ledger</a>
+      <a href="{% url 'staff:reviews' %}" class="{% if active_nav == 'reviews' %}active{% endif %}">Reviews</a>
       <a href="{% url 'staff:audit' %}" class="{% if active_nav == 'audit' %}active{% endif %}">Audit log</a>
       <a href="{% url 'staff:emails' %}" class="{% if active_nav == 'emails' %}active{% endif %}">Email log</a>
     </nav>

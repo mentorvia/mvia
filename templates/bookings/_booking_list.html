@@ -28,6 +28,13 @@
               </form>
             {% endif %}
           {% endif %}
+          {% if b.status == 'completed' and role == 'mentee' %}
+            {% if b.review %}
+              <span style="font-size:0.85rem; color:var(--ink); opacity:0.6;">Reviewed {{ b.review.rating }}★</span>
+            {% else %}
+              <a href="{% url 'leave_review' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">Leave a review</a>
+            {% endif %}
+          {% endif %}
         </div>
       </div>
     {% endfor %}
