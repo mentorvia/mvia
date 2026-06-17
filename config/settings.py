@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "directory",
     "bookings",
     "payments",
+    "reviews",
 ]
 
 # Use our email-based User model instead of Django's default.

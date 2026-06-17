@@ -15,6 +15,7 @@ urlpatterns = [
     path("profile/", include("profiles.urls")),
     path("", include("directory.urls")),
     path("", include("bookings.urls")),
+    path("", include("reviews.urls")),
 ]
 
 # Serve user-uploaded media (mentor photos). Safe here: media is public profile
