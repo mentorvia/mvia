@@ -197,8 +197,13 @@ RAZORPAY_ENABLED = bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
 
 # SendGrid (email) — sender is hello@mvia.in per the requirements.
 SENDGRID_API_KEY = env("SENDGRID_API_KEY", "")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "hello@mvia.in")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "info@mvia.in")
 SENDGRID_ENABLED = bool(SENDGRID_API_KEY)
+
+# Resend email provider. When RESEND_API_KEY is set, real emails send via Resend.
+# Sender must be at a domain verified in your Resend account (e.g. info@mvia.in).
+RESEND_API_KEY = env("RESEND_API_KEY", "")
+RESEND_ENABLED = bool(RESEND_API_KEY)
 
 # Platform fee (admin-configurable later; this is just the starting default, in rupees).
 DEFAULT_PLATFORM_FEE = env("DEFAULT_PLATFORM_FEE", "100")
