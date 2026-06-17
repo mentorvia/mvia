@@ -1,0 +1,33 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Activate login — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:edit_mentor_profile' mentor.id %}" class="back">← Back to profile</a>
+<div class="page-head"><h1>Activate login</h1>
+  <p>Give <strong>{{ mentor.user.full_name }}</strong> a real login so they can manage their own profile and availability.</p>
+</div>
+
+<div class="panel">
+  <div style="padding:1.25rem; max-width:520px;">
+    <div class="msg info" style="margin-bottom:1rem;">
+      This sets an email and password for the mentor. Share these with them directly (WhatsApp/call), and ask them to change the password after their first login.
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="err">{{ form.non_field_errors|striptags }}</div>{% endif %}
+      <label style="display:block; font-weight:600; font-size:0.88rem; margin-bottom:0.3rem;">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% if form.email.errors %}<div class="err">{{ form.email.errors|striptags }}</div>{% endif %}
+      <label style="display:block; font-weight:600; font-size:0.88rem; margin:0.9rem 0 0.3rem;">{{ form.password.label }}</label>
+      {{ form.password }}
+      {% if form.password.errors %}<div class="err">{{ form.password.errors|striptags }}</div>{% endif %}
+      <div style="margin-top:1.25rem;">
+        <button type="submit" style="padding:0.65rem 1.4rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Activate login</button>
+      </div>
+    </form>
+  </div>
+</div>
+<style>
+  .panel input[type=email], .panel input[type=password]{width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem;}
+  .err{color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem;}
+</style>
+{% endblock %}

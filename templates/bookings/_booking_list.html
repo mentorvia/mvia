@@ -22,6 +22,9 @@
             <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('Cancel this booking?');">
               {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">Cancel</button>
             </form>
+            {% if role == 'mentee' and b.reschedule_count < 2 %}
+              <a href="{% url 'reschedule_booking' b.id %}" style="font-size:0.85rem; margin-left:0.5rem;">Reschedule</a>
+            {% endif %}
             {% if b.slot.start < now %}
               <form method="post" action="{% url 'complete_booking' b.id %}" style="display:inline;">
                 {% csrf_token %}<button type="submit" style="background:none; border:none; color:#1a7f37; cursor:pointer; font-size:0.85rem; font-weight:600;">Mark complete</button>

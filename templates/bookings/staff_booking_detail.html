@@ -58,4 +58,30 @@
     </div>
   </div>
 {% endif %}
+
+{% if reschedule_slots is not None %}
+  <div class="panel">
+    <h2>Reschedule</h2>
+    <div style="padding:1.25rem; max-width:560px;">
+      <div style="font-size:0.88rem; color:var(--muted); margin-bottom:0.75rem;">
+        Move this confirmed session to another open slot of the same mentor (no re-payment). Allowed up to 24h before, max 2 times. Rescheduled so far: {{ booking.reschedule_count }}/2.
+      </div>
+      {% if reschedule_slots %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reschedule">
+        <select name="new_slot_id" required style="width:100%; padding:0.55rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; margin-bottom:0.9rem;">
+          <option value="">— pick a new slot —</option>
+          {% for s in reschedule_slots %}
+          <option value="{{ s.id }}">{{ s.start|date:"d M Y · H:i" }}–{{ s.end|date:"H:i" }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" onclick="return confirm('Reschedule this booking?');" style="padding:0.6rem 1.3rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Reschedule</button>
+      </form>
+      {% else %}
+        <div class="empty">No other open slots for this mentor.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 {% endblock %}
