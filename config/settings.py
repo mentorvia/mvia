@@ -154,6 +154,10 @@ CURRENCY_SYMBOL = "\u20b9"  # ₹
 # e.g. 0.20 means a ₹2000 mentor session costs the mentee ₹2400; mVia keeps ₹400.
 PLATFORM_FEE_RATE = float(env("PLATFORM_FEE_RATE", "0.20"))
 
+# How long an unpaid (pending_payment) booking is held before the scheduler
+# expires it and frees the slot. Minutes.
+BOOKING_EXPIRY_MINUTES = int(env("BOOKING_EXPIRY_MINUTES", "30"))
+
 
 # --- Static files (CSS, JavaScript, images) ---
 STATIC_URL = "static/"

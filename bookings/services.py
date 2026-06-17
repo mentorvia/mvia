@@ -184,3 +184,141 @@ def record_refund(*, booking_id, actor, reason, reference=""):
     booking.save(update_fields=["is_refunded", "refund_reason", "refund_reference",
                                 "refunded_at", "refunded_by"])
     return booking
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Scheduled / background tasks
+# These are designed to be IDEMPOTENT: safe to run repeatedly (e.g. every 15
+# min from a Render Cron Job) without double-acting. Each returns a count so
+# the command can report what it did.
+# ──────────────────────────────────────────────────────────────────────────
+
+def expire_unpaid_bookings():
+    """
+    Expire pending_payment bookings older than BOOKING_EXPIRY_MINUTES, freeing
+    the slot for others. Returns the number expired.
+    """
+    from datetime import timedelta
+
+    minutes = getattr(settings, "BOOKING_EXPIRY_MINUTES", 30)
+    cutoff = timezone.now() - timedelta(minutes=minutes)
+    stale = Booking.objects.filter(
+        status=Booking.STATUS_PENDING_PAYMENT, created_at__lt=cutoff)
+
+    count = 0
+    for booking in stale:
+        # Use a transaction per booking so one failure doesn't block the rest.
+        try:
+            with transaction.atomic():
+                b = Booking.objects.select_for_update().get(pk=booking.pk)
+                if b.status != Booking.STATUS_PENDING_PAYMENT:
+                    continue
+                b.status = Booking.STATUS_EXPIRED
+                b.save(update_fields=["status"])
+                count += 1
+        except Exception:  # noqa: BLE001 — never let one bad row stop the sweep
+            continue
+    return count
+
+
+def auto_complete_past_sessions():
+    """
+    Mark confirmed bookings whose session end time has passed as completed.
+    This is what feeds the payout report and enables reviews. Idempotent.
+    Returns the number completed.
+    """
+    now = timezone.now()
+    due = Booking.objects.filter(
+        status=Booking.STATUS_CONFIRMED, slot__end__lt=now).select_related("slot")
+
+    count = 0
+    for booking in due:
+        try:
+            with transaction.atomic():
+                b = Booking.objects.select_for_update().get(pk=booking.pk)
+                if b.status != Booking.STATUS_CONFIRMED:
+                    continue
+                b.status = Booking.STATUS_COMPLETED
+                b.completed_at = now
+                b.save(update_fields=["status", "completed_at"])
+                count += 1
+        except Exception:  # noqa: BLE001
+            continue
+    return count
+
+
+def send_due_reminders():
+    """
+    Send 24-hour and 1-hour reminder emails for upcoming confirmed sessions.
+    Each reminder is sent at most once (tracked on the booking). Idempotent.
+    Returns a dict with counts.
+    """
+    from datetime import timedelta
+    from accounts.emails import send_email
+
+    now = timezone.now()
+    sent_24h = 0
+    sent_1h = 0
+
+    # 24h reminder: session starts within the next 24h, not already sent.
+    window_24h = now + timedelta(hours=24)
+    upcoming_24h = Booking.objects.filter(
+        status=Booking.STATUS_CONFIRMED,
+        reminder_24h_sent_at__isnull=True,
+        slot__start__gt=now,
+        slot__start__lte=window_24h,
+    ).select_related("slot", "mentee", "mentor")
+
+    for b in upcoming_24h:
+        _send_reminder(b, "24 hours", "booking_reminder_24h")
+        b.reminder_24h_sent_at = now
+        b.save(update_fields=["reminder_24h_sent_at"])
+        sent_24h += 1
+
+    # 1h reminder: session starts within the next 1h, not already sent.
+    window_1h = now + timedelta(hours=1)
+    upcoming_1h = Booking.objects.filter(
+        status=Booking.STATUS_CONFIRMED,
+        reminder_1h_sent_at__isnull=True,
+        slot__start__gt=now,
+        slot__start__lte=window_1h,
+    ).select_related("slot", "mentee", "mentor")
+
+    for b in upcoming_1h:
+        _send_reminder(b, "1 hour", "booking_reminder_1h")
+        b.reminder_1h_sent_at = now
+        b.save(update_fields=["reminder_1h_sent_at"])
+        sent_1h += 1
+
+    return {"sent_24h": sent_24h, "sent_1h": sent_1h}
+
+
+def _send_reminder(booking, when_label, template_name):
+    """Send one reminder email to the mentee (and record it in EmailLog)."""
+    from accounts.emails import send_email
+
+    when = timezone.localtime(booking.slot.start).strftime("%d %b %Y at %I:%M %p")
+    subject = f"Reminder: your mVia session is in {when_label}"
+    body = (
+        f"Hi {booking.mentee.get_short_name()},\n\n"
+        f"This is a reminder that your mentorship session with "
+        f"{booking.mentor.full_name} is coming up in {when_label}.\n\n"
+        f"When: {when}\n\n"
+        f"See you there!\n— The mVia team"
+    )
+    send_email(
+        to_email=booking.mentee.email, subject=subject, body=body,
+        template_name=template_name, related_booking=booking)
+
+
+def run_scheduled_tasks():
+    """Run all scheduled maintenance tasks. Returns a summary dict."""
+    expired = expire_unpaid_bookings()
+    completed = auto_complete_past_sessions()
+    reminders = send_due_reminders()
+    return {
+        "expired_unpaid": expired,
+        "auto_completed": completed,
+        "reminders_24h": reminders["sent_24h"],
+        "reminders_1h": reminders["sent_1h"],
+    }

@@ -104,6 +104,10 @@ class Booking(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
         related_name="bookings_refunded")
 
+    # Reminder tracking — so the scheduler never sends the same reminder twice.
+    reminder_24h_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1h_sent_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
