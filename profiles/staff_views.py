@@ -186,3 +186,50 @@ def add_placeholder_mentor(request):
     return render(request, "profiles/staff_add_placeholder.html", {
         "form": form, "interests": interests, "active_nav": "mentors",
     })
+
+
+# ---------- Staff: activate login for a placeholder mentor ----------
+
+class ActivateLoginForm(forms.Form):
+    email = forms.EmailField(label="Mentor's email")
+    password = forms.CharField(min_length=8, widget=forms.PasswordInput,
+                               label="Set a password (min 8 chars)")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing:
+            raise forms.ValidationError("That email is already in use by another account.")
+        return email
+
+
+@staff_required
+def activate_mentor_login(request, mentor_id):
+    from profiles.models import MentorProfile
+    from auditlog.models import AdminAuditLog
+
+    profile = get_object_or_404(MentorProfile, pk=mentor_id)
+    user = profile.user
+
+    if not user.is_placeholder:
+        messages.info(request, "This mentor already has a login.")
+        return redirect("staff:edit_mentor_profile", mentor_id=profile.id)
+
+    if request.method == "POST":
+        form = ActivateLoginForm(request.POST)
+        if form.is_valid():
+            user.activate_login(form.cleaned_data["email"], form.cleaned_data["password"])
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.login_activated",
+                target=f"{user.full_name} <{user.email}>")
+            messages.success(
+                request,
+                f"Login activated for {user.full_name}. Share the email and password with them "
+                f"and ask them to change the password after first login.")
+            return redirect("staff:edit_mentor_profile", mentor_id=profile.id)
+    else:
+        form = ActivateLoginForm()
+
+    return render(request, "profiles/staff_activate_login.html", {
+        "form": form, "mentor": profile, "active_nav": "mentors",
+    })
