@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -129,7 +130,7 @@ section{padding:5rem 0;}
 /* Founders */
 .f-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
 .f-card{display:flex;gap:1.5rem;background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:1.75rem;}
-.f-card img{width:140px;height:180px;object-fit:cover;border-radius:12px;flex-shrink:0;}
+.f-card img{width:150px;height:190px;object-fit:cover;border-radius:12px;flex-shrink:0;background:var(--beige);}
 .f-card h3{font-size:1.3rem;}
 .frole{font-size:0.78rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--deep-red);margin:0.2rem 0 0.8rem;}
 .fbio{font-size:0.9rem;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
@@ -234,7 +235,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     </div>
    </div>
    <div class="hero-visual reveal reveal-d2">
-    <div class="hv-main"><img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80" alt="mVia mentorship"></div>
+    <div class="hv-main"><img src="{% static 'images/hero-banner.jpg' %}" alt="mVia mentorship"></div>
     <div class="hv-card hv-card-1">
      <div class="label">Quality</div>
      <div class="stat">Vetted experts</div>
@@ -388,7 +389,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
   </div>
   <div class="f-grid">
    <div class="f-card reveal">
-    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80" alt="Santosh Neelangatil">
+    <img src="{% static 'images/santosh.jpg' %}" alt="Santosh Neelangatil">
     <div>
      <h3>Santosh Neelangatil</h3>
      <div class="frole">Founder and Visionary</div>
@@ -398,7 +399,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     </div>
    </div>
    <div class="f-card reveal reveal-d2">
-    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80" alt="Evelyn Sunil">
+    <img src="{% static 'images/evelyn.jpg' %}" alt="Evelyn Sunil">
     <div>
      <h3>Evelyn Sunil</h3>
      <div class="frole">Co-Founder and Strategic Architect</div>
