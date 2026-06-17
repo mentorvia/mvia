@@ -201,7 +201,8 @@ footer .f-grid-foot a:hover{color:var(--red);}
    <li><a href="#about">About</a></li>
    <li><a href="#model">Model</a></li>
    <li><a href="#journey">Journey</a></li>
-   <li><a href="{% url 'directory' %}">Mentors</a></li>
+   {# HIDE-MENTORS: un-comment the line below to show Mentors in the nav once mentors are added #}
+   {# <li><a href="{% url 'directory' %}">Mentors</a></li> #}
    <li><a href="#contact">Contact</a></li>
    {% if user.is_authenticated %}
     <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
@@ -235,7 +236,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     </div>
    </div>
    <div class="hero-visual reveal reveal-d2">
-    <div class="hv-main"><img src="{% static 'images/hero-banner.jpg' %}" alt="mVia mentorship"></div>
+    <div class="hv-main"><img src="{% static 'images/hero-banner.png' %}" alt="mVia mentorship"></div>
     <div class="hv-card hv-card-1">
      <div class="label">Quality</div>
      <div class="stat">Vetted experts</div>
@@ -271,7 +272,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
    <p>Bridging the massive gap between high-potential talent and professional excellence through elite mentorship. Our team of industry veterans maps a customized path to transform raw potential into strategic executive excellence. Mentorship is the bridge from potential to achievement.</p>
   </div>
   <div class="why-visual reveal reveal-d2">
-   <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=900&q=80" alt="Transformation" style="width:100%;height:100%;object-fit:cover">
+   <img src="{% static 'images/achieve.png' %}" alt="From ambition to achievement" style="width:100%;height:100%;object-fit:cover">
    <div class="why-quote">Clarity without structure is wasted. We provide the structure.</div>
   </div>
  </div>
@@ -349,6 +350,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 </section>
 
 <!-- MENTORS -->
+{% comment %}HIDE-MENTORS-SECTION: to show the mentors strip again, delete this opening comment tag and the matching closing comment tag right before the FOUNDERS section.
 <section class="mentors-strip">
  <div class="wrap">
   <div class="sec-head reveal">
@@ -379,6 +381,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
   </div>
  </div>
 </section>
+{% endcomment %}
 
 <!-- FOUNDERS -->
 <section class="founders-section">
@@ -389,7 +392,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
   </div>
   <div class="f-grid">
    <div class="f-card reveal">
-    <img src="{% static 'images/santosh.jpg' %}" alt="Santosh Neelangatil">
+    <img src="{% static 'images/Santosh_n.png' %}" alt="Santosh Neelangatil">
     <div>
      <h3>Santosh Neelangatil</h3>
      <div class="frole">Founder and Visionary</div>
@@ -399,7 +402,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     </div>
    </div>
    <div class="f-card reveal reveal-d2">
-    <img src="{% static 'images/evelyn.jpg' %}" alt="Evelyn Sunil">
+    <img src="{% static 'images/evelyn.png' %}" alt="Evelyn Sunil">
     <div>
      <h3>Evelyn Sunil</h3>
      <div class="frole">Co-Founder and Strategic Architect</div>
