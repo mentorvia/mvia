@@ -116,6 +116,32 @@ class MentorProfile(models.Model):
     def focus_points(self):
         return self.points.filter(category="focus")
 
+    @property
+    def rating_summary(self):
+        """Average rating + count for this mentor. Cached on the instance."""
+        if not hasattr(self, "_rating_summary"):
+            from django.db.models import Avg, Count
+            agg = self.user.reviews_received.aggregate(
+                avg=Avg("rating"), n=Count("id"))
+            self._rating_summary = (agg["avg"], agg["n"] or 0)
+        return self._rating_summary
+
+    @property
+    def avg_rating(self):
+        return self.rating_summary[0]
+
+    @property
+    def review_count(self):
+        return self.rating_summary[1]
+
+    @property
+    def rating_display(self):
+        """'New' for unrated mentors, else a one-decimal average."""
+        avg, n = self.rating_summary
+        if not n:
+            return "New"
+        return f"{avg:.1f}"
+
     def __str__(self):
         return f"Mentor: {self.user.email} ({self.status})"
 
