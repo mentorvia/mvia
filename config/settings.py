@@ -158,6 +158,8 @@ PLATFORM_FEE_RATE = float(env("PLATFORM_FEE_RATE", "0.20"))
 # --- Static files (CSS, JavaScript, images) ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Project-level static assets (brand images, etc.) live here and get collected.
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Media (user-uploaded files, e.g. mentor photos).
 # MEDIA_ROOT points to a persistent location. On Render (paid), attach a disk
