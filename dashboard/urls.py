@@ -6,6 +6,7 @@ from interests import staff_views as interest_views
 from profiles import staff_views as profile_views
 from profiles import profile_editor
 from bookings import staff_views as booking_views
+from reviews import staff_views as review_views
 
 app_name = "staff"
 
@@ -19,6 +20,7 @@ urlpatterns = [
     path("bookings/<int:booking_id>/", booking_views.booking_detail, name="booking_detail"),
     path("ledger/", booking_views.ledger, name="ledger"),
     path("earnings/", booking_views.mentor_earnings_report, name="earnings_report"),
+    path("reviews/", review_views.reviews_list, name="reviews"),
     path("payouts/", booking_views.payout_history, name="payout_history"),
     # Interests
     path("interests/", interest_views.interests_list, name="interests"),
