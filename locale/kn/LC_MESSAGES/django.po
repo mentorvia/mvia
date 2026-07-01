@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-01 14:21+0530\n"
+"POT-Creation-Date: 2026-07-01 18:59+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,7 +125,7 @@ msgstr "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?"
 msgid "Staff console"
 msgstr "ಸಿಬ್ಬಂದಿ ಕನ್ಸೋಲ್"
 
-#: templates/base.html:54
+#: templates/base.html:54 templates/home.html:220
 msgid "Dashboard"
 msgstr "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
 
@@ -443,15 +443,39 @@ msgstr "ಬೀಟಾ"
 msgid "mVia is in early access. Have feedback? Write to"
 msgstr "mVia ಆರಂಭಿಕ ಹಂತದಲ್ಲಿದೆ. ಅಭಿಪ್ರಾಯವಿದೆಯೇ? ಬರೆಯಿರಿ"
 
+#: templates/home.html:213
+msgid "About"
+msgstr "ನಮ್ಮ ಬಗ್ಗೆ"
+
+#: templates/home.html:214
+msgid "Model"
+msgstr "ಮಾದರಿ"
+
+#: templates/home.html:215
+msgid "Journey"
+msgstr "ಪಯಣ"
+
+#: templates/home.html:218
+msgid "Contact"
+msgstr "ಸಂಪರ್ಕಿಸಿ"
+
+#: templates/home.html:221
+msgid "Logout"
+msgstr "ಲಾಗ್ ಔಟ್"
+
+#: templates/home.html:223
+msgid "Login"
+msgstr "ಲಾಗಿನ್"
+
 #: templates/home.html:224
 msgid "Apply"
 msgstr "ಅರ್ಜಿ ಸಲ್ಲಿಸಿ"
 
-#: templates/home.html:237
+#: templates/home.html:238
 msgid "Where clarity meets <span class=\"accent\">acceleration.</span>"
 msgstr "ಸ್ಪಷ್ಟತೆ <span class=\"accent\">ವೇಗವನ್ನು</span> ಸಂಧಿಸುವಲ್ಲಿ."
 
-#: templates/home.html:238
+#: templates/home.html:239
 msgid ""
 "For ambitious professionals who already know where they want to go — and "
 "want elite mentorship, strategic guidance, and industry-backed "
@@ -461,31 +485,31 @@ msgstr ""
 "ಮತ್ತು ಅಲ್ಲಿಗೆ ವೇಗವಾಗಿ ತಲುಪಲು ಉನ್ನತ ಮಾರ್ಗದರ್ಶನ, ಕಾರ್ಯತಂತ್ರದ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು "
 "ಉದ್ಯಮ-ಬೆಂಬಲಿತ ಪರಿವರ್ತನೆ ಬಯಸುವವರಿಗಾಗಿ."
 
-#: templates/home.html:240
+#: templates/home.html:241
 msgid "Apply as Mentee"
 msgstr "ಮೆಂಟೀ ಆಗಿ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ"
 
-#: templates/home.html:241
+#: templates/home.html:242
 msgid "Become a Mentor"
 msgstr "ಮಾರ್ಗದರ್ಶಕರಾಗಿ"
 
-#: templates/home.html:282
+#: templates/home.html:283
 msgid "Why mVia exists"
 msgstr "mVia ಏಕೆ ಅಸ್ತಿತ್ವದಲ್ಲಿದೆ"
 
-#: templates/home.html:297
+#: templates/home.html:298
 msgid "The model"
 msgstr "ಮಾದರಿ"
 
-#: templates/home.html:328
+#: templates/home.html:329
 msgid "Advantages"
 msgstr "ಪ್ರಯೋಜನಗಳು"
 
-#: templates/home.html:346
+#: templates/home.html:347
 msgid "The roadmap"
 msgstr "ಮಾರ್ಗಸೂಚಿ"
 
-#: templates/home.html:402
+#: templates/home.html:403
 msgid "Leadership"
 msgstr "ನಾಯಕತ್ವ"
 
