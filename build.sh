@@ -14,3 +14,8 @@ python manage.py migrate
 python manage.py seed_interests
 # Create the admin account once, from environment variables (no-op if it exists).
 python manage.py bootstrap_admin
+
+# Compile translation files (.po -> .mo) so Kannada (and future languages) load.
+# Try Django's compilemessages (needs gettext); if gettext isn't available on the
+# build image, fall back to a pure-Python compile via polib.
+python manage.py compilemessages -l kn || python compile_messages_fallback.py

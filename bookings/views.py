@@ -144,3 +144,30 @@ def complete(request, booking_id):
         except BookingError as e:
             messages.error(request, str(e))
     return redirect("my_bookings")
+
+
+@login_required
+def reschedule(request, booking_id):
+    """Mentee self-reschedule: pick another open slot of the same mentor."""
+    from .services import reschedule_booking, open_slots_for_mentor
+
+    booking = get_object_or_404(Booking, pk=booking_id)
+    if request.user.id != booking.mentee_id:
+        messages.error(request, "You can only reschedule your own bookings.")
+        return redirect("my_bookings")
+
+    if request.method == "POST":
+        new_slot_id = request.POST.get("new_slot_id")
+        try:
+            reschedule_booking(booking_id=booking.id, new_slot_id=new_slot_id, actor=request.user)
+            messages.success(request, "Your session has been rescheduled.")
+            return redirect("my_bookings")
+        except BookingError as e:
+            messages.error(request, str(e))
+        except Exception:
+            messages.error(request, "Could not reschedule. Please pick a valid open slot.")
+
+    slots = open_slots_for_mentor(booking.mentor, exclude_booking=booking)
+    return render(request, "bookings/reschedule.html", {
+        "booking": booking, "slots": slots,
+    })

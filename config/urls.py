@@ -6,6 +6,8 @@ from django.urls import path, include, re_path
 from django.views.static import serve as static_serve
 
 urlpatterns = [
+    # Language switcher (Django's built-in view; the dropdown posts here).
+    path("i18n/", include("django.conf.urls.i18n")),
     # Our custom, branded staff admin:
     path("staff/", include("dashboard.urls")),
     # Django's built-in admin kept as a raw-data safety net at a less obvious URL:

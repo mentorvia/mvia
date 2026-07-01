@@ -1,6 +1,7 @@
 """Forms for signup, login, and password reset."""
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -9,10 +10,10 @@ from .models import User
 
 
 class SignupForm(forms.Form):
-    full_name = forms.CharField(max_length=150, label="Full name")
-    email = forms.EmailField(label="Email")
-    password = forms.CharField(widget=forms.PasswordInput, label="Password")
-    password_confirm = forms.CharField(widget=forms.PasswordInput, label="Confirm password")
+    full_name = forms.CharField(max_length=150, label=_("Full name"))
+    email = forms.EmailField(label=_("Email"))
+    password = forms.CharField(widget=forms.PasswordInput, label=_("Password"))
+    password_confirm = forms.CharField(widget=forms.PasswordInput, label=_("Confirm password"))
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower().strip()
@@ -42,8 +43,8 @@ class SignupForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(label="Email")
-    password = forms.CharField(widget=forms.PasswordInput, label="Password")
+    email = forms.EmailField(label=_("Email"))
+    password = forms.CharField(widget=forms.PasswordInput, label=_("Password"))
 
     def __init__(self, *args, request=None, **kwargs):
         self.request = request
@@ -68,12 +69,12 @@ class LoginForm(forms.Form):
 
 
 class PasswordResetRequestForm(forms.Form):
-    email = forms.EmailField(label="Email")
+    email = forms.EmailField(label=_("Email"))
 
 
 class SetNewPasswordForm(forms.Form):
-    password = forms.CharField(widget=forms.PasswordInput, label="New password")
-    password_confirm = forms.CharField(widget=forms.PasswordInput, label="Confirm new password")
+    password = forms.CharField(widget=forms.PasswordInput, label=_("New password"))
+    password_confirm = forms.CharField(widget=forms.PasswordInput, label=_("Confirm new password"))
 
     def clean_password(self):
         password = self.cleaned_data["password"]

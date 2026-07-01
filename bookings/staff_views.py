@@ -69,7 +69,27 @@ def booking_detail(request, booking_id):
             messages.error(request, str(e))
         return redirect("staff:booking_detail", booking_id=booking.id)
 
+    if request.method == "POST" and request.POST.get("action") == "reschedule":
+        from .services import reschedule_booking
+        try:
+            reschedule_booking(
+                booking_id=booking.id,
+                new_slot_id=request.POST.get("new_slot_id"),
+                actor=request.user)
+            messages.success(request, "Booking rescheduled.")
+        except BookingError as e:
+            messages.error(request, str(e))
+        except Exception:
+            messages.error(request, "Could not reschedule — pick a valid open slot.")
+        return redirect("staff:booking_detail", booking_id=booking.id)
+
+    from .services import open_slots_for_mentor
+    reschedule_slots = (
+        open_slots_for_mentor(booking.mentor, exclude_booking=booking)
+        if booking.status == Booking.STATUS_CONFIRMED else None)
+
     return render(request, "bookings/staff_booking_detail.html", {
+        "reschedule_slots": reschedule_slots,
         "booking": booking, "ledger": booking.ledger_entries.all(), "active_nav": "bookings",
     })
 

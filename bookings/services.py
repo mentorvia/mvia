@@ -322,3 +322,104 @@ def run_scheduled_tasks():
         "reminders_24h": reminders["sent_24h"],
         "reminders_1h": reminders["sent_1h"],
     }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Rescheduling
+# ──────────────────────────────────────────────────────────────────────────
+
+MAX_RESCHEDULES = 2
+RESCHEDULE_CUTOFF_HOURS = 24
+
+
+def reschedule_booking(*, booking_id, new_slot_id, actor):
+    """
+    Move a confirmed booking to a different open slot of the SAME mentor.
+    No new payment — the paid session simply moves. Rules:
+      - booking must be confirmed (not completed/cancelled/expired)
+      - at least RESCHEDULE_CUTOFF_HOURS before the CURRENT session start
+      - new slot belongs to the same mentor, is in the future, and is free
+      - at most MAX_RESCHEDULES times
+    `actor` is the user performing it (mentee or staff) — used for audit only.
+    """
+    from datetime import timedelta
+
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related("slot", "mentor").get(pk=booking_id)
+
+        if booking.status != Booking.STATUS_CONFIRMED:
+            raise BookingError("Only confirmed bookings can be rescheduled.")
+        if booking.reschedule_count >= MAX_RESCHEDULES:
+            raise BookingError(f"This booking has already been rescheduled {MAX_RESCHEDULES} times (the limit).")
+
+        now = timezone.now()
+        cutoff = booking.slot.start - timedelta(hours=RESCHEDULE_CUTOFF_HOURS)
+        if now >= cutoff:
+            raise BookingError(
+                f"Rescheduling must be done at least {RESCHEDULE_CUTOFF_HOURS} hours before the session.")
+
+        new_slot = AvailabilitySlot.objects.select_for_update().get(pk=new_slot_id)
+
+        if new_slot.mentor_id != booking.mentor_id:
+            raise BookingError("The new slot must belong to the same mentor.")
+        if new_slot.pk == booking.slot_id:
+            raise BookingError("That's the same slot the booking is already on.")
+        if new_slot.start <= now:
+            raise BookingError("The new slot is in the past.")
+
+        # New slot must be free (no confirmed/completed booking on it).
+        taken = Booking.objects.filter(
+            slot=new_slot,
+            status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
+        ).exclude(pk=booking.pk).exists()
+        if taken:
+            raise BookingError("That slot is no longer available.")
+
+        old_slot_start = booking.slot.start
+        booking.slot = new_slot
+        booking.reschedule_count += 1
+        # Reset reminders so they fire correctly for the new time.
+        booking.reminder_24h_sent_at = None
+        booking.reminder_1h_sent_at = None
+        try:
+            booking.save(update_fields=[
+                "slot", "reschedule_count", "reminder_24h_sent_at", "reminder_1h_sent_at"])
+        except IntegrityError:
+            raise BookingError("That slot was just taken by someone else.")
+
+        # Audit trail.
+        try:
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=actor, action="booking.rescheduled",
+                target=f"Booking #{booking.id}: {old_slot_start:%d %b %H:%M} → {new_slot.start:%d %b %H:%M}")
+        except Exception:  # noqa: BLE001 — audit failure shouldn't block the reschedule
+            pass
+
+    # Notify the mentee (outside the transaction).
+    try:
+        from accounts.emails import send_email
+        when = timezone.localtime(new_slot.start).strftime("%d %b %Y at %I:%M %p")
+        send_email(
+            to_email=booking.mentee.email,
+            subject="Your mVia session has been rescheduled",
+            body=(f"Hi {booking.mentee.get_short_name()},\n\n"
+                  f"Your session with {booking.mentor.full_name} has been rescheduled.\n\n"
+                  f"New time: {when}\n\n— The mVia team"),
+            template_name="booking_rescheduled", related_booking=booking)
+    except Exception:  # noqa: BLE001
+        pass
+
+    return booking
+
+
+def open_slots_for_mentor(mentor, exclude_booking=None):
+    """Future, un-booked slots for a mentor — the choices when rescheduling."""
+    now = timezone.now()
+    taken_slot_ids = Booking.objects.filter(
+        mentor=mentor,
+        status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
+    ).values_list("slot_id", flat=True)
+    qs = AvailabilitySlot.objects.filter(mentor=mentor, start__gt=now).exclude(
+        pk__in=list(taken_slot_ids)).order_by("start")
+    return qs

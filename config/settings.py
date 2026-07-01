@@ -90,6 +90,9 @@ MIDDLEWARE = [
     # WhiteNoise serves CSS/JS efficiently in production (added right after security).
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # LocaleMiddleware enables per-request language selection (must sit after
+    # SessionMiddleware and before CommonMiddleware).
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -141,6 +144,18 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- Internationalization ---
 LANGUAGE_CODE = "en-us"
+
+# Languages offered in the site's language dropdown. English default; Kannada
+# added now, with room to add Hindi/Tamil etc. later by adding to this list and
+# providing a translation file.
+from django.utils.translation import gettext_lazy as _gl  # noqa: E402
+LANGUAGES = [
+    ("en", _gl("English")),
+    ("kn", _gl("ಕನ್ನಡ")),  # Kannada
+]
+
+# Where Django looks for translation (.po/.mo) files.
+LOCALE_PATHS = [BASE_DIR / "locale"]
 # India-first launch: times shown in Indian Standard Time.
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True

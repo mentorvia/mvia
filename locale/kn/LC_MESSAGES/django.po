@@ -1,0 +1,615 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-01 14:21+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: accounts/forms.py:13
+msgid "Full name"
+msgstr "ಪೂರ್ಣ ಹೆಸರು"
+
+#: accounts/forms.py:14 accounts/forms.py:46 accounts/forms.py:72
+msgid "Email"
+msgstr "ಇಮೇಲ್"
+
+#: accounts/forms.py:15 accounts/forms.py:47
+#, fuzzy
+#| msgid "Reset password"
+msgid "Password"
+msgstr "ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ"
+
+#: accounts/forms.py:16
+#, fuzzy
+#| msgid "Confirm & pay"
+msgid "Confirm password"
+msgstr "ಪಾಸ್‌ವರ್ಡ್ ಖಚಿತಪಡಿಸಿ"
+
+#: accounts/forms.py:76
+#, fuzzy
+#| msgid "Set new password"
+msgid "New password"
+msgstr "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ"
+
+#: accounts/forms.py:77
+#, fuzzy
+#| msgid "Set new password"
+msgid "Confirm new password"
+msgstr "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಖಚಿತಪಡಿಸಿ"
+
+#: templates/accounts/login.html:3 templates/accounts/login.html:16
+#: templates/accounts/signup.html:17 templates/base.html:61
+msgid "Log in"
+msgstr "ಲಾಗಿನ್"
+
+#: templates/accounts/login.html:6
+msgid "Welcome back"
+msgstr "ಮತ್ತೆ ಸ್ವಾಗತ"
+
+#: templates/accounts/login.html:7
+msgid "Log in to your mVia account."
+msgstr "ನಿಮ್ಮ mVia ಖಾತೆಗೆ ಲಾಗಿನ್ ಆಗಿ."
+
+#: templates/accounts/login.html:18
+msgid "Forgot password?"
+msgstr "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?"
+
+#: templates/accounts/login.html:19
+msgid "No account?"
+msgstr "ಖಾತೆ ಇಲ್ಲವೇ?"
+
+#: templates/accounts/login.html:19 templates/accounts/signup.html:3
+#: templates/accounts/signup.html:15 templates/base.html:62
+msgid "Sign up"
+msgstr "ಸೈನ್ ಅಪ್"
+
+#: templates/accounts/password_reset_confirm.html:3
+msgid "Set new password"
+msgstr "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ"
+
+#: templates/accounts/password_reset_confirm.html:6
+msgid "Set a new password"
+msgstr "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ"
+
+#: templates/accounts/password_reset_confirm.html:7
+msgid "Choose a strong password."
+msgstr "ಬಲವಾದ ಪಾಸ್‌ವರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ."
+
+#: templates/accounts/password_reset_confirm.html:15
+msgid "Update password"
+msgstr "ಪಾಸ್‌ವರ್ಡ್ ನವೀಕರಿಸಿ"
+
+#: templates/accounts/password_reset_request.html:3
+#: templates/accounts/password_reset_request.html:6
+msgid "Reset password"
+msgstr "ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ"
+
+#: templates/accounts/password_reset_request.html:7
+msgid "Enter your email and we'll send a reset link."
+msgstr "ನಿಮ್ಮ ಇಮೇಲ್ ನಮೂದಿಸಿ, ನಾವು ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಕಳುಹಿಸುತ್ತೇವೆ."
+
+#: templates/accounts/password_reset_request.html:15
+msgid "Send reset link"
+msgstr "ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಕಳುಹಿಸಿ"
+
+#: templates/accounts/password_reset_request.html:17
+msgid "Back to log in"
+msgstr "ಲಾಗಿನ್‌ಗೆ ಹಿಂತಿರುಗಿ"
+
+#: templates/accounts/signup.html:6
+msgid "Create your account"
+msgstr "ನಿಮ್ಮ ಖಾತೆ ರಚಿಸಿ"
+
+#: templates/accounts/signup.html:7
+msgid "Start as a mentee. Become a mentor anytime."
+msgstr "ಮೆಂಟೀ ಆಗಿ ಪ್ರಾರಂಭಿಸಿ. ಯಾವಾಗ ಬೇಕಾದರೂ ಮಾರ್ಗದರ್ಶಕರಾಗಿ."
+
+#: templates/accounts/signup.html:17
+msgid "Already have an account?"
+msgstr "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?"
+
+#: templates/base.html:53
+msgid "Staff console"
+msgstr "ಸಿಬ್ಬಂದಿ ಕನ್ಸೋಲ್"
+
+#: templates/base.html:54
+msgid "Dashboard"
+msgstr "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
+
+#: templates/base.html:55 templates/directory/directory.html:3
+#: templates/directory/directory.html:7
+msgid "Find a mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕರನ್ನು ಹುಡುಕಿ"
+
+#: templates/base.html:56 templates/bookings/my_bookings.html:3
+#: templates/bookings/my_bookings.html:6
+msgid "My bookings"
+msgstr "ನನ್ನ ಬುಕಿಂಗ್‌ಗಳು"
+
+#: templates/base.html:57
+msgid "Availability"
+msgstr "ಲಭ್ಯತೆ"
+
+#: templates/base.html:58 templates/profiles/mentee_profile.html:3
+#: templates/profiles/mentee_profile.html:6
+msgid "My profile"
+msgstr "ನನ್ನ ಪ್ರೊಫೈಲ್"
+
+#: templates/base.html:59
+msgid "Log out"
+msgstr "ಲಾಗ್ ಔಟ್"
+
+#: templates/bookings/_booking_list.html:13
+msgid "Pending payment"
+msgstr "ಪಾವತಿ ಬಾಕಿ ಇದೆ"
+
+#: templates/bookings/_booking_list.html:14
+msgid "Confirmed"
+msgstr "ಖಚಿತಪಡಿಸಲಾಗಿದೆ"
+
+#: templates/bookings/_booking_list.html:15
+msgid "Completed"
+msgstr "ಪೂರ್ಣಗೊಂಡಿದೆ"
+
+#: templates/bookings/_booking_list.html:16
+msgid "Cancelled"
+msgstr "ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ"
+
+#: templates/bookings/_booking_list.html:17
+msgid "Expired"
+msgstr "ಅವಧಿ ಮುಗಿದಿದೆ"
+
+#: templates/bookings/_booking_list.html:20
+msgid "Pay now"
+msgstr "ಈಗ ಪಾವತಿಸಿ"
+
+#: templates/bookings/_booking_list.html:23
+msgid "Cancel this booking?"
+msgstr "ಈ ಬುಕಿಂಗ್ ರದ್ದುಗೊಳಿಸುವುದೇ?"
+
+#: templates/bookings/_booking_list.html:24 templates/bookings/pay.html:25
+#: templates/bookings/reschedule.html:27
+#: templates/reviews/leave_review.html:33
+msgid "Cancel"
+msgstr "ರದ್ದುಮಾಡಿ"
+
+#: templates/bookings/_booking_list.html:27
+#: templates/bookings/reschedule.html:3
+msgid "Reschedule"
+msgstr "ಮರುನಿಗದಿಪಡಿಸಿ"
+
+#: templates/bookings/_booking_list.html:31
+msgid "Mark complete"
+msgstr "ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ"
+
+#: templates/bookings/_booking_list.html:37
+#, python-format
+msgid "Reviewed %(r)s★"
+msgstr "%(r)s★ ವಿಮರ್ಶಿಸಲಾಗಿದೆ"
+
+#: templates/bookings/_booking_list.html:39
+#: templates/reviews/leave_review.html:3
+msgid "Leave a review"
+msgstr "ವಿಮರ್ಶೆ ಬರೆಯಿರಿ"
+
+#: templates/bookings/_booking_list.html:47
+msgid "Nothing here yet."
+msgstr "ಇಲ್ಲಿ ಇನ್ನೂ ಏನೂ ಇಲ್ಲ."
+
+#: templates/bookings/my_availability.html:3
+#: templates/bookings/my_availability.html:6
+#, fuzzy
+#| msgid "Availability"
+msgid "My availability"
+msgstr "ಲಭ್ಯತೆ"
+
+#: templates/bookings/my_availability.html:7
+msgid "Publish time slots mentees can book."
+msgstr "ಮೆಂಟೀಗಳು ಬುಕ್ ಮಾಡಬಹುದಾದ ಸಮಯದ ಸ್ಲಾಟ್‌ಗಳನ್ನು ಪ್ರಕಟಿಸಿ."
+
+#: templates/bookings/my_availability.html:12
+msgid "Date"
+msgstr "ದಿನಾಂಕ"
+
+#: templates/bookings/my_availability.html:15
+msgid "Start time"
+msgstr "ಪ್ರಾರಂಭದ ಸಮಯ"
+
+#: templates/bookings/my_availability.html:18
+msgid "Duration"
+msgstr "ಅವಧಿ"
+
+#: templates/bookings/my_availability.html:20
+msgid "Add slot"
+msgstr "ಸ್ಲಾಟ್ ಸೇರಿಸಿ"
+
+#: templates/bookings/my_availability.html:24
+msgid "Upcoming slots"
+msgstr "ಮುಂಬರುವ ಸ್ಲಾಟ್‌ಗಳು"
+
+#: templates/bookings/my_availability.html:29
+msgid "Booked"
+msgstr "ಬುಕ್ ಆಗಿದೆ"
+
+#: templates/bookings/my_availability.html:29
+msgid "Open"
+msgstr "ಲಭ್ಯ"
+
+#: templates/bookings/my_availability.html:32
+msgid "Remove this slot?"
+msgstr "ಈ ಸ್ಲಾಟ್ ತೆಗೆದುಹಾಕುವುದೇ?"
+
+#: templates/bookings/my_availability.html:33
+msgid "Remove"
+msgstr "ತೆಗೆದುಹಾಕಿ"
+
+#: templates/bookings/my_availability.html:38
+msgid "No upcoming slots yet. Add one above."
+msgstr "ಇನ್ನೂ ಮುಂಬರುವ ಸ್ಲಾಟ್‌ಗಳಿಲ್ಲ. ಮೇಲೆ ಒಂದನ್ನು ಸೇರಿಸಿ."
+
+#: templates/bookings/my_bookings.html:9
+msgid "Sessions I'm mentoring"
+msgstr "ನಾನು ಮಾರ್ಗದರ್ಶನ ನೀಡುತ್ತಿರುವ ಸೆಷನ್‌ಗಳು"
+
+#: templates/bookings/my_bookings.html:13
+msgid "Sessions I booked"
+msgstr "ನಾನು ಬುಕ್ ಮಾಡಿದ ಸೆಷನ್‌ಗಳು"
+
+#: templates/bookings/pay.html:3 templates/bookings/pay.html:6
+msgid "Confirm & pay"
+msgstr "ಖಚಿತಪಡಿಸಿ ಮತ್ತು ಪಾವತಿಸಿ"
+
+#: templates/bookings/pay.html:7
+msgid "Review your session details."
+msgstr "ನಿಮ್ಮ ಸೆಷನ್ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ."
+
+#: templates/bookings/pay.html:10
+msgid "Mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕ"
+
+#: templates/bookings/pay.html:11
+msgid "When"
+msgstr "ಯಾವಾಗ"
+
+#: templates/bookings/pay.html:17
+msgid ""
+"Test mode: no real payment will be taken. Clicking below simulates a "
+"successful payment so you can test the flow."
+msgstr ""
+"ಪರೀಕ್ಷಾ ಮೋಡ್: ಯಾವುದೇ ನಿಜವಾದ ಪಾವತಿ ಆಗುವುದಿಲ್ಲ. ಕೆಳಗೆ ಕ್ಲಿಕ್ ಮಾಡುವುದರಿಂದ ಫ್ಲೋ "
+"ಪರೀಕ್ಷಿಸಲು ಯಶಸ್ವಿ ಪಾವತಿಯನ್ನು ಅನುಕರಿಸುತ್ತದೆ."
+
+#: templates/bookings/pay.html:23
+msgid "Simulate payment & confirm"
+msgstr "ಪಾವತಿಯನ್ನು ಅನುಕರಿಸಿ ಮತ್ತು ಖಚಿತಪಡಿಸಿ"
+
+#: templates/bookings/pay.html:23
+#, python-format
+msgid "Pay ₹%(amt)s"
+msgstr "₹%(amt)s ಪಾವತಿಸಿ"
+
+#: templates/bookings/reschedule.html:6
+msgid "Reschedule your session"
+msgstr "ನಿಮ್ಮ ಸೆಷನ್ ಮರುನಿಗದಿಪಡಿಸಿ"
+
+#: templates/bookings/reschedule.html:7
+#, python-format
+msgid "with %(name)s — currently %(when)s"
+msgstr "%(name)s ಅವರೊಂದಿಗೆ — ಪ್ರಸ್ತುತ %(when)s"
+
+#: templates/bookings/reschedule.html:10
+msgid ""
+"You can reschedule up to 24 hours before the session, at most twice. No "
+"extra payment — your paid session simply moves to the new time."
+msgstr ""
+"ಸೆಷನ್‌ಗೆ 24 ಗಂಟೆಗಳ ಮೊದಲು, ಗರಿಷ್ಠ ಎರಡು ಬಾರಿ ನೀವು ಮರುನಿಗದಿಪಡಿಸಬಹುದು. ಹೆಚ್ಚುವರಿ"
+" ಪಾವತಿ ಇಲ್ಲ — ನಿಮ್ಮ ಪಾವತಿಸಿದ ಸೆಷನ್ ಹೊಸ ಸಮಯಕ್ಕೆ ಸರಳವಾಗಿ ಸ್ಥಳಾಂತರಗೊಳ್ಳುತ್ತದೆ."
+
+#: templates/bookings/reschedule.html:11
+#, python-format
+msgid "Rescheduled %(n)s of 2 times."
+msgstr "2 ರಲ್ಲಿ %(n)s ಬಾರಿ ಮರುನಿಗದಿಪಡಿಸಲಾಗಿದೆ."
+
+#: templates/bookings/reschedule.html:17
+msgid "Pick a new slot"
+msgstr "ಹೊಸ ಸ್ಲಾಟ್ ಆಯ್ಕೆಮಾಡಿ"
+
+#: templates/bookings/reschedule.html:26
+msgid "Confirm reschedule"
+msgstr "ಮರುನಿಗದಿ ಖಚಿತಪಡಿಸಿ"
+
+#: templates/bookings/reschedule.html:30
+msgid ""
+"This mentor has no other open slots right now. Please check back later or "
+"contact us."
+msgstr ""
+"ಈ ಮಾರ್ಗದರ್ಶಕರಿಗೆ ಇದೀಗ ಬೇರೆ ಯಾವುದೇ ಸ್ಲಾಟ್‌ಗಳಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಪರಿಶೀಲಿಸಿ "
+"ಅಥವಾ ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ."
+
+#: templates/bookings/reschedule.html:31
+#, fuzzy
+#| msgid "My bookings"
+msgid "Back to my bookings"
+msgstr "ನನ್ನ ಬುಕಿಂಗ್‌ಗಳು"
+
+#: templates/directory/directory.html:8
+msgid "Browse approved mentors."
+msgstr "ಅನುಮೋದಿತ ಮಾರ್ಗದರ್ಶಕರನ್ನು ವೀಕ್ಷಿಸಿ."
+
+#: templates/directory/directory.html:8
+msgid "Mentors matching your interests are marked"
+msgstr "ನಿಮ್ಮ ಆಸಕ್ತಿಗಳಿಗೆ ಹೊಂದುವ ಮಾರ್ಗದರ್ಶಕರನ್ನು ಗುರುತಿಸಲಾಗಿದೆ"
+
+#: templates/directory/directory.html:8
+msgid "Recommended"
+msgstr "ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ"
+
+#: templates/directory/directory.html:12
+msgid "Search name, role, company…"
+msgstr "ಹೆಸರು, ಪಾತ್ರ, ಕಂಪನಿ ಹುಡುಕಿ…"
+
+#: templates/directory/directory.html:14
+msgid "All interests"
+msgstr "ಎಲ್ಲಾ ಆಸಕ್ತಿಗಳು"
+
+#: templates/directory/directory.html:19
+msgid "Max ₹"
+msgstr "ಗರಿಷ್ಠ ₹"
+
+#: templates/directory/directory.html:20
+msgid "Filter"
+msgstr "ಫಿಲ್ಟರ್"
+
+#: templates/directory/directory.html:21
+msgid "Clear"
+msgstr "ತೆರವುಗೊಳಿಸಿ"
+
+#: templates/directory/directory.html:36
+#: templates/directory/mentor_profile.html:83
+#: templates/profiles/mentor_status.html:17
+msgid "session"
+msgstr "ಸೆಷನ್"
+
+#: templates/directory/directory.html:41
+#, fuzzy
+#| msgid "Find a mentor"
+msgid "New mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕರನ್ನು ಹುಡುಕಿ"
+
+#: templates/directory/directory.html:49
+msgid "No mentors found."
+msgstr "ಯಾವುದೇ ಮಾರ್ಗದರ್ಶಕರು ಕಂಡುಬಂದಿಲ್ಲ."
+
+#: templates/directory/directory.html:50
+msgid "Clear filters"
+msgstr "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ತೆರವುಗೊಳಿಸಿ"
+
+#: templates/directory/mentor_profile.html:6
+msgid "All mentors"
+msgstr "ಎಲ್ಲಾ ಮಾರ್ಗದರ್ಶಕರು"
+
+#: templates/directory/mentor_profile.html:40
+msgid "About the Mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕರ ಬಗ್ಗೆ"
+
+#: templates/directory/mentor_profile.html:47
+msgid "Core Industry Expertise"
+msgstr "ಪ್ರಮುಖ ಉದ್ಯಮ ಪರಿಣತಿ"
+
+#: templates/directory/mentor_profile.html:61
+msgid "Mentorship Focus Areas"
+msgstr "ಮಾರ್ಗದರ್ಶನ ಗಮನ ಕ್ಷೇತ್ರಗಳು"
+
+#: templates/directory/mentor_profile.html:75
+msgid "Specializations"
+msgstr "ಪರಿಣತಿ ಕ್ಷೇತ್ರಗಳು"
+
+#: templates/directory/mentor_profile.html:87
+msgid "This is your profile."
+msgstr "ಇದು ನಿಮ್ಮ ಪ್ರೊಫೈಲ್."
+
+#: templates/directory/mentor_profile.html:89
+#, fuzzy
+#| msgid "Availability"
+msgid "Available times"
+msgstr "ಲಭ್ಯತೆ"
+
+#: templates/directory/mentor_profile.html:102
+msgid "Log in to book."
+msgstr "ಬುಕ್ ಮಾಡಲು ಲಾಗಿನ್ ಆಗಿ."
+
+#: templates/directory/mentor_profile.html:104
+msgid "No open slots right now. Check back soon."
+msgstr "ಇದೀಗ ಯಾವುದೇ ಸ್ಲಾಟ್‌ಗಳಿಲ್ಲ. ಶೀಘ್ರದಲ್ಲೇ ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ."
+
+#: templates/home.html:202
+msgid "Beta"
+msgstr "ಬೀಟಾ"
+
+#: templates/home.html:202
+msgid "mVia is in early access. Have feedback? Write to"
+msgstr "mVia ಆರಂಭಿಕ ಹಂತದಲ್ಲಿದೆ. ಅಭಿಪ್ರಾಯವಿದೆಯೇ? ಬರೆಯಿರಿ"
+
+#: templates/home.html:224
+msgid "Apply"
+msgstr "ಅರ್ಜಿ ಸಲ್ಲಿಸಿ"
+
+#: templates/home.html:237
+msgid "Where clarity meets <span class=\"accent\">acceleration.</span>"
+msgstr "ಸ್ಪಷ್ಟತೆ <span class=\"accent\">ವೇಗವನ್ನು</span> ಸಂಧಿಸುವಲ್ಲಿ."
+
+#: templates/home.html:238
+msgid ""
+"For ambitious professionals who already know where they want to go — and "
+"want elite mentorship, strategic guidance, and industry-backed "
+"transformation to get there faster."
+msgstr ""
+"ತಾವು ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕೆಂದು ಈಗಾಗಲೇ ತಿಳಿದಿರುವ ಮಹತ್ವಾಕಾಂಕ್ಷಿ ವೃತ್ತಿಪರರಿಗಾಗಿ — "
+"ಮತ್ತು ಅಲ್ಲಿಗೆ ವೇಗವಾಗಿ ತಲುಪಲು ಉನ್ನತ ಮಾರ್ಗದರ್ಶನ, ಕಾರ್ಯತಂತ್ರದ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು "
+"ಉದ್ಯಮ-ಬೆಂಬಲಿತ ಪರಿವರ್ತನೆ ಬಯಸುವವರಿಗಾಗಿ."
+
+#: templates/home.html:240
+msgid "Apply as Mentee"
+msgstr "ಮೆಂಟೀ ಆಗಿ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ"
+
+#: templates/home.html:241
+msgid "Become a Mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕರಾಗಿ"
+
+#: templates/home.html:282
+msgid "Why mVia exists"
+msgstr "mVia ಏಕೆ ಅಸ್ತಿತ್ವದಲ್ಲಿದೆ"
+
+#: templates/home.html:297
+msgid "The model"
+msgstr "ಮಾದರಿ"
+
+#: templates/home.html:328
+msgid "Advantages"
+msgstr "ಪ್ರಯೋಜನಗಳು"
+
+#: templates/home.html:346
+msgid "The roadmap"
+msgstr "ಮಾರ್ಗಸೂಚಿ"
+
+#: templates/home.html:402
+msgid "Leadership"
+msgstr "ನಾಯಕತ್ವ"
+
+#: templates/profiles/mentee_profile.html:7
+msgid "Complete this so you can book sessions with mentors."
+msgstr "ಮಾರ್ಗದರ್ಶಕರೊಂದಿಗೆ ಸೆಷನ್‌ಗಳನ್ನು ಬುಕ್ ಮಾಡಲು ಇದನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ."
+
+#: templates/profiles/mentee_profile.html:11
+#, python-format
+msgid "To book, please add: %(fields)s."
+msgstr "ಬುಕ್ ಮಾಡಲು, ದಯವಿಟ್ಟು ಸೇರಿಸಿ: %(fields)s."
+
+#: templates/profiles/mentee_profile.html:23
+#, fuzzy
+#| msgid "All interests"
+msgid "Your interests"
+msgstr "ಎಲ್ಲಾ ಆಸಕ್ತಿಗಳು"
+
+#: templates/profiles/mentee_profile.html:24
+msgid "Pick what you want guidance on. This powers mentor recommendations."
+msgstr ""
+"ನಿಮಗೆ ಯಾವ ವಿಷಯದಲ್ಲಿ ಮಾರ್ಗದರ್ಶನ ಬೇಕು ಎಂಬುದನ್ನು ಆಯ್ಕೆಮಾಡಿ. ಇದು ಮಾರ್ಗದರ್ಶಕ "
+"ಶಿಫಾರಸುಗಳಿಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ."
+
+#: templates/profiles/mentee_profile.html:27
+msgid "Don't see your interest? Add one"
+msgstr "ನಿಮ್ಮ ಆಸಕ್ತಿ ಕಾಣಿಸುತ್ತಿಲ್ಲವೇ? ಒಂದನ್ನು ಸೇರಿಸಿ"
+
+#: templates/profiles/mentee_profile.html:28
+msgid "e.g. Robotics (sent for review)"
+msgstr "ಉದಾ. ರೊಬೊಟಿಕ್ಸ್ (ಪರಿಶೀಲನೆಗೆ ಕಳುಹಿಸಲಾಗಿದೆ)"
+
+#: templates/profiles/mentee_profile.html:30
+#, fuzzy
+#| msgid "My profile"
+msgid "Save profile"
+msgstr "ನನ್ನ ಪ್ರೊಫೈಲ್"
+
+#: templates/profiles/mentor_apply.html:3
+#: templates/profiles/mentor_apply.html:6
+#, fuzzy
+#| msgid "Become a Mentor"
+msgid "Become a mentor"
+msgstr "ಮಾರ್ಗದರ್ಶಕರಾಗಿ"
+
+#: templates/profiles/mentor_apply.html:7
+msgid ""
+"Share your experience and earn by guiding others. Applications are reviewed "
+"before going live."
+msgstr ""
+"ನಿಮ್ಮ ಅನುಭವವನ್ನು ಹಂಚಿಕೊಳ್ಳಿ ಮತ್ತು ಇತರರಿಗೆ ಮಾರ್ಗದರ್ಶನ ನೀಡುವ ಮೂಲಕ ಗಳಿಸಿ. ಲೈವ್ "
+"ಆಗುವ ಮೊದಲು ಅರ್ಜಿಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ."
+
+#: templates/profiles/mentor_apply.html:18
+#, fuzzy
+#| msgid "Specializations"
+msgid "Your specializations"
+msgstr "ಪರಿಣತಿ ಕ್ಷೇತ್ರಗಳು"
+
+#: templates/profiles/mentor_apply.html:19
+msgid "Select at least one — these are what mentees find you by."
+msgstr ""
+"ಕನಿಷ್ಠ ಒಂದನ್ನು ಆಯ್ಕೆಮಾಡಿ — ಇವುಗಳ ಮೂಲಕ ಮೆಂಟೀಗಳು ನಿಮ್ಮನ್ನು ಹುಡುಕುತ್ತಾರೆ."
+
+#: templates/profiles/mentor_apply.html:22
+#, fuzzy
+#| msgid "Mentor application"
+msgid "Submit application"
+msgstr "ಮಾರ್ಗದರ್ಶಕ ಅರ್ಜಿ"
+
+#: templates/profiles/mentor_status.html:3
+#: templates/profiles/mentor_status.html:6
+msgid "Mentor application"
+msgstr "ಮಾರ್ಗದರ್ಶಕ ಅರ್ಜಿ"
+
+#: templates/profiles/mentor_status.html:8
+msgid "Your application is pending review. We'll email you once it's decided."
+msgstr ""
+"ನಿಮ್ಮ ಅರ್ಜಿ ಪರಿಶೀಲನೆಗೆ ಬಾಕಿ ಇದೆ. ನಿರ್ಧಾರವಾದ ನಂತರ ನಾವು ನಿಮಗೆ ಇಮೇಲ್ "
+"ಮಾಡುತ್ತೇವೆ."
+
+#: templates/profiles/mentor_status.html:10
+msgid "You're an approved mentor! Your profile can now receive bookings."
+msgstr ""
+"ನೀವು ಅನುಮೋದಿತ ಮಾರ್ಗದರ್ಶಕರು! ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ಈಗ ಬುಕಿಂಗ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸಬಹುದು."
+
+#: templates/profiles/mentor_status.html:12
+msgid "Your application was not approved."
+msgstr "ನಿಮ್ಮ ಅರ್ಜಿ ಅನುಮೋದಿಸಲಾಗಿಲ್ಲ."
+
+#: templates/profiles/mentor_status.html:15
+msgid "Role"
+msgstr "ಪಾತ್ರ"
+
+#: templates/profiles/mentor_status.html:15
+msgid "at"
+msgstr "ನಲ್ಲಿ"
+
+#: templates/profiles/mentor_status.html:16
+msgid "Experience"
+msgstr "ಅನುಭವ"
+
+#: templates/profiles/mentor_status.html:16
+#, python-format
+msgid "%(y)s years"
+msgstr "%(y)s ವರ್ಷಗಳು"
+
+#: templates/profiles/mentor_status.html:17
+msgid "Rate"
+msgstr "ದರ"
+
+#: templates/reviews/leave_review.html:6
+msgid "Review your session"
+msgstr "ನಿಮ್ಮ ಸೆಷನ್ ವಿಮರ್ಶಿಸಿ"
+
+#: templates/reviews/leave_review.html:7
+#, python-format
+msgid "with %(name)s · %(when)s"
+msgstr "%(name)s ಅವರೊಂದಿಗೆ · %(when)s"
+
+#: templates/reviews/leave_review.html:29
+msgid "Only the mVia team can see this."
+msgstr "ಇದನ್ನು mVia ತಂಡ ಮಾತ್ರ ನೋಡಬಹುದು."
+
+#: templates/reviews/leave_review.html:32
+msgid "Submit review"
+msgstr "ವಿಮರ್ಶೆ ಸಲ್ಲಿಸಿ"

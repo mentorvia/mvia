@@ -110,6 +110,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         """False for placeholder accounts that don't yet have a real email."""
         return not self.is_placeholder and not self.email.endswith("@mvia.invalid")
 
+    def activate_login(self, email, raw_password):
+        """
+        Convert a placeholder mentor into a real, login-capable account by
+        attaching an email and password. Marks email verified so they can log
+        in immediately. Safe to call only on placeholder accounts.
+        """
+        self.email = email.strip().lower()
+        self.set_password(raw_password)
+        self.is_placeholder = False
+        self.is_email_verified = True
+        self.save(update_fields=["email", "password", "is_placeholder", "is_email_verified"])
+        return self
+
 
 def _make_token():
     """Generate a long, unguessable random token for email links."""

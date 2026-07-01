@@ -108,6 +108,9 @@ class Booking(models.Model):
     reminder_24h_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_1h_sent_at = models.DateTimeField(null=True, blank=True)
 
+    # How many times this booking has been rescheduled (capped in services).
+    reschedule_count = models.PositiveSmallIntegerField(default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
