@@ -210,19 +210,20 @@ footer .f-grid-foot a:hover{color:var(--red);}
    <span class="tagline-nav"><span>To dream it's human</span><span class="tag-red">To pursue it's <strong>mVia</strong></span></span>
   </a>
   <ul class="nav-links" id="navlinks">
-   <li><a href="#about">About</a></li>
-   <li><a href="#model">Model</a></li>
-   <li><a href="#journey">Journey</a></li>
+   <li><a href="#about">{% trans "About" %}</a></li>
+   <li><a href="#model">{% trans "Model" %}</a></li>
+   <li><a href="#journey">{% trans "Journey" %}</a></li>
    {# HIDE-MENTORS: un-comment the line below to show Mentors in the nav once mentors are added #}
-   {# <li><a href="{% url 'directory' %}">Mentors</a></li> #}
-   <li><a href="#contact">Contact</a></li>
+   {# <li><a href="{% url 'directory' %}">{% trans "Mentors" %}</a></li> #}
+   <li><a href="#contact">{% trans "Contact" %}</a></li>
    {% if user.is_authenticated %}
-    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-    <li><a href="{% url 'logout' %}">Logout</a></li>
+    <li><a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a></li>
+    <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
    {% else %}
-    <li><a href="{% url 'login' %}">Login</a></li>
+    <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>
     <li><a class="btn btn-red btn-noarrow" href="{% url 'signup' %}">{% trans "Apply" %}</a></li>
    {% endif %}
+   <li>{% include "partials/_language_dropdown.html" %}</li>
   </ul>
   <button class="burger" onclick="document.getElementById('navlinks').classList.toggle('open')">≡</button>
  </div>
