@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load i18n %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -198,7 +199,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 
 <!-- BETA NOTICE -->
 <div class="beta-bar">
-  <strong>Beta</strong> — mVia is in early access. Have feedback? Write to <a href="mailto:evelyn.sunil@mvia.in">evelyn.sunil@mvia.in</a>
+  <strong>{% trans "Beta" %}</strong> — {% trans "mVia is in early access. Have feedback? Write to" %} <a href="mailto:evelyn.sunil@mvia.in">evelyn.sunil@mvia.in</a>
 </div>
 
 <!-- NAV -->
@@ -220,7 +221,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     <li><a href="{% url 'logout' %}">Logout</a></li>
    {% else %}
     <li><a href="{% url 'login' %}">Login</a></li>
-    <li><a class="btn btn-red btn-noarrow" href="{% url 'signup' %}">Apply</a></li>
+    <li><a class="btn btn-red btn-noarrow" href="{% url 'signup' %}">{% trans "Apply" %}</a></li>
    {% endif %}
   </ul>
   <button class="burger" onclick="document.getElementById('navlinks').classList.toggle('open')">≡</button>
@@ -233,11 +234,11 @@ footer .f-grid-foot a:hover{color:var(--red);}
   <div class="hero-grid">
    <div class="hero-left reveal">
     <div class="eyebrow">Mentorship · Acceleration</div>
-    <h1>Where clarity meets <span class="accent">acceleration.</span></h1>
-    <p class="hero-lead">For ambitious professionals who already know where they want to go — and want elite mentorship, strategic guidance, and industry-backed transformation to get there faster.</p>
+    <h1>{% blocktrans %}Where clarity meets <span class="accent">acceleration.</span>{% endblocktrans %}</h1>
+    <p class="hero-lead">{% trans "For ambitious professionals who already know where they want to go — and want elite mentorship, strategic guidance, and industry-backed transformation to get there faster." %}</p>
     <div class="hero-cta">
-     <a class="btn btn-red" href="{% url 'signup' %}">Apply as Mentee</a>
-     <a class="btn btn-ghost" href="{% url 'signup' %}">Become a Mentor</a>
+     <a class="btn btn-red" href="{% url 'signup' %}">{% trans "Apply as Mentee" %}</a>
+     <a class="btn btn-ghost" href="{% url 'signup' %}">{% trans "Become a Mentor" %}</a>
     </div>
     <div class="trust-strip">
      <div class="trust-item"><strong>Vetted</strong>Mentors</div>
@@ -278,7 +279,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 <section class="why-section" id="about">
  <div class="wrap why-grid">
   <div class="text reveal">
-   <div class="eyebrow">Why mVia exists</div>
+   <div class="eyebrow">{% trans "Why mVia exists" %}</div>
    <h2>The gap between ambition and <span class="accent">acceleration</span>.</h2>
    <p>Bridging the massive gap between high-potential talent and professional excellence through elite mentorship. Our team of industry veterans maps a customized path to transform raw potential into strategic executive excellence. Mentorship is the bridge from potential to achievement.</p>
   </div>
@@ -293,7 +294,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 <section class="model-section" id="model">
  <div class="wrap">
   <div class="sec-head reveal">
-   <div class="eyebrow">The model</div>
+   <div class="eyebrow">{% trans "The model" %}</div>
    <h2>Three tiers, one <span class="accent">ecosystem</span>.</h2>
    <p>A three-tier mentorship ecosystem built for transformation.</p>
   </div>
@@ -324,7 +325,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 <section class="advantages">
  <div class="wrap">
   <div class="sec-head reveal">
-   <div class="eyebrow">Advantages</div>
+   <div class="eyebrow">{% trans "Advantages" %}</div>
    <h2>What makes mVia <span class="accent">different</span>.</h2>
   </div>
   <div class="adv-grid">
@@ -342,7 +343,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 <section class="journey-section" id="journey">
  <div class="wrap">
   <div class="sec-head reveal">
-   <div class="eyebrow">The roadmap</div>
+   <div class="eyebrow">{% trans "The roadmap" %}</div>
    <h2>Your seven-step <span class="accent">transformation</span>.</h2>
    <p>A structured transformation roadmap.</p>
   </div>
@@ -398,7 +399,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
 <section class="founders-section">
  <div class="wrap">
   <div class="sec-head reveal">
-   <div class="eyebrow">Leadership</div>
+   <div class="eyebrow">{% trans "Leadership" %}</div>
    <h2>The <span class="accent">visionaries</span> behind mVia.</h2>
   </div>
   <div class="f-grid">

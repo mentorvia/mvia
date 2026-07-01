@@ -1,3 +1,4 @@
+{% load i18n %}
 {% if bookings %}
   <div style="display:flex; flex-direction:column; gap:0.6rem;">
     {% for b in bookings %}
@@ -9,33 +10,33 @@
           <div style="font-size:0.85rem; opacity:0.65;">{{ b.slot.start|date:"D, d M Y · H:i" }} · ₹{{ b.amount }}</div>
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
-          {% if b.status == 'pending_payment' %}<span class="badge pending">Pending payment</span>
-          {% elif b.status == 'confirmed' %}<span class="badge yes">Confirmed</span>
-          {% elif b.status == 'completed' %}<span class="badge neutral">Completed</span>
-          {% elif b.status == 'cancelled' %}<span class="badge no">Cancelled</span>
-          {% elif b.status == 'expired' %}<span class="badge neutral">Expired</span>{% endif %}
+          {% if b.status == 'pending_payment' %}<span class="badge pending">{% trans "Pending payment" %}</span>
+          {% elif b.status == 'confirmed' %}<span class="badge yes">{% trans "Confirmed" %}</span>
+          {% elif b.status == 'completed' %}<span class="badge neutral">{% trans "Completed" %}</span>
+          {% elif b.status == 'cancelled' %}<span class="badge no">{% trans "Cancelled" %}</span>
+          {% elif b.status == 'expired' %}<span class="badge neutral">{% trans "Expired" %}</span>{% endif %}
 
           {% if b.status == 'pending_payment' and role == 'mentee' %}
-            <a href="{% url 'pay_booking' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">Pay now</a>
+            <a href="{% url 'pay_booking' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">{% trans "Pay now" %}</a>
           {% endif %}
           {% if b.status == 'confirmed' %}
-            <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('Cancel this booking?');">
-              {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">Cancel</button>
+            <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('{% trans 'Cancel this booking?' %}');">
+              {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">{% trans "Cancel" %}</button>
             </form>
             {% if role == 'mentee' and b.reschedule_count < 2 %}
-              <a href="{% url 'reschedule_booking' b.id %}" style="font-size:0.85rem; margin-left:0.5rem;">Reschedule</a>
+              <a href="{% url 'reschedule_booking' b.id %}" style="font-size:0.85rem; margin-left:0.5rem;">{% trans "Reschedule" %}</a>
             {% endif %}
             {% if b.slot.start < now %}
               <form method="post" action="{% url 'complete_booking' b.id %}" style="display:inline;">
-                {% csrf_token %}<button type="submit" style="background:none; border:none; color:#1a7f37; cursor:pointer; font-size:0.85rem; font-weight:600;">Mark complete</button>
+                {% csrf_token %}<button type="submit" style="background:none; border:none; color:#1a7f37; cursor:pointer; font-size:0.85rem; font-weight:600;">{% trans "Mark complete" %}</button>
               </form>
             {% endif %}
           {% endif %}
           {% if b.status == 'completed' and role == 'mentee' %}
             {% if b.review %}
-              <span style="font-size:0.85rem; color:var(--ink); opacity:0.6;">Reviewed {{ b.review.rating }}★</span>
+              <span style="font-size:0.85rem; color:var(--ink); opacity:0.6;">{% blocktrans with r=b.review.rating %}Reviewed {{ r }}★{% endblocktrans %}</span>
             {% else %}
-              <a href="{% url 'leave_review' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">Leave a review</a>
+              <a href="{% url 'leave_review' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">{% trans "Leave a review" %}</a>
             {% endif %}
           {% endif %}
         </div>
@@ -43,7 +44,7 @@
     {% endfor %}
   </div>
 {% else %}
-  <p style="opacity:0.6;">Nothing here yet.</p>
+  <p style="opacity:0.6;">{% trans "Nothing here yet." %}</p>
 {% endif %}
 <style>
   .badge { font-size:0.72rem; font-weight:600; padding:0.2rem 0.55rem; border-radius:99px; }

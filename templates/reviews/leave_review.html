@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Leave a review — mVia{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Leave a review" %} — mVia{% endblock %}
 {% block content %}
 <div class="card" style="max-width:520px;">
-  <h1>Review your session</h1>
-  <p class="sub">with {{ booking.mentor.full_name }} · {{ booking.slot.start|date:"d M Y" }}</p>
+  <h1>{% trans "Review your session" %}</h1>
+  <p class="sub">{% blocktrans with name=booking.mentor.full_name when=booking.slot.start|date:"d M Y" %}with {{ name }} · {{ when }}{% endblocktrans %}</p>
 
   <form method="post" novalidate style="margin-top:1rem;">
     {% csrf_token %}
@@ -25,11 +26,11 @@
     <div style="margin-bottom:1.5rem;">
       <label style="display:block; font-weight:600; margin-bottom:0.35rem;">{{ form.private_note.label }}</label>
       {{ form.private_note }}
-      <div style="font-size:0.78rem; color:var(--ink); opacity:0.5; margin-top:0.25rem;">Only the mVia team can see this.</div>
+      <div style="font-size:0.78rem; color:var(--ink); opacity:0.5; margin-top:0.25rem;">{% trans "Only the mVia team can see this." %}</div>
     </div>
 
-    <button type="submit" class="btn">Submit review</button>
-    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; color:var(--ink); opacity:0.6;">Cancel</a>
+    <button type="submit" class="btn">{% trans "Submit review" %}</button>
+    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; color:var(--ink); opacity:0.6;">{% trans "Cancel" %}</a>
   </form>
 </div>
 <style>

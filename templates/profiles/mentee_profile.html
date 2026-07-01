@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}My profile — mVia{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "My profile" %} — mVia{% endblock %}
 {% block content %}
 <div class="card" style="max-width:600px;">
-  <h1>My profile</h1>
-  <p class="sub">Complete this so you can book sessions with mentors.</p>
+  <h1>{% trans "My profile" %}</h1>
+  <p class="sub">{% trans "Complete this so you can book sessions with mentors." %}</p>
 
   {% if not profile.is_complete %}
     <div class="msg info" style="margin-bottom:1rem;">
-      To book, please add: {{ profile.missing_fields|join:", " }}.
+      {% blocktrans with fields=profile.missing_fields|join:", " %}To book, please add: {{ fields }}.{% endblocktrans %}
     </div>
   {% endif %}
 
@@ -19,14 +20,14 @@
       {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     {% endfor %}
 
-    <label style="margin-top:1.2rem;">Your interests</label>
-    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">Pick what you want guidance on. This powers mentor recommendations.</p>
+    <label style="margin-top:1.2rem;">{% trans "Your interests" %}</label>
+    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">{% trans "Pick what you want guidance on. This powers mentor recommendations." %}</p>
     {% include "profiles/_interest_picker.html" %}
 
-    <label style="margin-top:1rem;">Don't see your interest? Add one</label>
-    <input type="text" name="custom_interest" placeholder="e.g. Robotics (sent for review)">
+    <label style="margin-top:1rem;">{% trans "Don't see your interest? Add one" %}</label>
+    <input type="text" name="custom_interest" placeholder="{% trans 'e.g. Robotics (sent for review)' %}">
 
-    <button type="submit" class="btn">Save profile</button>
+    <button type="submit" class="btn">{% trans "Save profile" %}</button>
   </form>
 </div>
 <style>

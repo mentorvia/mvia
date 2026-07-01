@@ -1,19 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Reschedule — mVia{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Reschedule" %} — mVia{% endblock %}
 {% block content %}
 <div class="card" style="max-width:560px;">
-  <h1>Reschedule your session</h1>
-  <p class="sub">with {{ booking.mentor.full_name }} — currently {{ booking.slot.start|date:"d M Y · H:i" }}</p>
+  <h1>{% trans "Reschedule your session" %}</h1>
+  <p class="sub">{% blocktrans with name=booking.mentor.full_name when=booking.slot.start|date:"d M Y · H:i" %}with {{ name }} — currently {{ when }}{% endblocktrans %}</p>
 
   <div class="msg info" style="margin:1rem 0;">
-    You can reschedule up to 24 hours before the session, at most twice. No extra payment — your paid session simply moves to the new time.
-    {% if booking.reschedule_count %}<br><strong>Rescheduled {{ booking.reschedule_count }} of 2 times.</strong>{% endif %}
+    {% trans "You can reschedule up to 24 hours before the session, at most twice. No extra payment — your paid session simply moves to the new time." %}
+    {% if booking.reschedule_count %}<br><strong>{% blocktrans with n=booking.reschedule_count %}Rescheduled {{ n }} of 2 times.{% endblocktrans %}</strong>{% endif %}
   </div>
 
   {% if slots %}
   <form method="post">
     {% csrf_token %}
-    <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Pick a new slot</label>
+    <label style="display:block; font-weight:600; margin-bottom:0.5rem;">{% trans "Pick a new slot" %}</label>
     <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem;">
       {% for s in slots %}
       <label class="slot-opt">
@@ -22,12 +23,12 @@
       </label>
       {% endfor %}
     </div>
-    <button type="submit" class="btn">Confirm reschedule</button>
-    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; color:var(--ink); opacity:0.6;">Cancel</a>
+    <button type="submit" class="btn">{% trans "Confirm reschedule" %}</button>
+    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; color:var(--ink); opacity:0.6;">{% trans "Cancel" %}</a>
   </form>
   {% else %}
-    <div class="empty">This mentor has no other open slots right now. Please check back later or contact us.</div>
-    <a href="{% url 'my_bookings' %}" style="display:inline-block; margin-top:1rem;">← Back to my bookings</a>
+    <div class="empty">{% trans "This mentor has no other open slots right now. Please check back later or contact us." %}</div>
+    <a href="{% url 'my_bookings' %}" style="display:inline-block; margin-top:1rem;">← {% trans "Back to my bookings" %}</a>
   {% endif %}
 </div>
 <style>

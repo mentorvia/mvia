@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}{{ mentor_user.full_name }} — mVia{% endblock %}
 {% block content %}
 <div class="mp">
-  <a href="{% url 'directory' %}" class="mp-back">← All mentors</a>
+  <a href="{% url 'directory' %}" class="mp-back">← {% trans "All mentors" %}</a>
 
   <!-- Hero -->
   <header class="mp-hero">
@@ -36,14 +37,14 @@
     <div class="mp-content">
       {% if mentor.bio %}
         <section class="mp-section">
-          <h2>About the Mentor</h2>
+          <h2>{% trans "About the Mentor" %}</h2>
           <div class="mp-prose">{{ mentor.bio|linebreaks }}</div>
         </section>
       {% endif %}
 
       {% if expertise_points %}
         <section class="mp-section">
-          <h2>Core Industry Expertise</h2>
+          <h2>{% trans "Core Industry Expertise" %}</h2>
           <div class="mp-items">
             {% for item in expertise_points %}
               <div class="mp-item">
@@ -57,7 +58,7 @@
 
       {% if focus_points %}
         <section class="mp-section">
-          <h2>Mentorship Focus Areas</h2>
+          <h2>{% trans "Mentorship Focus Areas" %}</h2>
           <div class="mp-items">
             {% for item in focus_points %}
               <div class="mp-item">
@@ -71,7 +72,7 @@
 
       {% if specs %}
         <section class="mp-section">
-          <h2>Specializations</h2>
+          <h2>{% trans "Specializations" %}</h2>
           <div class="mp-specs">{% for s in specs %}<span class="mp-chip">{{ s.name }}</span>{% endfor %}</div>
         </section>
       {% endif %}
@@ -79,13 +80,13 @@
 
     <!-- Booking sidebar -->
     <aside class="mp-side">
-      <div class="mp-price">₹{{ mentor.hourly_rate }}<span class="mp-per">/ session</span></div>
+      <div class="mp-price">₹{{ mentor.hourly_rate }}<span class="mp-per">/ {% trans "session" %}</span></div>
       {% if mentor.gst_note %}<div class="mp-gst">{{ mentor.gst_note }}</div>{% endif %}
 
       {% if user.is_authenticated and user.id == mentor_user.id %}
-        <p class="mp-note">This is your profile.</p>
+        <p class="mp-note">{% trans "This is your profile." %}</p>
       {% elif bookable_slots %}
-        <div class="mp-slots-label">Available times</div>
+        <div class="mp-slots-label">{% trans "Available times" %}</div>
         <div class="mp-slots">
           {% for slot in bookable_slots %}
             {% if user.is_authenticated %}
@@ -98,9 +99,9 @@
             {% endif %}
           {% endfor %}
         </div>
-        {% if not user.is_authenticated %}<p class="mp-note">Log in to book.</p>{% endif %}
+        {% if not user.is_authenticated %}<p class="mp-note">{% trans "Log in to book." %}</p>{% endif %}
       {% else %}
-        <p class="mp-note">No open slots right now. Check back soon.</p>
+        <p class="mp-note">{% trans "No open slots right now. Check back soon." %}</p>
       {% endif %}
     </aside>
   </div>

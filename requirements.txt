@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 sendgrid==6.11.0
 Pillow==11.0.0
 resend==2.5.1
+polib>=1.2.0

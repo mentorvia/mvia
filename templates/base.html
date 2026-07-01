@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load i18n %}
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -17,6 +18,8 @@
     nav a { margin-left:1.25rem; font-size:0.9rem; text-decoration:none; color:var(--ink); opacity:0.8; }
     nav a:hover { opacity:1; color:var(--red); }
     .nav-cta { background:var(--red); color:#fff !important; padding:0.5rem 1.1rem; border-radius:8px; opacity:1 !important; font-weight:600; }
+    .lang-form { display:inline-block; margin-left:1.25rem; }
+    .lang-select { font-size:0.85rem; padding:0.35rem 0.5rem; border:1px solid rgba(15,15,16,0.15); border-radius:7px; background:#fff; font-family:inherit; cursor:pointer; color:var(--ink); }
     .nav-cta:hover { background:var(--deep-red); color:#fff !important; }
     main { flex:1; display:flex; flex-direction:column; align-items:center; padding:2.5rem 1.5rem; }
     .card { background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:420px; box-shadow:0 4px 24px rgba(15,15,16,0.06); }
@@ -47,17 +50,18 @@
     <a href="{% url 'home' %}" class="logo">mVia</a>
     <nav>
       {% if user.is_authenticated %}
-        {% if user.is_staff %}<a href="{% url 'staff:overview' %}">Staff console</a>{% endif %}
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'directory' %}">Find a mentor</a>
-        <a href="{% url 'my_bookings' %}">My bookings</a>
-        {% if user.is_mentor %}<a href="{% url 'my_availability' %}">Availability</a>{% endif %}
-        <a href="{% url 'mentee_profile' %}">My profile</a>
-        <a href="{% url 'logout' %}">Log out</a>
+        {% if user.is_staff %}<a href="{% url 'staff:overview' %}">{% trans "Staff console" %}</a>{% endif %}
+        <a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a>
+        <a href="{% url 'directory' %}">{% trans "Find a mentor" %}</a>
+        <a href="{% url 'my_bookings' %}">{% trans "My bookings" %}</a>
+        {% if user.is_mentor %}<a href="{% url 'my_availability' %}">{% trans "Availability" %}</a>{% endif %}
+        <a href="{% url 'mentee_profile' %}">{% trans "My profile" %}</a>
+        <a href="{% url 'logout' %}">{% trans "Log out" %}</a>
       {% else %}
-        <a href="{% url 'login' %}">Log in</a>
-        <a href="{% url 'signup' %}" class="nav-cta">Sign up</a>
+        <a href="{% url 'login' %}">{% trans "Log in" %}</a>
+        <a href="{% url 'signup' %}" class="nav-cta">{% trans "Sign up" %}</a>
       {% endif %}
+      {% include "partials/_language_dropdown.html" %}
     </nav>
   </header>
   <main>

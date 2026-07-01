@@ -1,23 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Find a mentor — mVia{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Find a mentor" %} — mVia{% endblock %}
 {% block content %}
 <div class="dir-wrap">
   <div class="dir-head">
-    <h1>Find a mentor</h1>
-    <p>Browse approved mentors. {% if has_recommendations %}Mentors matching your interests are marked <span class="rec-badge">Recommended</span>.{% endif %}</p>
+    <h1>{% trans "Find a mentor" %}</h1>
+    <p>{% trans "Browse approved mentors." %} {% if has_recommendations %}{% trans "Mentors matching your interests are marked" %} <span class="rec-badge">{% trans "Recommended" %}</span>.{% endif %}</p>
   </div>
 
   <form method="get" class="dir-filters">
-    <input type="text" name="q" value="{{ query }}" placeholder="Search name, role, company…">
+    <input type="text" name="q" value="{{ query }}" placeholder="{% trans 'Search name, role, company…' %}">
     <select name="interest">
-      <option value="">All interests</option>
+      <option value="">{% trans "All interests" %}</option>
       {% for i in interests %}
         <option value="{{ i.id }}" {% if interest_id == i.id|stringformat:'s' %}selected{% endif %}>{{ i.name }}</option>
       {% endfor %}
     </select>
-    <input type="number" name="max_rate" value="{{ max_rate }}" placeholder="Max ₹" min="0">
-    <button type="submit">Filter</button>
-    {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}" class="dir-clear">Clear</a>{% endif %}
+    <input type="number" name="max_rate" value="{{ max_rate }}" placeholder="{% trans 'Max ₹' %}" min="0">
+    <button type="submit">{% trans "Filter" %}</button>
+    {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}" class="dir-clear">{% trans "Clear" %}</a>{% endif %}
   </form>
 
   {% if mentor_cards %}
@@ -32,12 +33,12 @@
             {% for s in card.specs|slice:":3" %}<span class="chip">{{ s.name }}</span>{% endfor %}
             {% if card.specs|length > 3 %}<span class="chip more">+{{ card.specs|length|add:"-3" }}</span>{% endif %}
           </div>
-          <div class="mc-rate">₹{{ card.mentor.hourly_rate }} <span>/ session</span></div>
+          <div class="mc-rate">₹{{ card.mentor.hourly_rate }} <span>/ {% trans "session" %}</span></div>
           <div class="mc-rating">
             {% if card.mentor.review_count %}
               ★ {{ card.mentor.rating_display }} <span style="opacity:0.55;">({{ card.mentor.review_count }})</span>
             {% else %}
-              <span style="opacity:0.55;">New mentor</span>
+              <span style="opacity:0.55;">{% trans "New mentor" %}</span>
             {% endif %}
           </div>
         </a>
@@ -45,8 +46,8 @@
     </div>
   {% else %}
     <div class="dir-empty">
-      <p>No mentors found{% if query or interest_id or max_rate %} for these filters{% endif %}.</p>
-      {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}">Clear filters</a>{% endif %}
+      <p>{% trans "No mentors found." %}</p>
+      {% if query or interest_id or max_rate %}<a href="{% url 'directory' %}">{% trans "Clear filters" %}</a>{% endif %}
     </div>
   {% endif %}
 </div>

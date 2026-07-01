@@ -1,40 +1,41 @@
 {% extends "base.html" %}
-{% block title %}My availability — mVia{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "My availability" %} — mVia{% endblock %}
 {% block content %}
 <div class="card" style="max-width:620px;">
-  <h1>My availability</h1>
-  <p class="sub">Publish time slots mentees can book.</p>
+  <h1>{% trans "My availability" %}</h1>
+  <p class="sub">{% trans "Publish time slots mentees can book." %}</p>
 
   <form method="post" novalidate style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:end; margin-bottom:1.5rem;">
     {% csrf_token %}
     <div style="flex:1; min-width:130px;">
-      <label>Date</label>{{ form.date }}
+      <label>{% trans "Date" %}</label>{{ form.date }}
     </div>
     <div style="flex:1; min-width:110px;">
-      <label>Start time</label>{{ form.start_time }}
+      <label>{% trans "Start time" %}</label>{{ form.start_time }}
     </div>
     <div style="flex:1; min-width:120px;">
-      <label>Duration</label>{{ form.duration_minutes }}
+      <label>{% trans "Duration" %}</label>{{ form.duration_minutes }}
     </div>
-    <button type="submit" class="btn" style="width:auto; margin-top:0;">Add slot</button>
+    <button type="submit" class="btn" style="width:auto; margin-top:0;">{% trans "Add slot" %}</button>
   </form>
   {% if form.non_field_errors %}<div class="nonfield">{{ form.non_field_errors|striptags }}</div>{% endif %}
 
-  <h2 style="font-family:'Geist',sans-serif; font-size:1.1rem; margin:1rem 0 0.5rem;">Upcoming slots</h2>
+  <h2 style="font-family:'Geist',sans-serif; font-size:1.1rem; margin:1rem 0 0.5rem;">{% trans "Upcoming slots" %}</h2>
   {% for slot in slots %}
     <div style="display:flex; justify-content:space-between; align-items:center; padding:0.7rem 0; border-bottom:1px solid rgba(15,15,16,0.08);">
       <div>
         {{ slot.start|date:"D, d M Y" }} · {{ slot.start|date:"H:i" }}–{{ slot.end|date:"H:i" }}
-        {% if slot.is_taken %}<span class="badge no" style="margin-left:0.5rem;">Booked</span>{% else %}<span class="badge yes" style="margin-left:0.5rem;">Open</span>{% endif %}
+        {% if slot.is_taken %}<span class="badge no" style="margin-left:0.5rem;">{% trans "Booked" %}</span>{% else %}<span class="badge yes" style="margin-left:0.5rem;">{% trans "Open" %}</span>{% endif %}
       </div>
       {% if not slot.is_taken %}
-      <form method="post" action="{% url 'delete_slot' slot.id %}" onsubmit="return confirm('Remove this slot?');">
-        {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">Remove</button>
+      <form method="post" action="{% url 'delete_slot' slot.id %}" onsubmit="return confirm('{% trans 'Remove this slot?' %}');">
+        {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">{% trans "Remove" %}</button>
       </form>
       {% endif %}
     </div>
   {% empty %}
-    <p style="opacity:0.6;">No upcoming slots yet. Add one above.</p>
+    <p style="opacity:0.6;">{% trans "No upcoming slots yet. Add one above." %}</p>
   {% endfor %}
 </div>
 <style>
