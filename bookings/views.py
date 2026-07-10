@@ -83,23 +83,68 @@ def pay_booking(request, booking_id):
         messages.info(request, "This booking is already processed.")
         return redirect("my_bookings")
 
-    if request.method == "POST":
-        # SAFE SIMULATION: if Razorpay isn't configured, simulate success.
-        if not settings.RAZORPAY_ENABLED:
+    # SAFE SIMULATION path (only when Razorpay keys are NOT configured).
+    if not settings.RAZORPAY_ENABLED:
+        if request.method == "POST":
             try:
                 confirm_payment(booking_id=booking.id, simulated=True)
                 messages.success(request, "Payment simulated — your booking is confirmed!")
             except BookingError as e:
                 messages.error(request, str(e))
-                return redirect("my_bookings")
             return redirect("my_bookings")
-        else:
-            # Real Razorpay verification slots in here in a later step.
-            messages.error(request, "Live payments not yet wired. Please contact support.")
+        return render(request, "bookings/pay.html", {"booking": booking, "simulated": True})
+
+    # LIVE RAZORPAY path.
+    from payments.razorpay_client import create_order, verify_payment_signature, mentee_total
+
+    # Callback POST from Razorpay Checkout (contains payment id, order id, signature).
+    if request.method == "POST":
+        rp_payment_id = request.POST.get("razorpay_payment_id", "")
+        rp_order_id = request.POST.get("razorpay_order_id", "")
+        rp_signature = request.POST.get("razorpay_signature", "")
+
+        # Verify the payment belongs to THIS booking's order.
+        payment = booking.payments.order_by("-created_at").first()
+        if not payment or payment.razorpay_order_id != rp_order_id:
+            messages.error(request, "Payment could not be matched to your booking. If money was deducted, contact support.")
             return redirect("my_bookings")
 
+        # SECURITY-CRITICAL: verify the signature before confirming anything.
+        if not verify_payment_signature(rp_order_id, rp_payment_id, rp_signature):
+            payment.status = payment.STATUS_FAILED
+            payment.save(update_fields=["status"])
+            messages.error(request, "Payment verification failed. If money was deducted, it will be auto-refunded by the bank; please contact support.")
+            return redirect("my_bookings")
+
+        try:
+            confirm_payment(
+                booking_id=booking.id, simulated=False,
+                razorpay_payment_id=rp_payment_id, razorpay_signature=rp_signature)
+            messages.success(request, "Payment successful — your booking is confirmed!")
+        except BookingError as e:
+            messages.error(request, str(e))
+        return redirect("my_bookings")
+
+    # GET: create a Razorpay order and render checkout.
+    try:
+        order = create_order(booking)
+    except Exception:
+        messages.error(request, "Could not start payment right now. Please try again in a moment.")
+        return redirect("my_bookings")
+
+    # Save the order id on the payment so we can verify the callback against it.
+    payment = booking.payments.order_by("-created_at").first()
+    if payment:
+        payment.razorpay_order_id = order["id"]
+        payment.save(update_fields=["razorpay_order_id"])
+
+    total = mentee_total(booking.amount)
     return render(request, "bookings/pay.html", {
-        "booking": booking, "simulated": not settings.RAZORPAY_ENABLED,
+        "booking": booking, "simulated": False,
+        "razorpay_key_id": settings.RAZORPAY_KEY_ID,
+        "razorpay_order_id": order["id"],
+        "amount_paise": int((total * 100)),
+        "total_rupees": total,
     })
 
 

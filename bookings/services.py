@@ -79,6 +79,7 @@ def confirm_payment(*, booking_id, simulated=True, razorpay_payment_id="", razor
         payment.is_simulated = simulated
         payment.razorpay_payment_id = razorpay_payment_id
         payment.razorpay_signature = razorpay_signature
+        payment.save(update_fields=["is_simulated", "razorpay_payment_id", "razorpay_signature"])
         payment.mark_paid()
 
     booking.status = Booking.STATUS_CONFIRMED
