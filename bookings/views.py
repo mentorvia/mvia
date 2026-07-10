@@ -128,7 +128,10 @@ def pay_booking(request, booking_id):
     # GET: create a Razorpay order and render checkout.
     try:
         order = create_order(booking)
-    except Exception:
+    except Exception as exc:
+        import logging
+        logging.getLogger("mvia.payments").exception(
+            "Razorpay order creation failed for booking %s: %s", booking.id, exc)
         messages.error(request, "Could not start payment right now. Please try again in a moment.")
         return redirect("my_bookings")
 
