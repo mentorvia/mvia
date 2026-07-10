@@ -9,19 +9,58 @@
   <div style="background:var(--beige); border-radius:11px; padding:1.25rem; margin:1rem 0; line-height:1.9;">
     <div><strong>{% trans "Mentor" %}:</strong> {{ booking.mentor.full_name }}</div>
     <div><strong>{% trans "When" %}:</strong> {{ booking.slot.start|date:"D, d M Y" }} · {{ booking.slot.start|date:"H:i" }}–{{ booking.slot.end|date:"H:i" }}</div>
-    <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700; margin-top:0.5rem;">₹{{ booking.amount }}</div>
+    {% if simulated %}
+      <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700; margin-top:0.5rem;">₹{{ booking.amount }}</div>
+    {% else %}
+      <div style="margin-top:0.5rem; font-size:0.9rem; color:var(--ink); opacity:0.75;">
+        {% trans "Session" %}: ₹{{ booking.amount }} + {% trans "platform fee" %}
+      </div>
+      <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700;">{% trans "Total" %}: ₹{{ total_rupees }}</div>
+    {% endif %}
   </div>
 
   {% if simulated %}
     <div class="msg info" style="margin-bottom:1rem;">
       💡 {% trans "Test mode: no real payment will be taken. Clicking below simulates a successful payment so you can test the flow." %}
     </div>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn">{% trans "Simulate payment & confirm" %}</button>
+    </form>
+  {% else %}
+    <button id="rzp-btn" class="btn" style="width:100%;">{% blocktrans with amt=total_rupees %}Pay ₹{{ amt }}{% endblocktrans %}</button>
+    <form id="rzp-callback-form" method="post" style="display:none;">
+      {% csrf_token %}
+      <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+      <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+      <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+    </form>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      var options = {
+        "key": "{{ razorpay_key_id }}",
+        "amount": "{{ amount_paise }}",
+        "currency": "INR",
+        "name": "mVia",
+        "description": "Mentorship session with {{ booking.mentor.full_name|escapejs }}",
+        "order_id": "{{ razorpay_order_id }}",
+        "prefill": {
+          "name": "{{ booking.mentee.full_name|escapejs }}",
+          "email": "{{ booking.mentee.email|escapejs }}"
+        },
+        "theme": { "color": "#D71920" },
+        "handler": function (response) {
+          document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+          document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+          document.getElementById('razorpay_signature').value = response.razorpay_signature;
+          document.getElementById('rzp-callback-form').submit();
+        }
+      };
+      var rzp = new Razorpay(options);
+      document.getElementById('rzp-btn').onclick = function (e) { rzp.open(); e.preventDefault(); };
+    </script>
   {% endif %}
 
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn">{% if simulated %}{% trans "Simulate payment & confirm" %}{% else %}{% blocktrans with amt=booking.amount %}Pay ₹{{ amt }}{% endblocktrans %}{% endif %}</button>
-  </form>
-  <p class="muted"><a href="{% url 'mentor_profile' booking.mentor_id %}">{% trans "Cancel" %}</a></p>
+  <p class="muted" style="margin-top:1rem;"><a href="{% url 'mentor_profile' booking.mentor_id %}">{% trans "Cancel" %}</a></p>
 </div>
 {% endblock %}
