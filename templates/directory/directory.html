@@ -44,6 +44,7 @@
         </a>
       {% endfor %}
     </div>
+    {% include "partials/_pagination.html" %}
   {% else %}
     <div class="dir-empty">
       <p>{% trans "No mentors found." %}</p>

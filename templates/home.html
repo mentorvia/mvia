@@ -213,8 +213,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
    <li><a href="#about">{% trans "About" %}</a></li>
    <li><a href="#model">{% trans "Model" %}</a></li>
    <li><a href="#journey">{% trans "Journey" %}</a></li>
-   {# HIDE-MENTORS: un-comment the line below to show Mentors in the nav once mentors are added #}
-   {# <li><a href="{% url 'directory' %}">{% trans "Mentors" %}</a></li> #}
+   <li><a href="{% url 'directory' %}">{% trans "Mentors" %}</a></li>
    <li><a href="#contact">{% trans "Contact" %}</a></li>
    {% if user.is_authenticated %}
     <li><a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a></li>
@@ -363,7 +362,6 @@ footer .f-grid-foot a:hover{color:var(--red);}
 </section>
 
 <!-- MENTORS -->
-{% comment %}HIDE-MENTORS-SECTION: to show the mentors strip again, delete this opening comment tag and the matching closing comment tag right before the FOUNDERS section.
 <section class="mentors-strip">
  <div class="wrap">
   <div class="sec-head reveal">
@@ -394,7 +392,6 @@ footer .f-grid-foot a:hover{color:var(--red);}
   </div>
  </div>
 </section>
-{% endcomment %}
 
 <!-- FOUNDERS -->
 <section class="founders-section">
