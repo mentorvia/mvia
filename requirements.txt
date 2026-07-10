@@ -9,3 +9,4 @@ Pillow==11.0.0
 resend==2.5.1
 polib>=1.2.0
 razorpay==1.4.2
+setuptools==69.5.1
