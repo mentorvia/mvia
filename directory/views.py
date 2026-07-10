@@ -78,13 +78,22 @@ def directory(request):
         mentor_links__user__mentor_profile__status=MentorProfile.STATUS_APPROVED
     ).distinct().order_by("name")
 
+    # Paginate the mentor cards (12 per page fits a 3-col grid nicely).
+    from core.pagination import paginate, querystring_without_page
+    has_recommendations = any(c["recommended"] for c in mentor_cards)
+    total_mentors = len(mentor_cards)
+    page_obj = paginate(request, mentor_cards, per_page=12)
+
     return render(request, "directory/directory.html", {
-        "mentor_cards": mentor_cards,
+        "mentor_cards": page_obj,
+        "page_obj": page_obj,
+        "qs": querystring_without_page(request),
+        "total_mentors": total_mentors,
         "query": query,
         "interest_id": interest_id,
         "max_rate": max_rate,
         "interests": interests_with_mentors,
-        "has_recommendations": any(c["recommended"] for c in mentor_cards),
+        "has_recommendations": has_recommendations,
     })
 
 

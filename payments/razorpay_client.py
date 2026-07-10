@@ -36,17 +36,27 @@ def create_order(booking):
     total = mentee_total(booking.amount)
     amount_paise = int((total * 100).to_integral_value())
     client = _client()
-    order = client.order.create({
-        "amount": amount_paise,
-        "currency": "INR",
-        "receipt": f"booking_{booking.id}",
-        "notes": {
-            "booking_id": str(booking.id),
-            "mentee": booking.mentee.email,
-            "mentor": booking.mentor.full_name,
-        },
-    })
-    return order
+    try:
+        order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "receipt": f"booking_{booking.id}",
+            "notes": {
+                "booking_id": str(booking.id),
+                "mentee": booking.mentee.email,
+                "mentor": booking.mentor.full_name,
+            },
+        })
+        return order
+    except Exception as exc:
+        import logging
+        logging.getLogger("mvia.payments").error(
+            "Razorpay create_order failed (amount_paise=%s, key_id_prefix=%s): %r",
+            amount_paise,
+            (settings.RAZORPAY_KEY_ID or "")[:12],
+            exc,
+        )
+        raise
 
 
 def verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature):
