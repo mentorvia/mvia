@@ -14,11 +14,10 @@
 </div>
 
 <div class="stat-grid">
-  {% for label, note in coming_soon_stats %}
-    <div class="stat soon">
-      <div class="num">—</div>
+  {% for label, value in live_stats %}
+    <div class="stat">
+      <div class="num">{{ value }}</div>
       <div class="label">{{ label }}</div>
-      <span class="tag">{{ note }}</span>
     </div>
   {% endfor %}
 </div>

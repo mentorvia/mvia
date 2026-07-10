@@ -6,7 +6,15 @@ from django.http import JsonResponse
 
 
 def home(request):
-    return render(request, "home.html")
+    # Show up to 4 real approved, available mentors (with photos preferred) in
+    # the "Meet our mentors" section. Falls back gracefully if there are none.
+    from profiles.models import MentorProfile
+    featured = list(
+        MentorProfile.objects.filter(
+            status=MentorProfile.STATUS_APPROVED, is_available=True
+        ).select_related("user").order_by("-id")[:4]
+    )
+    return render(request, "home.html", {"featured_mentors": featured})
 
 
 def health(request):

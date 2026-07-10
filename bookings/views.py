@@ -142,12 +142,18 @@ def pay_booking(request, booking_id):
         payment.save(update_fields=["razorpay_order_id"])
 
     total = mentee_total(booking.amount)
+    from decimal import Decimal
+    fee_rate = Decimal(str(getattr(settings, "PLATFORM_FEE_RATE", 0.20)))
+    fee_amount = (booking.amount * fee_rate).quantize(Decimal("0.01"))
+    fee_percent = int(fee_rate * 100)
     return render(request, "bookings/pay.html", {
         "booking": booking, "simulated": False,
         "razorpay_key_id": settings.RAZORPAY_KEY_ID,
         "razorpay_order_id": order["id"],
         "amount_paise": int((total * 100)),
         "total_rupees": total,
+        "fee_amount": fee_amount,
+        "fee_percent": fee_percent,
     })
 
 

@@ -24,19 +24,37 @@ def staff_required(view):
 @staff_required
 def overview(request):
     """Dashboard home: live summary stats."""
+    from decimal import Decimal
+    from django.db.models import Sum
+    from profiles.models import MentorProfile
+    from bookings.models import Booking
+    from payments.models import LedgerEntry
+
     total_users = User.objects.count()
     total_mentors = User.objects.filter(is_mentor=True).count()
     verified_users = User.objects.filter(is_email_verified=True).count()
     unverified_users = total_users - verified_users
     recent_users = User.objects.order_by("-date_joined")[:5]
 
-    # Stats that depend on features not built yet. Shown as "—" with a note,
-    # so the dashboard is honest about what's live vs. coming.
-    coming_soon_stats = [
-        ("Pending mentor approvals", "Mentor applications (next steps)"),
-        ("Total bookings", "Booking system (later step)"),
-        ("Completed sessions", "Booking system (later step)"),
-        ("Revenue", "Payments (later step)"),
+    # Real operational numbers (now that bookings + payments are live).
+    pending_approvals = MentorProfile.objects.filter(
+        status=MentorProfile.STATUS_PENDING).count()
+    total_bookings = Booking.objects.exclude(
+        status=Booking.STATUS_PENDING_PAYMENT).count()
+    completed_sessions = Booking.objects.filter(
+        status=Booking.STATUS_COMPLETED).count()
+    # mVia revenue = platform fees collected, net of refunds.
+    fees = LedgerEntry.objects.filter(
+        entry_type=LedgerEntry.TYPE_PLATFORM_FEE).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+    refunds = LedgerEntry.objects.filter(
+        entry_type=LedgerEntry.TYPE_REFUND).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+    revenue = fees + refunds  # refunds are negative
+
+    live_stats = [
+        ("Pending mentor approvals", pending_approvals),
+        ("Total bookings", total_bookings),
+        ("Completed sessions", completed_sessions),
+        ("Revenue (₹)", revenue),
     ]
 
     context = {
@@ -45,7 +63,7 @@ def overview(request):
         "verified_users": verified_users,
         "unverified_users": unverified_users,
         "recent_users": recent_users,
-        "coming_soon_stats": coming_soon_stats,
+        "live_stats": live_stats,
         "active_nav": "overview",
     }
     return render(request, "dashboard/overview.html", context)

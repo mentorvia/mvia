@@ -129,6 +129,7 @@ section{padding:5rem 0;}
 .mentor-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;}
 .mentor-tile{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4;display:block;}
 .mentor-tile img{width:100%;height:100%;object-fit:cover;}
+.mentor-tile-ph{width:100%;height:100%;background:linear-gradient(135deg,var(--deep-red),var(--red));color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Geist',sans-serif;font-weight:700;font-size:3.5rem;}
 .mentor-tile .info{position:absolute;bottom:0;left:0;right:0;padding:1.5rem 1rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,0.85));}
 .mentor-tile h4{color:#fff;font-size:1.05rem;}
 .mentor-tile span{color:rgba(255,255,255,0.7);font-size:0.82rem;}
@@ -370,25 +371,21 @@ footer .f-grid-foot a:hover{color:var(--red);}
    <p>A curated network of executives, founders, and senior practitioners — each personally vetted before joining mVia.</p>
   </div>
   <div class="mentor-row reveal reveal-d2">
-   <a href="{% url 'directory' %}" class="mentor-tile">
-    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="Mentor">
-    <div class="info"><h4>Patil M S</h4><span>IT Infra · 30 years</span></div>
+   {% for m in featured_mentors %}
+   <a href="{% url 'mentor_profile' m.user_id %}" class="mentor-tile">
+    {% if m.display_photo %}
+      <img src="{{ m.display_photo }}" alt="{{ m.user.full_name }}">
+    {% else %}
+      <div class="mentor-tile-ph">{{ m.user.get_short_name|first|upper }}</div>
+    {% endif %}
+    <div class="info"><h4>{{ m.user.full_name }}</h4><span>{{ m.current_role }}{% if m.years_experience %} · {{ m.years_experience }} {% trans "years" %}{% endif %}</span></div>
    </a>
-   <a href="{% url 'directory' %}" class="mentor-tile">
-    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80" alt="Mentor">
-    <div class="info"><h4>Christina Sunil</h4><span>Bio Medical · 2 years</span></div>
-   </a>
-   <a href="{% url 'directory' %}" class="mentor-tile">
-    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" alt="Mentor">
-    <div class="info"><h4>Madhu M S</h4><span>IT Infra · 28 years</span></div>
-   </a>
-   <a href="{% url 'directory' %}" class="mentor-tile">
-    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80" alt="Mentor">
-    <div class="info"><h4>Udaya Joisa</h4><span>Technology · 37 years</span></div>
-   </a>
+   {% empty %}
+   <p style="color:rgba(255,255,255,0.6); grid-column:1/-1;">{% trans "Our mentor network is growing — check back soon." %}</p>
+   {% endfor %}
   </div>
   <div class="mentors-cta">
-   <a href="{% url 'directory' %}" class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,0.3);">Browse all mentors</a>
+   <a href="{% url 'directory' %}" class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,0.3);">{% trans "Browse all mentors" %}</a>
   </div>
  </div>
 </section>

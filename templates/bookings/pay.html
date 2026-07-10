@@ -12,10 +12,17 @@
     {% if simulated %}
       <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700; margin-top:0.5rem;">₹{{ booking.amount }}</div>
     {% else %}
-      <div style="margin-top:0.5rem; font-size:0.9rem; color:var(--ink); opacity:0.75;">
-        {% trans "Session" %}: ₹{{ booking.amount }} + {% trans "platform fee" %}
+      <div style="margin-top:0.75rem; border-top:1px solid rgba(15,15,16,0.1); padding-top:0.75rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-bottom:0.3rem;">
+          <span>{% trans "Session fee" %}</span><span>₹{{ booking.amount }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-bottom:0.5rem; color:var(--ink); opacity:0.75;">
+          <span>{% blocktrans %}Platform fee ({{ fee_percent }}%){% endblocktrans %}</span><span>₹{{ fee_amount }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:1.25rem; font-family:'Geist',sans-serif; font-weight:700; border-top:1px solid rgba(15,15,16,0.1); padding-top:0.5rem;">
+          <span>{% trans "Total payable" %}</span><span>₹{{ total_rupees }}</span>
+        </div>
       </div>
-      <div style="font-size:1.3rem; font-family:'Geist',sans-serif; font-weight:700;">{% trans "Total" %}: ₹{{ total_rupees }}</div>
     {% endif %}
   </div>
 
