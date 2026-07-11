@@ -85,20 +85,25 @@
 
       {% if user.is_authenticated and user.id == mentor_user.id %}
         <p class="mp-note">{% trans "This is your profile." %}</p>
-      {% elif bookable_slots %}
-        <div class="mp-slots-label">{% trans "Available times" %}</div>
-        <div class="mp-slots">
-          {% for slot in bookable_slots %}
-            {% if user.is_authenticated %}
-              <form method="post" action="{% url 'book_slot' slot.id %}">
-                {% csrf_token %}
-                <button type="submit" class="mp-slot">{{ slot.start|date:"D d M" }} · {{ slot.start|date:"H:i" }}</button>
-              </form>
-            {% else %}
-              <a href="{% url 'login' %}" class="mp-slot">{{ slot.start|date:"D d M" }} · {{ slot.start|date:"H:i" }}</a>
-            {% endif %}
-          {% endfor %}
+      {% elif slots_by_day %}
+        <div class="mp-slots-label">{% trans "Pick a time" %}</div>
+        {% for day, day_slots in slots_by_day %}
+        <div class="mp-day">
+          <div class="mp-day-label">{{ day|date:"l, d M" }}</div>
+          <div class="mp-slots">
+            {% for slot in day_slots %}
+              {% if user.is_authenticated %}
+                <form method="post" action="{% url 'book_slot' slot.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="mp-slot">{{ slot.start|date:"H:i" }}</button>
+                </form>
+              {% else %}
+                <a href="{% url 'login' %}" class="mp-slot">{{ slot.start|date:"H:i" }}</a>
+              {% endif %}
+            {% endfor %}
+          </div>
         </div>
+        {% endfor %}
         {% if not user.is_authenticated %}<p class="mp-note">{% trans "Log in to book." %}</p>{% endif %}
       {% else %}
         <p class="mp-note">{% trans "No open slots right now. Check back soon." %}</p>
@@ -149,7 +154,9 @@
   .mp-per { font-family:'Inter',sans-serif; font-weight:400; font-size:0.85rem; opacity:0.55; margin-left:0.25rem; }
   .mp-gst { font-size:0.78rem; opacity:0.6; margin-top:0.15rem; margin-bottom:1.25rem; }
   .mp-slots-label { font-size:0.75rem; font-weight:600; opacity:0.55; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.6rem; }
-  .mp-slots { display:flex; flex-direction:column; gap:0.45rem; }
+  .mp-day { margin-bottom:0.9rem; }
+  .mp-day-label { font-size:0.82rem; font-weight:600; opacity:0.75; margin-bottom:0.4rem; }
+  .mp-slots { display:flex; flex-wrap:wrap; gap:0.45rem; }
   .mp-slot { display:block; width:100%; background:var(--beige); border:1px solid rgba(15,15,16,0.1); border-radius:9px; padding:0.65rem; font-size:0.88rem; font-family:inherit; cursor:pointer; text-decoration:none; color:var(--ink); text-align:center; }
   .mp-slot:hover { border-color:var(--red); color:var(--red); }
   .mp-note { font-size:0.82rem; opacity:0.6; margin-top:0.5rem; }

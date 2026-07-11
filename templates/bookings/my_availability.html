@@ -2,46 +2,100 @@
 {% load i18n %}
 {% block title %}{% trans "My availability" %} — mVia{% endblock %}
 {% block content %}
-<div class="card" style="max-width:620px;">
+<div class="avail-wrap">
   <h1>{% trans "My availability" %}</h1>
-  <p class="sub">{% trans "Publish time slots mentees can book." %}</p>
+  <p class="sub">{% trans "Set your usual weekly times, then confirm which slots you can actually do over the next 2 weeks." %}</p>
 
-  <form method="post" novalidate style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:end; margin-bottom:1.5rem;">
-    {% csrf_token %}
-    <div style="flex:1; min-width:130px;">
-      <label>{% trans "Date" %}</label>{{ form.date }}
-    </div>
-    <div style="flex:1; min-width:110px;">
-      <label>{% trans "Start time" %}</label>{{ form.start_time }}
-    </div>
-    <div style="flex:1; min-width:120px;">
-      <label>{% trans "Duration" %}</label>{{ form.duration_minutes }}
-    </div>
-    <button type="submit" class="btn" style="width:auto; margin-top:0;">{% trans "Add slot" %}</button>
-  </form>
-  {% if form.non_field_errors %}<div class="nonfield">{{ form.non_field_errors|striptags }}</div>{% endif %}
+  <!-- STEP 1: Weekly pattern -->
+  <div class="av-card">
+    <h2>{% trans "1. Your weekly availability" %}</h2>
+    <p class="av-hint">{% trans "Add the days and times you're usually free. Sessions are 60 minutes." %}</p>
 
-  <h2 style="font-family:'Geist',sans-serif; font-size:1.1rem; margin:1rem 0 0.5rem;">{% trans "Upcoming slots" %}</h2>
-  {% for slot in slots %}
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.7rem 0; border-bottom:1px solid rgba(15,15,16,0.08);">
-      <div>
-        {{ slot.start|date:"D, d M Y" }} · {{ slot.start|date:"H:i" }}–{{ slot.end|date:"H:i" }}
-        {% if slot.is_taken %}<span class="badge no" style="margin-left:0.5rem;">{% trans "Booked" %}</span>{% else %}<span class="badge yes" style="margin-left:0.5rem;">{% trans "Open" %}</span>{% endif %}
+    <form method="post" class="av-pattern-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_pattern">
+      <select name="weekday" required>
+        {% for val, label in weekday_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+      </select>
+      <input type="time" name="start_time" required>
+      <button type="submit" class="btn-sm">{% trans "Add" %}</button>
+    </form>
+
+    {% if patterns %}
+    <div class="av-pattern-list">
+      {% for p in patterns %}
+      <div class="av-pattern-chip">
+        <span>{{ p.get_weekday_display }} · {{ p.start_time|time:"H:i" }}</span>
+        <form method="post" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="remove_pattern">
+          <input type="hidden" name="pattern_id" value="{{ p.id }}">
+          <button type="submit" class="av-x" title="{% trans 'Remove' %}">×</button>
+        </form>
       </div>
-      {% if not slot.is_taken %}
-      <form method="post" action="{% url 'delete_slot' slot.id %}" onsubmit="return confirm('{% trans 'Remove this slot?' %}');">
-        {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">{% trans "Remove" %}</button>
-      </form>
-      {% endif %}
+      {% endfor %}
     </div>
-  {% empty %}
-    <p style="opacity:0.6;">{% trans "No upcoming slots yet. Add one above." %}</p>
-  {% endfor %}
+    <form method="post" style="margin-top:1rem;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="generate">
+      <button type="submit" class="btn">{% trans "Generate slots for next 2 weeks →" %}</button>
+    </form>
+    {% else %}
+    <p class="av-empty">{% trans "No weekly times yet. Add one above to get started." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- STEP 2: Confirm the next 2 weeks -->
+  <div class="av-card">
+    <h2>{% trans "2. Confirm your next 2 weeks" %}</h2>
+    <p class="av-hint">{% trans "Tick the slots you can do. Untick any you can't (travel, holidays). Only ticked slots are shown to mentees." %}</p>
+
+    {% if slots_by_day %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="confirm_slots">
+      {% for day, day_slots in slots_by_day %}
+      <div class="av-day">
+        <div class="av-day-label">{{ day|date:"l, d M Y" }}</div>
+        <div class="av-slot-grid">
+          {% for slot in day_slots %}
+          <label class="av-slot {% if slot.is_taken %}booked{% endif %}">
+            <input type="checkbox" name="confirm" value="{{ slot.id }}"
+                   {% if slot.is_confirmed %}checked{% endif %}
+                   {% if slot.is_taken %}disabled checked{% endif %}>
+            <span>{{ slot.start|date:"H:i" }}{% if slot.is_taken %} · {% trans "booked" %}{% endif %}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn" style="margin-top:1.25rem;">{% trans "Save my availability" %}</button>
+    </form>
+    {% else %}
+    <p class="av-empty">{% trans "No upcoming slots. Add weekly times above and click 'Generate slots'." %}</p>
+    {% endif %}
+  </div>
 </div>
+
 <style>
-  .card input, .card select { width:100%; padding:0.6rem 0.7rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; font-family:inherit; font-size:0.92rem; }
-  .card label { font-size:0.82rem; font-weight:600; margin-bottom:0.3rem; display:block; }
-  .badge { font-size:0.72rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:99px; }
-  .badge.yes { background:#e7f6ec; color:#1a7f37; } .badge.no { background:#fdeaea; color:var(--deep-red); }
+  .avail-wrap { max-width:720px; margin:0 auto; }
+  .avail-wrap h1 { font-family:'Geist',sans-serif; font-size:2rem; letter-spacing:-0.02em; }
+  .avail-wrap .sub { opacity:0.65; margin-bottom:1.5rem; }
+  .av-card { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; padding:1.5rem; margin-bottom:1.5rem; }
+  .av-card h2 { font-family:'Geist',sans-serif; font-size:1.2rem; margin-bottom:0.3rem; }
+  .av-hint { font-size:0.88rem; opacity:0.6; margin-bottom:1rem; }
+  .av-pattern-form { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .av-pattern-form select, .av-pattern-form input { padding:0.55rem 0.7rem; border:1px solid rgba(15,15,16,0.15); border-radius:8px; font-family:inherit; font-size:0.92rem; }
+  .btn-sm { padding:0.55rem 1.1rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .av-pattern-list { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem; }
+  .av-pattern-chip { display:flex; align-items:center; gap:0.4rem; background:var(--beige); border-radius:99px; padding:0.35rem 0.4rem 0.35rem 0.9rem; font-size:0.88rem; font-weight:500; }
+  .av-x { background:none; border:none; cursor:pointer; font-size:1.1rem; line-height:1; color:var(--deep-red); padding:0 0.3rem; }
+  .av-empty { opacity:0.55; font-size:0.9rem; }
+  .av-day { margin-bottom:1.1rem; }
+  .av-day-label { font-weight:600; font-size:0.9rem; margin-bottom:0.5rem; padding-bottom:0.3rem; border-bottom:1px solid rgba(15,15,16,0.08); }
+  .av-slot-grid { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .av-slot { display:flex; align-items:center; gap:0.4rem; border:1px solid rgba(15,15,16,0.15); border-radius:8px; padding:0.45rem 0.7rem; cursor:pointer; font-size:0.9rem; }
+  .av-slot:hover { border-color:var(--red); }
+  .av-slot.booked { background:var(--beige); opacity:0.7; cursor:not-allowed; }
 </style>
 {% endblock %}
