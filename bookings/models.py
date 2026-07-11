@@ -19,11 +19,47 @@ from django.db import models
 from django.utils import timezone
 
 
+class WeeklyAvailability(models.Model):
+    """
+    A mentor's recurring weekly availability pattern: for a given weekday, a
+    start time at which a fixed-length session can begin. The mentor sets these
+    once; the system uses them to pre-fill the rolling 2-week confirmation view,
+    from which concrete AvailabilitySlots are generated.
+
+    Example: (mentor=Arjun, weekday=2 [Wed], start_time=18:00) means "Arjun is
+    generally free Wednesdays at 6pm."
+    """
+    WEEKDAYS = [
+        (0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"),
+        (4, "Friday"), (5, "Saturday"), (6, "Sunday"),
+    ]
+    mentor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="weekly_availability")
+    weekday = models.IntegerField(choices=WEEKDAYS)
+    start_time = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["weekday", "start_time"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["mentor", "weekday", "start_time"],
+                name="unique_mentor_weekday_time"),
+        ]
+
+    def __str__(self):
+        return f"{self.mentor.get_short_name()} · {self.get_weekday_display()} {self.start_time:%H:%M}"
+
+
 class AvailabilitySlot(models.Model):
     mentor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="availability_slots")
     start = models.DateTimeField()
     end = models.DateTimeField()
+    # In the weekly-pattern model, generated slots must be CONFIRMED by the
+    # mentor (in the 2-week view) before mentees can see/book them. Slots the
+    # mentor unchecks (travel/holiday) simply aren't confirmed.
+    is_confirmed = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -46,7 +82,7 @@ class AvailabilitySlot(models.Model):
 
     @property
     def is_bookable(self):
-        return (not self.is_past) and (not self.is_taken)
+        return (not self.is_past) and (not self.is_taken) and self.is_confirmed
 
     def __str__(self):
         return f"{self.mentor.get_short_name()} · {self.start:%d %b %Y %H:%M}"

@@ -424,3 +424,66 @@ def open_slots_for_mentor(mentor, exclude_booking=None):
     qs = AvailabilitySlot.objects.filter(mentor=mentor, start__gt=now).exclude(
         pk__in=list(taken_slot_ids)).order_by("start")
     return qs
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Weekly availability → generated slots (Calendly-style)
+# ──────────────────────────────────────────────────────────────────────────
+
+def generate_slots_from_pattern(mentor, days=None):
+    """
+    For each WeeklyAvailability entry, ensure a concrete AvailabilitySlot exists
+    for every matching date in the rolling window. Newly generated slots start
+    UNCONFIRMED (the mentor confirms them in the 2-week view). Existing slots
+    (confirmed or booked) are left untouched. Idempotent.
+    """
+    from datetime import timedelta, datetime
+    from django.conf import settings
+    from .models import WeeklyAvailability, AvailabilitySlot
+
+    days = days or getattr(settings, "BOOKING_WINDOW_DAYS", 14)
+    session_len = getattr(settings, "SESSION_LENGTH_MINUTES", 60)
+    patterns = list(WeeklyAvailability.objects.filter(mentor=mentor))
+    if not patterns:
+        return 0
+
+    now = timezone.now()
+    today = timezone.localdate()
+    created = 0
+
+    for offset in range(days + 1):
+        the_date = today + timedelta(days=offset)
+        weekday = the_date.weekday()  # Mon=0 .. Sun=6
+        for pat in patterns:
+            if pat.weekday != weekday:
+                continue
+            # Build a timezone-aware start datetime for this date + pattern time.
+            naive_start = datetime.combine(the_date, pat.start_time)
+            start_dt = timezone.make_aware(naive_start, timezone.get_current_timezone())
+            if start_dt <= now:
+                continue  # don't generate past slots
+            end_dt = start_dt + timedelta(minutes=session_len)
+            # Create only if a slot at this exact start doesn't already exist.
+            slot, was_created = AvailabilitySlot.objects.get_or_create(
+                mentor=mentor, start=start_dt,
+                defaults={"end": end_dt, "is_confirmed": False})
+            if was_created:
+                created += 1
+    return created
+
+
+def confirmable_slots(mentor, days=None):
+    """
+    The slots shown in the mentor's rolling confirmation view: all future slots
+    within the window, whether confirmed or not, that aren't already booked.
+    """
+    from datetime import timedelta
+    from django.conf import settings
+    from .models import AvailabilitySlot
+
+    days = days or getattr(settings, "BOOKING_WINDOW_DAYS", 14)
+    now = timezone.now()
+    horizon = now + timedelta(days=days + 1)
+    return AvailabilitySlot.objects.filter(
+        mentor=mentor, start__gt=now, start__lte=horizon
+    ).order_by("start")

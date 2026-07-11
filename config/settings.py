@@ -173,6 +173,10 @@ PLATFORM_FEE_RATE = float(env("PLATFORM_FEE_RATE", "0.20"))
 # expires it and frees the slot. Minutes.
 BOOKING_EXPIRY_MINUTES = int(env("BOOKING_EXPIRY_MINUTES", "30"))
 
+# Availability model: fixed session length and how far ahead mentees can book.
+SESSION_LENGTH_MINUTES = int(env("SESSION_LENGTH_MINUTES", "60"))
+BOOKING_WINDOW_DAYS = int(env("BOOKING_WINDOW_DAYS", "14"))
+
 
 # --- Static files (CSS, JavaScript, images) ---
 STATIC_URL = "static/"

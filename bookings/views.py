@@ -7,12 +7,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from .models import AvailabilitySlot, Booking
-from .forms import SlotForm
 from .services import create_booking, confirm_payment, cancel_booking, complete_booking, BookingError
 from profiles.models import MentorProfile
 
 
-# ---------- Mentor: manage availability ----------
+# ---------- Mentor: manage availability (weekly pattern + rolling confirm) ----------
 
 @login_required
 def my_availability(request):
@@ -20,38 +19,65 @@ def my_availability(request):
         messages.error(request, "Only approved mentors can set availability.")
         return redirect("dashboard")
 
+    from .models import WeeklyAvailability
+    from .services import generate_slots_from_pattern, confirmable_slots
+
     if request.method == "POST":
-        form = SlotForm(request.POST)
-        if form.is_valid():
+        action = request.POST.get("action")
+
+        # 1) Add a weekly pattern entry (weekday + start time).
+        if action == "add_pattern":
+            weekday = request.POST.get("weekday")
+            start_time = request.POST.get("start_time")
             try:
-                AvailabilitySlot.objects.create(
-                    mentor=request.user,
-                    start=form.cleaned_data["start_dt"],
-                    end=form.cleaned_data["end_dt"],
-                )
-                messages.success(request, "Slot added.")
+                WeeklyAvailability.objects.get_or_create(
+                    mentor=request.user, weekday=int(weekday), start_time=start_time)
+                messages.success(request, "Added to your weekly availability.")
             except Exception:
-                messages.error(request, "You already have a slot at that time.")
+                messages.error(request, "Couldn't add that — check the day and time.")
             return redirect("my_availability")
-    else:
-        form = SlotForm()
 
-    upcoming = request.user.availability_slots.filter(start__gt=timezone.now()).order_by("start")
+        # 2) Remove a weekly pattern entry.
+        if action == "remove_pattern":
+            WeeklyAvailability.objects.filter(
+                pk=request.POST.get("pattern_id"), mentor=request.user).delete()
+            messages.success(request, "Removed from your weekly availability.")
+            return redirect("my_availability")
+
+        # 3) Generate slots for the next 2 weeks from the pattern.
+        if action == "generate":
+            n = generate_slots_from_pattern(request.user)
+            messages.success(request, f"Generated {n} new slot(s) for the next 2 weeks. Confirm the ones you can do below.")
+            return redirect("my_availability")
+
+        # 4) Confirm/unconfirm slots (the 2-week checkbox view).
+        if action == "confirm_slots":
+            confirmed_ids = set(request.POST.getlist("confirm"))
+            slots = confirmable_slots(request.user)
+            for slot in slots:
+                if slot.is_taken:
+                    continue  # never touch booked slots
+                should_be = str(slot.id) in confirmed_ids
+                if slot.is_confirmed != should_be:
+                    slot.is_confirmed = should_be
+                    slot.save(update_fields=["is_confirmed"])
+            messages.success(request, "Your availability for the next 2 weeks is updated.")
+            return redirect("my_availability")
+
+    patterns = WeeklyAvailability.objects.filter(mentor=request.user)
+    slots = confirmable_slots(request.user)
+
+    # Group slots by date for a clean day-by-day view.
+    from itertools import groupby
+    slots_by_day = []
+    for day, day_slots in groupby(slots, key=lambda s: timezone.localtime(s.start).date()):
+        slots_by_day.append((day, list(day_slots)))
+
     return render(request, "bookings/my_availability.html", {
-        "form": form, "slots": upcoming,
+        "patterns": patterns,
+        "weekday_choices": WeeklyAvailability.WEEKDAYS,
+        "slots_by_day": slots_by_day,
     })
-
-
-@login_required
-def delete_slot(request, slot_id):
-    slot = get_object_or_404(AvailabilitySlot, pk=slot_id, mentor=request.user)
-    if request.method == "POST":
-        if slot.is_taken:
-            messages.error(request, "Can't delete — this slot is booked.")
-        else:
-            slot.delete()
-            messages.success(request, "Slot removed.")
-    return redirect("my_availability")
 
 
 # ---------- Mentee: book a slot ----------
