@@ -39,8 +39,9 @@ def overview(request):
     # Real operational numbers (now that bookings + payments are live).
     pending_approvals = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_PENDING).count()
-    total_bookings = Booking.objects.exclude(
-        status=Booking.STATUS_PENDING_PAYMENT).count()
+    # "Total bookings" = real paid bookings (confirmed or completed only).
+    total_bookings = Booking.objects.filter(
+        status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED]).count()
     completed_sessions = Booking.objects.filter(
         status=Booking.STATUS_COMPLETED).count()
     # mVia revenue = platform fees collected, net of refunds.

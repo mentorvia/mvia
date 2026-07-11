@@ -103,14 +103,19 @@ def mentor_profile(request, user_id):
         MentorProfile, user=user, status=MentorProfile.STATUS_APPROVED)
     specs = [mi.interest for mi in
              MentorInterest.objects.filter(user=user).select_related("interest")]
-    # Open, future slots the mentee can book.
+    # Open, future, confirmed slots the mentee can book, grouped by day.
     from bookings.models import AvailabilitySlot
     from django.utils import timezone
-    slots = [s for s in AvailabilitySlot.objects.filter(
+    from itertools import groupby
+    open_slots = [s for s in AvailabilitySlot.objects.filter(
         mentor=user, start__gt=timezone.now()).order_by("start") if s.is_bookable]
+    slots_by_day = []
+    for day, day_slots in groupby(open_slots, key=lambda s: timezone.localtime(s.start).date()):
+        slots_by_day.append((day, list(day_slots)))
     return render(request, "directory/mentor_profile.html", {
         "mentor": mentor, "mentor_user": user, "specs": specs,
-        "bookable_slots": slots,
+        "bookable_slots": open_slots,
+        "slots_by_day": slots_by_day,
         "expertise_points": mentor.expertise_points,
         "focus_points": mentor.focus_points,
     })
