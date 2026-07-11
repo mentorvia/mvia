@@ -84,6 +84,12 @@ def booking_detail(request, booking_id):
         return redirect("staff:booking_detail", booking_id=booking.id)
 
     from .services import open_slots_for_mentor
+    if request.method == "POST" and request.POST.get("action") == "set_meet_link":
+        from .services import set_meet_link
+        set_meet_link(booking_id=booking.id, link=request.POST.get("meet_link", ""), actor=request.user)
+        messages.success(request, "Meeting link updated.")
+        return redirect("staff:booking_detail", booking_id=booking.id)
+
     reschedule_slots = (
         open_slots_for_mentor(booking.mentor, exclude_booking=booking)
         if booking.status == Booking.STATUS_CONFIRMED else None)

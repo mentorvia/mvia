@@ -8,7 +8,7 @@ from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
 from bookings.services import (
-    create_booking, confirm_payment,
+    create_booking, confirm_payment, approve_booking,
     expire_unpaid_bookings, auto_complete_past_sessions, send_due_reminders,
     run_scheduled_tasks,
 )
@@ -58,6 +58,7 @@ class ExpireUnpaidTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(days=2))
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         Booking.objects.filter(pk=b.pk).update(
             created_at=timezone.now() - timedelta(minutes=90))
         expire_unpaid_bookings()
@@ -71,6 +72,7 @@ class AutoCompleteTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(days=1))
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         # move the slot into the past
         AvailabilitySlot.objects.filter(pk=slot.pk).update(
             start=timezone.now() - timedelta(hours=2),
@@ -86,6 +88,7 @@ class AutoCompleteTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(days=1))
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         n = auto_complete_past_sessions()
         b.refresh_from_db()
         self.assertEqual(n, 0)
@@ -96,6 +99,7 @@ class AutoCompleteTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(days=1))
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         AvailabilitySlot.objects.filter(pk=slot.pk).update(
             start=timezone.now() - timedelta(hours=2), end=timezone.now() - timedelta(hours=1))
         self.assertEqual(auto_complete_past_sessions(), 1)
@@ -109,6 +113,7 @@ class ReminderTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(hours=20))  # within 24h
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         r1 = send_due_reminders()
         self.assertEqual(r1["sent_24h"], 1)
         b.refresh_from_db()
@@ -123,6 +128,7 @@ class ReminderTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(minutes=45))  # within 1h
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         r = send_due_reminders()
         self.assertEqual(r["sent_1h"], 1)
 
@@ -132,6 +138,7 @@ class ReminderTest(TestCase):
         slot = make_slot(mentor, timezone.now() + timedelta(days=5))
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         r = send_due_reminders()
         self.assertEqual(r["sent_24h"], 0)
         self.assertEqual(r["sent_1h"], 0)
@@ -152,6 +159,7 @@ class RunAllTest(TestCase):
         # one past confirmed -> completes; one soon -> reminder
         s1 = make_slot(mentor, timezone.now() + timedelta(days=1))
         b1 = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b1.id)
+        approve_booking(booking_id=b1.id, actor=b1.mentor)
         AvailabilitySlot.objects.filter(pk=s1.pk).update(
             start=timezone.now() - timedelta(hours=2), end=timezone.now() - timedelta(hours=1))
         result = run_scheduled_tasks()

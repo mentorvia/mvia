@@ -26,11 +26,14 @@ def send_email(*, to_email, subject, body, template_name, related_booking=None):
     """
     from .models import EmailLog
 
+    # Accept either a Booking object or a raw id; store the id (BigIntegerField).
+    booking_id = getattr(related_booking, "id", related_booking)
+
     log = EmailLog.objects.create(
         recipient=to_email,
         template=template_name,
         subject=subject,
-        related_booking=related_booking,
+        related_booking=booking_id,
         status=EmailLog.STATUS_PENDING,
     )
 

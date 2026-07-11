@@ -8,6 +8,7 @@ from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
 from bookings.services import create_booking, confirm_payment, record_refund, cancel_booking, BookingError
+from bookings.services import approve_booking
 from payments.models import LedgerEntry
 
 
@@ -30,6 +31,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking(rate=2000)
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         entries = {e.entry_type: e.amount for e in b.ledger_entries.all()}
         self.assertEqual(entries["booking_payment"], Decimal("2400.00"))  # 2000 + 20%
         self.assertEqual(entries["platform_fee"], Decimal("400.00"))
@@ -44,6 +46,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking(rate=2000)
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         record_refund(booking_id=b.id, actor=mentor, reason="Mentor unavailable", reference="rzp_123")
         b.refresh_from_db()
         self.assertTrue(b.is_refunded)
@@ -61,6 +64,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking()
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         record_refund(booking_id=b.id, actor=mentor, reason="once")
         with self.assertRaises(BookingError):
             record_refund(booking_id=b.id, actor=mentor, reason="twice")
@@ -69,6 +73,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking()
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         with self.assertRaises(BookingError):
             record_refund(booking_id=b.id, actor=mentor, reason="   ")
 
@@ -78,6 +83,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking()
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         count_before = LedgerEntry.objects.count()
         record_refund(booking_id=b.id, actor=mentor, reason="test")
         # refund ADDS an entry, never removes
@@ -87,6 +93,7 @@ class LedgerTest(TestCase):
         mentor, mentee, slot = setup_booking(rate=2000)
         b = create_booking(mentee=mentee, slot_id=slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=b.mentor)
         record_refund(booking_id=b.id, actor=mentor, reason="cancelled")
         # earnings report filters is_refunded=False
         owed = LedgerEntry.objects.filter(
@@ -100,6 +107,7 @@ class StaffRefundViewTest(TestCase):
         self.mentor, self.mentee, self.slot = setup_booking(rate=2000)
         self.b = create_booking(mentee=self.mentee, slot_id=self.slot.id)
         confirm_payment(booking_id=self.b.id)
+        approve_booking(booking_id=self.b.id, actor=self.b.mentor)
         self.client.login(username="admin@mvia.in", password="Admin!2345")
 
     def test_staff_can_record_refund(self):

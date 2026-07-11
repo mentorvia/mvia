@@ -8,6 +8,7 @@ from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
 from bookings.services import create_booking, confirm_payment, complete_booking, record_refund
+from bookings.services import approve_booking
 from payments.models import LedgerEntry, Payout
 
 
@@ -21,6 +22,7 @@ def make_completed_booking(mentor, mentee_email, rate_slot_offset_days=1):
     slot = AvailabilitySlot.objects.create(mentor=mentor, start=start, end=start+timedelta(hours=1))
     b = create_booking(mentee=me, slot_id=slot.id)
     confirm_payment(booking_id=b.id)
+    approve_booking(booking_id=b.id, actor=b.mentor)
     return b
 
 

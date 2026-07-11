@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from .models import AvailabilitySlot, Booking
-from .services import create_booking, confirm_payment, cancel_booking, complete_booking, BookingError
+from .services import create_booking, confirm_payment, confirm_payment_and_notify, cancel_booking, complete_booking, BookingError
 from profiles.models import MentorProfile
 
 
@@ -113,7 +113,7 @@ def pay_booking(request, booking_id):
     if not settings.RAZORPAY_ENABLED:
         if request.method == "POST":
             try:
-                confirm_payment(booking_id=booking.id, simulated=True)
+                confirm_payment_and_notify(booking_id=booking.id, simulated=True)
                 messages.success(request, "Payment simulated — your booking is confirmed!")
             except BookingError as e:
                 messages.error(request, str(e))
@@ -143,7 +143,7 @@ def pay_booking(request, booking_id):
             return redirect("my_bookings")
 
         try:
-            confirm_payment(
+            confirm_payment_and_notify(
                 booking_id=booking.id, simulated=False,
                 razorpay_payment_id=rp_payment_id, razorpay_signature=rp_signature)
             messages.success(request, "Payment successful — your booking is confirmed!")
@@ -251,3 +251,61 @@ def reschedule(request, booking_id):
     return render(request, "bookings/reschedule.html", {
         "booking": booking, "slots": slots,
     })
+
+
+# ---------- Mentor: approve / decline / suggest ----------
+
+@login_required
+def approve(request, booking_id):
+    from .services import approve_booking
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        try:
+            approve_booking(booking_id=booking.id, actor=request.user)
+            messages.success(request, "Session approved and confirmed.")
+        except BookingError as e:
+            messages.error(request, str(e))
+    return redirect("my_bookings")
+
+
+@login_required
+def decline(request, booking_id):
+    from .services import decline_booking
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        try:
+            decline_booking(booking_id=booking.id, actor=request.user,
+                            reason=request.POST.get("reason", ""))
+            messages.success(request, "Session declined — the mentee will be refunded.")
+        except BookingError as e:
+            messages.error(request, str(e))
+    return redirect("my_bookings")
+
+
+@login_required
+def suggest_time(request, booking_id):
+    from .services import suggest_new_slot, open_slots_for_mentor
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        try:
+            suggest_new_slot(booking_id=booking.id,
+                             new_slot_id=request.POST.get("new_slot_id"), actor=request.user)
+            messages.success(request, "Suggested a new time — the mentee will be notified.")
+            return redirect("my_bookings")
+        except BookingError as e:
+            messages.error(request, str(e))
+    slots = open_slots_for_mentor(request.user, exclude_booking=booking)
+    return render(request, "bookings/suggest_time.html", {"booking": booking, "slots": slots})
+
+
+@login_required
+def accept_suggestion(request, booking_id):
+    from .services import accept_suggested_slot
+    booking = get_object_or_404(Booking, pk=booking_id, mentee=request.user)
+    if request.method == "POST":
+        try:
+            accept_suggested_slot(booking_id=booking.id, actor=request.user)
+            messages.success(request, "New time accepted — now awaiting mentor confirmation.")
+        except BookingError as e:
+            messages.error(request, str(e))
+    return redirect("my_bookings")

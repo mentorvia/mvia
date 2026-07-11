@@ -6,7 +6,7 @@ from accounts.models import User
 from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
-from bookings.services import create_booking, confirm_payment, cancel_booking, complete_booking, BookingError
+from bookings.services import create_booking, confirm_payment, cancel_booking, complete_booking, approve_booking, BookingError
 from payments.models import Payment
 
 
@@ -47,10 +47,15 @@ class BookingFlowTest(TestCase):
         b = create_booking(mentee=self.mentee, slot_id=self.slot.id)
         confirm_payment(booking_id=b.id, simulated=True)
         b.refresh_from_db()
-        self.assertEqual(b.status, "confirmed")
-        self.assertIsNotNone(b.confirmed_at)
+        # Payment now moves to awaiting_approval; slot is held.
+        self.assertEqual(b.status, "awaiting_approval")
         self.assertEqual(b.payments.first().status, "paid")
         self.assertTrue(self.slot.is_taken)
+        # Mentor approval confirms it.
+        approve_booking(booking_id=b.id, actor=self.mentor)
+        b.refresh_from_db()
+        self.assertEqual(b.status, "confirmed")
+        self.assertIsNotNone(b.confirmed_at)
 
     def test_cannot_book_own_slot(self):
         with self.assertRaises(BookingError):
@@ -64,7 +69,7 @@ class BookingFlowTest(TestCase):
         with self.assertRaises(BookingError):
             create_booking(mentee=other, slot_id=self.slot.id)
         # only one active booking on the slot
-        self.assertEqual(Booking.objects.filter(slot=self.slot, status="confirmed").count(), 1)
+        self.assertEqual(Booking.objects.filter(slot=self.slot, status="awaiting_approval").count(), 1)
 
     def test_concurrent_pending_then_confirm_race(self):
         # Two pending bookings exist; only the first to confirm wins.
@@ -76,7 +81,7 @@ class BookingFlowTest(TestCase):
             confirm_payment(booking_id=b2.id)
         b2.refresh_from_db()
         self.assertEqual(b2.status, "pending_payment")
-        self.assertEqual(Booking.objects.filter(slot=self.slot, status="confirmed").count(), 1)
+        self.assertEqual(Booking.objects.filter(slot=self.slot, status="awaiting_approval").count(), 1)
 
     def test_state_machine_illegal_transition(self):
         b = create_booking(mentee=self.mentee, slot_id=self.slot.id)
@@ -88,6 +93,7 @@ class BookingFlowTest(TestCase):
     def test_cancel_confirmed(self):
         b = create_booking(mentee=self.mentee, slot_id=self.slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=self.mentor)
         cancel_booking(booking_id=b.id, actor=self.mentee, reason="Conflict")
         b.refresh_from_db()
         self.assertEqual(b.status, "cancelled")
@@ -98,6 +104,7 @@ class BookingFlowTest(TestCase):
     def test_complete_after_confirm(self):
         b = create_booking(mentee=self.mentee, slot_id=self.slot.id)
         confirm_payment(booking_id=b.id)
+        approve_booking(booking_id=b.id, actor=self.mentor)
         complete_booking(booking_id=b.id)
         b.refresh_from_db()
         self.assertEqual(b.status, "completed")
@@ -130,10 +137,10 @@ class BookingViewTest(TestCase):
         self.client.get(f"/book/{self.slot.id}/", follow=True)
         b = Booking.objects.get(mentee=self.mentee)
         self.assertEqual(b.status, "pending_payment")
-        # pay (simulated) -> confirmed
+        # pay (simulated) -> awaiting mentor approval
         self.client.post(f"/pay/{b.id}/", follow=True)
         b.refresh_from_db()
-        self.assertEqual(b.status, "confirmed")
+        self.assertEqual(b.status, "awaiting_approval")
 
     def test_only_mentor_sets_availability(self):
         self.client.login(username="mentee@b.com", password="StrongPass!234")

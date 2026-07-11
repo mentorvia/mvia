@@ -56,23 +56,31 @@ def create_booking(*, mentee, slot_id):
 @transaction.atomic
 def confirm_payment(*, booking_id, simulated=True, razorpay_payment_id="", razorpay_signature=""):
     """
-    Mark a booking's payment successful and move it to confirmed. Re-checks slot
-    availability under lock to be safe. Returns the Booking.
+    Mark a booking's payment successful. Money is captured now, but the booking
+    moves to AWAITING_APPROVAL (not confirmed) — the mentor must approve within
+    48 hours. Re-checks slot availability under lock. Returns the Booking.
+
+    Note: notification email is sent by the caller AFTER this commits, so email
+    problems can never roll back a payment. Use confirm_payment_and_notify for
+    the combined behaviour.
     """
+    from datetime import timedelta
+
     booking = Booking.objects.select_for_update().select_related("slot").get(pk=booking_id)
 
     if booking.status != Booking.STATUS_PENDING_PAYMENT:
         raise BookingError("This booking is no longer awaiting payment.")
-    if not booking.can_transition_to(Booking.STATUS_CONFIRMED):
-        raise BookingError("This booking can't be confirmed.")
+    if not booking.can_transition_to(Booking.STATUS_AWAITING_APPROVAL):
+        raise BookingError("This booking can't move to approval.")
 
-    # Final guard: ensure no other confirmed booking grabbed this slot.
+    # Final guard: the slot is HELD while awaiting approval, so awaiting_approval
+    # counts as taken too.
     clash = Booking.objects.filter(
         slot=booking.slot,
-        status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
+        status__in=[Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
     ).exclude(pk=booking.pk).exists()
     if clash:
-        raise BookingError("That slot was confirmed by someone else first.")
+        raise BookingError("That slot was just taken by someone else.")
 
     payment = booking.payments.order_by("-created_at").first()
     if payment:
@@ -82,18 +90,35 @@ def confirm_payment(*, booking_id, simulated=True, razorpay_payment_id="", razor
         payment.save(update_fields=["is_simulated", "razorpay_payment_id", "razorpay_signature"])
         payment.mark_paid()
 
-    booking.status = Booking.STATUS_CONFIRMED
-    booking.confirmed_at = timezone.now()
+    booking.status = Booking.STATUS_AWAITING_APPROVAL
+    booking.approval_due_at = timezone.now() + timedelta(hours=48)
     try:
-        booking.save(update_fields=["status", "confirmed_at"])
+        booking.save(update_fields=["status", "approval_due_at"])
     except IntegrityError:
-        # The unique constraint caught a concurrent confirm — treat as clash.
-        raise BookingError("That slot was confirmed by someone else first.")
+        raise BookingError("That slot was just taken by someone else.")
 
-    # Write the money ledger entries for this confirmed payment.
-    # Our fee model: mentor keeps their full rate; mVia's fee is added on top.
-    # booking.amount is the mentor's rate (what we snapshotted at booking time).
+    # Write the money ledger entries now (payment captured).
     _write_booking_ledger(booking)
+    return booking
+
+
+def confirm_payment_and_notify(*, booking_id, simulated=True, razorpay_payment_id="", razorpay_signature=""):
+    """confirm_payment + send the mentor the 'awaiting approval' email AFTER commit."""
+    booking = confirm_payment(
+        booking_id=booking_id, simulated=simulated,
+        razorpay_payment_id=razorpay_payment_id, razorpay_signature=razorpay_signature)
+    try:
+        when = timezone.localtime(booking.slot.start).strftime("%d %b %Y at %I:%M %p")
+        _notify(
+            booking.mentor.email, "Action needed: approve your mVia session",
+            (f"Hi {booking.mentor.get_short_name()},\n\n"
+             f"{booking.mentee.full_name} has booked and paid for a session with you:\n\n"
+             f"When: {when}\n\n"
+             f"Please approve or decline within 48 hours in your mVia dashboard. "
+             f"If you can't make it, you can suggest a new time.\n\n— mVia"),
+            "booking_awaiting_approval", booking)
+    except Exception:  # noqa: BLE001
+        pass
     return booking
 
 
@@ -161,8 +186,8 @@ def record_refund(*, booking_id, actor, reason, reference=""):
 
     booking = Booking.objects.select_for_update().get(pk=booking_id)
 
-    if booking.status not in (Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED):
-        raise BookingError("Refunds apply only to paid (confirmed or completed) bookings.")
+    if booking.status not in (Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED):
+        raise BookingError("Refunds apply only to paid bookings.")
     if booking.is_refunded:
         raise BookingError("This booking has already been refunded.")
     if not reason.strip():
@@ -315,10 +340,12 @@ def _send_reminder(booking, when_label, template_name):
 def run_scheduled_tasks():
     """Run all scheduled maintenance tasks. Returns a summary dict."""
     expired = expire_unpaid_bookings()
+    auto_declined = auto_decline_expired_approvals()
     completed = auto_complete_past_sessions()
     reminders = send_due_reminders()
     return {
         "expired_unpaid": expired,
+        "auto_declined": auto_declined,
         "auto_completed": completed,
         "reminders_24h": reminders["sent_24h"],
         "reminders_1h": reminders["sent_1h"],
@@ -487,3 +514,148 @@ def confirmable_slots(mentor, days=None):
     return AvailabilitySlot.objects.filter(
         mentor=mentor, start__gt=now, start__lte=horizon
     ).order_by("start")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Mentor approval flow (session must be approved after payment)
+# ──────────────────────────────────────────────────────────────────────────
+
+def approve_booking(*, booking_id, actor):
+    """Mentor approves a paid, awaiting-approval booking -> confirmed."""
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related("slot", "mentee", "mentor").get(pk=booking_id)
+        if booking.status != Booking.STATUS_AWAITING_APPROVAL:
+            raise BookingError("This booking is not awaiting approval.")
+        booking.status = Booking.STATUS_CONFIRMED
+        booking.confirmed_at = timezone.now()
+        booking.approved_at = timezone.now()
+        booking.save(update_fields=["status", "confirmed_at", "approved_at"])
+
+    _notify(booking.mentee.email, "Your mVia session is confirmed!",
+            f"Hi {booking.mentee.get_short_name()},\n\nGood news — {booking.mentor.full_name} has "
+            f"approved your session on "
+            f"{timezone.localtime(booking.slot.start):%d %b %Y at %I:%M %p}.\n\n"
+            f"{'Join link: ' + booking.meet_link if booking.meet_link else 'The meeting link will be shared soon.'}"
+            f"\n\n— mVia", "booking_approved", booking)
+    return booking
+
+
+def decline_booking(*, booking_id, actor, reason=""):
+    """
+    Mentor declines a paid booking -> declined. Records a refund ledger entry
+    (ops still returns the money via Razorpay and enters the reference later).
+    Frees the slot.
+    """
+    from decimal import Decimal
+    from payments.models import LedgerEntry
+
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related("slot", "mentee", "mentor").get(pk=booking_id)
+        if booking.status != Booking.STATUS_AWAITING_APPROVAL:
+            raise BookingError("This booking is not awaiting approval.")
+
+        booking.status = Booking.STATUS_DECLINED
+        booking.declined_at = timezone.now()
+        booking.decline_reason = (reason or "").strip()
+        booking.save(update_fields=["status", "declined_at", "decline_reason"])
+
+        # Record the refund owed to the mentee (negative = money out of mVia).
+        fee_rate = Decimal(str(getattr(settings, "PLATFORM_FEE_RATE", 0.20)))
+        mentee_paid = booking.amount + (booking.amount * fee_rate).quantize(Decimal("0.01"))
+        LedgerEntry.objects.create(
+            booking=booking, entry_type=LedgerEntry.TYPE_REFUND,
+            amount=-mentee_paid, note=f"Mentor declined: {booking.decline_reason or 'no reason given'}",
+            created_by=actor)
+        booking.is_refunded = True
+        booking.refund_reason = f"Mentor declined: {booking.decline_reason}"
+        booking.save(update_fields=["is_refunded", "refund_reason"])
+
+    _notify(booking.mentee.email, "Update on your mVia session request",
+            f"Hi {booking.mentee.get_short_name()},\n\nUnfortunately {booking.mentor.full_name} "
+            f"couldn't confirm your requested session"
+            f"{(' — ' + booking.decline_reason) if booking.decline_reason else ''}.\n\n"
+            f"A full refund is being processed. We're sorry for the inconvenience.\n\n— mVia",
+            "booking_declined", booking)
+    return booking
+
+
+def suggest_new_slot(*, booking_id, new_slot_id, actor):
+    """
+    Instead of declining, the mentor suggests a different open slot. The booking
+    stays awaiting-approval; the mentee can accept (moves the booking) or the
+    booking can later be declined/refunded.
+    """
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related("mentor", "mentee").get(pk=booking_id)
+        if booking.status != Booking.STATUS_AWAITING_APPROVAL:
+            raise BookingError("This booking is not awaiting approval.")
+        new_slot = AvailabilitySlot.objects.select_for_update().get(pk=new_slot_id)
+        if new_slot.mentor_id != booking.mentor_id:
+            raise BookingError("Suggested slot must be the same mentor's.")
+        if not new_slot.is_bookable:
+            raise BookingError("That slot isn't available.")
+        booking.suggested_slot = new_slot
+        booking.save(update_fields=["suggested_slot"])
+
+    _notify(booking.mentee.email, "Your mentor suggested a new time",
+            f"Hi {booking.mentee.get_short_name()},\n\n{booking.mentor.full_name} can't make your "
+            f"original time but suggested a new one: "
+            f"{timezone.localtime(new_slot.start):%d %b %Y at %I:%M %p}.\n\n"
+            f"Open mVia to accept the new time or request a refund.\n\n— mVia",
+            "booking_suggested", booking)
+    return booking
+
+
+def accept_suggested_slot(*, booking_id, actor):
+    """Mentee accepts the mentor's suggested slot; the booking moves to it."""
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related("suggested_slot").get(pk=booking_id)
+        if booking.mentee_id != actor.id:
+            raise BookingError("Only the mentee can accept.")
+        if not booking.suggested_slot:
+            raise BookingError("No suggested slot to accept.")
+        new_slot = AvailabilitySlot.objects.select_for_update().get(pk=booking.suggested_slot_id)
+        if not new_slot.is_bookable:
+            raise BookingError("That slot is no longer available.")
+        booking.slot = new_slot
+        booking.suggested_slot = None
+        booking.reminder_24h_sent_at = None
+        booking.reminder_1h_sent_at = None
+        booking.save(update_fields=["slot", "suggested_slot", "reminder_24h_sent_at", "reminder_1h_sent_at"])
+    return booking
+
+
+def set_meet_link(*, booking_id, link, actor):
+    """Admin sets/updates the Google Meet link on a booking."""
+    booking = Booking.objects.get(pk=booking_id)
+    booking.meet_link = (link or "").strip()
+    booking.save(update_fields=["meet_link"])
+    return booking
+
+
+def auto_decline_expired_approvals():
+    """
+    Auto-decline (and refund) bookings whose 48h approval window passed without
+    the mentor acting. Idempotent; intended for the scheduler.
+    """
+    now = timezone.now()
+    overdue = Booking.objects.filter(
+        status=Booking.STATUS_AWAITING_APPROVAL, approval_due_at__lt=now)
+    count = 0
+    for b in overdue:
+        try:
+            decline_booking(booking_id=b.id, actor=None,
+                            reason="Auto-declined: mentor did not respond within 48 hours.")
+            count += 1
+        except Exception:  # noqa: BLE001
+            continue
+    return count
+
+
+def _notify(to_email, subject, body, template_name, booking):
+    try:
+        from accounts.emails import send_email
+        send_email(to_email=to_email, subject=subject, body=body,
+                   template_name=template_name, related_booking=booking)
+    except Exception:  # noqa: BLE001
+        pass

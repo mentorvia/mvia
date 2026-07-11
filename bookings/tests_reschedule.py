@@ -7,7 +7,7 @@ from accounts.models import User
 from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
-from bookings.services import create_booking, confirm_payment, reschedule_booking, BookingError
+from bookings.services import create_booking, confirm_payment, reschedule_booking, BookingError, approve_booking
 
 
 def setup():
@@ -33,7 +33,7 @@ class RescheduleTest(TestCase):
         mentor, mentee = setup()
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         reschedule_booking(booking_id=b.id, new_slot_id=s2.id, actor=mentee)
         b.refresh_from_db()
         self.assertEqual(b.slot_id, s2.id)
@@ -44,7 +44,7 @@ class RescheduleTest(TestCase):
         mentor, mentee = setup()
         s1 = slot(mentor, timezone.now() + timedelta(hours=12))  # within 24h
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         with self.assertRaises(BookingError):
             reschedule_booking(booking_id=b.id, new_slot_id=s2.id, actor=mentee)
 
@@ -54,7 +54,7 @@ class RescheduleTest(TestCase):
         s2 = slot(mentor, timezone.now() + timedelta(days=11))
         s3 = slot(mentor, timezone.now() + timedelta(days=12))
         s4 = slot(mentor, timezone.now() + timedelta(days=13))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         reschedule_booking(booking_id=b.id, new_slot_id=s2.id, actor=mentee)
         reschedule_booking(booking_id=b.id, new_slot_id=s3.id, actor=mentee)
         with self.assertRaises(BookingError):
@@ -68,7 +68,7 @@ class RescheduleTest(TestCase):
             years_experience=3, bio="B", hourly_rate=1000, status="approved")
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s_other = slot(other, timezone.now() + timedelta(days=4))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         with self.assertRaises(BookingError):
             reschedule_booking(booking_id=b.id, new_slot_id=s_other.id, actor=mentee)
 
@@ -79,8 +79,8 @@ class RescheduleTest(TestCase):
         MenteeProfile.objects.create(user=mentee2, current_role="S", career_goals="G")
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b1 = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b1.id)
-        b2 = create_booking(mentee=mentee2, slot_id=s2.id); confirm_payment(booking_id=b2.id)
+        b1 = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b1.id); approve_booking(booking_id=b1.id, actor=b1.mentor)
+        b2 = create_booking(mentee=mentee2, slot_id=s2.id); confirm_payment(booking_id=b2.id); approve_booking(booking_id=b2.id, actor=b2.mentor)
         # s2 is taken by b2 — b1 can't move there
         with self.assertRaises(BookingError):
             reschedule_booking(booking_id=b1.id, new_slot_id=s2.id, actor=mentee)
@@ -92,11 +92,11 @@ class RescheduleTest(TestCase):
         MenteeProfile.objects.create(user=mentee2, current_role="S", career_goals="G")
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b1 = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b1.id)
+        b1 = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b1.id); approve_booking(booking_id=b1.id, actor=b1.mentor)
         reschedule_booking(booking_id=b1.id, new_slot_id=s2.id, actor=mentee)
         # now s1 is free — mentee2 can book it
         b2 = create_booking(mentee=mentee2, slot_id=s1.id)
-        confirm_payment(booking_id=b2.id)  # should succeed, no clash
+        confirm_payment(booking_id=b2.id); approve_booking(booking_id=b2.id, actor=b2.mentor)
         b2.refresh_from_db()
         self.assertEqual(b2.status, Booking.STATUS_CONFIRMED)
 
@@ -104,7 +104,7 @@ class RescheduleTest(TestCase):
         mentor, mentee = setup()
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         Booking.objects.filter(pk=b.pk).update(status=Booking.STATUS_COMPLETED)
         with self.assertRaises(BookingError):
             reschedule_booking(booking_id=b.id, new_slot_id=s2.id, actor=mentee)
@@ -113,7 +113,7 @@ class RescheduleTest(TestCase):
         mentor, mentee = setup()
         s1 = slot(mentor, timezone.now() + timedelta(days=3))
         s2 = slot(mentor, timezone.now() + timedelta(days=4))
-        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id)
+        b = create_booking(mentee=mentee, slot_id=s1.id); confirm_payment(booking_id=b.id); approve_booking(booking_id=b.id, actor=b.mentor)
         Booking.objects.filter(pk=b.pk).update(reminder_24h_sent_at=timezone.now())
         reschedule_booking(booking_id=b.id, new_slot_id=s2.id, actor=mentee)
         b.refresh_from_db()

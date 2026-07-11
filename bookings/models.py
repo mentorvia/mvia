@@ -75,9 +75,9 @@ class AvailabilitySlot(models.Model):
 
     @property
     def is_taken(self):
-        """A slot is taken if it has a confirmed (or completed) booking."""
+        """A slot is taken if it has an awaiting-approval, confirmed, or completed booking."""
         return self.bookings.filter(
-            status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED]
+            status__in=[Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED]
         ).exists()
 
     @property
@@ -90,26 +90,34 @@ class AvailabilitySlot(models.Model):
 
 class Booking(models.Model):
     STATUS_PENDING_PAYMENT = "pending_payment"
+    STATUS_AWAITING_APPROVAL = "awaiting_approval"
     STATUS_CONFIRMED = "confirmed"
     STATUS_COMPLETED = "completed"
     STATUS_CANCELLED = "cancelled"
     STATUS_EXPIRED = "expired"
+    STATUS_DECLINED = "declined"
     STATUS_CHOICES = [
         (STATUS_PENDING_PAYMENT, "Pending payment"),
+        (STATUS_AWAITING_APPROVAL, "Awaiting mentor approval"),
         (STATUS_CONFIRMED, "Confirmed"),
         (STATUS_COMPLETED, "Completed"),
         (STATUS_CANCELLED, "Cancelled"),
         (STATUS_EXPIRED, "Expired"),
+        (STATUS_DECLINED, "Declined by mentor"),
     ]
 
     # Which terminal/next states each state may move to. The state machine
     # enforces this so a booking can never make an illegal jump.
     ALLOWED_TRANSITIONS = {
-        STATUS_PENDING_PAYMENT: {STATUS_CONFIRMED, STATUS_EXPIRED, STATUS_CANCELLED},
+        # After payment, a booking awaits mentor approval (not instantly confirmed).
+        STATUS_PENDING_PAYMENT: {STATUS_AWAITING_APPROVAL, STATUS_CONFIRMED, STATUS_EXPIRED, STATUS_CANCELLED},
+        # Mentor approves -> confirmed; declines -> declined; or it can be cancelled.
+        STATUS_AWAITING_APPROVAL: {STATUS_CONFIRMED, STATUS_DECLINED, STATUS_CANCELLED},
         STATUS_CONFIRMED: {STATUS_COMPLETED, STATUS_CANCELLED},
         STATUS_COMPLETED: set(),
         STATUS_CANCELLED: set(),
         STATUS_EXPIRED: set(),
+        STATUS_DECLINED: set(),
     }
 
     mentee = models.ForeignKey(
@@ -146,6 +154,21 @@ class Booking(models.Model):
 
     # How many times this booking has been rescheduled (capped in services).
     reschedule_count = models.PositiveSmallIntegerField(default=0)
+
+    # Google Meet (or other video) link for the session. Added by admin; visible
+    # to admin, mentor, and mentee once set.
+    meet_link = models.URLField(blank=True)
+
+    # Mentor approval flow (session must be approved after payment).
+    approved_at = models.DateTimeField(null=True, blank=True)
+    declined_at = models.DateTimeField(null=True, blank=True)
+    decline_reason = models.TextField(blank=True)
+    # When the awaiting-approval window opened (for the 48h timeout).
+    approval_due_at = models.DateTimeField(null=True, blank=True)
+    # Mentor's suggested alternative slot (instead of a flat decline).
+    suggested_slot = models.ForeignKey(
+        "AvailabilitySlot", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="suggested_for_bookings")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
