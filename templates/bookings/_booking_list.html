@@ -11,13 +11,42 @@
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
           {% if b.status == 'pending_payment' %}<span class="badge pending">{% trans "Pending payment" %}</span>
+          {% elif b.status == 'awaiting_approval' %}<span class="badge pending">{% trans "Awaiting mentor approval" %}</span>
           {% elif b.status == 'confirmed' %}<span class="badge yes">{% trans "Confirmed" %}</span>
           {% elif b.status == 'completed' %}<span class="badge neutral">{% trans "Completed" %}</span>
           {% elif b.status == 'cancelled' %}<span class="badge no">{% trans "Cancelled" %}</span>
+          {% elif b.status == 'declined' %}<span class="badge no">{% trans "Declined" %}</span>
           {% elif b.status == 'expired' %}<span class="badge neutral">{% trans "Expired" %}</span>{% endif %}
+
+          {% if b.meet_link and b.status == 'confirmed' %}
+            <a href="{{ b.meet_link }}" target="_blank" style="font-size:0.85rem; color:#1a56db; font-weight:600;">{% trans "Join link" %}</a>
+          {% endif %}
 
           {% if b.status == 'pending_payment' and role == 'mentee' %}
             <a href="{% url 'pay_booking' b.id %}" style="font-size:0.85rem; color:var(--deep-red); font-weight:600;">{% trans "Pay now" %}</a>
+          {% endif %}
+
+          {# Mentor's approval actions #}
+          {% if b.status == 'awaiting_approval' and role == 'mentor' %}
+            <form method="post" action="{% url 'approve_booking' b.id %}" style="display:inline;">
+              {% csrf_token %}<button type="submit" style="background:#1a7f37; color:#fff; border:none; padding:0.35rem 0.8rem; border-radius:7px; cursor:pointer; font-size:0.83rem; font-weight:600;">{% trans "Approve" %}</button>
+            </form>
+            <a href="{% url 'suggest_time' b.id %}" style="font-size:0.85rem; margin-left:0.3rem;">{% trans "Suggest new time" %}</a>
+            <form method="post" action="{% url 'decline_booking' b.id %}" style="display:inline;" onsubmit="return confirm('{% trans 'Decline this session? The mentee will be refunded.' %}');">
+              {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">{% trans "Decline" %}</button>
+            </form>
+          {% endif %}
+
+          {# Mentee waiting, possibly with a suggested new time #}
+          {% if b.status == 'awaiting_approval' and role == 'mentee' %}
+            {% if b.suggested_slot %}
+              <span style="font-size:0.8rem; opacity:0.7;">{% blocktrans with t=b.suggested_slot.start|date:"d M · H:i" %}New time suggested: {{ t }}{% endblocktrans %}</span>
+              <form method="post" action="{% url 'accept_suggestion' b.id %}" style="display:inline;">
+                {% csrf_token %}<button type="submit" style="background:#1a7f37; color:#fff; border:none; padding:0.35rem 0.8rem; border-radius:7px; cursor:pointer; font-size:0.83rem; font-weight:600;">{% trans "Accept new time" %}</button>
+              </form>
+            {% else %}
+              <span style="font-size:0.8rem; opacity:0.6;">{% trans "Waiting for mentor to approve…" %}</span>
+            {% endif %}
           {% endif %}
           {% if b.status == 'confirmed' %}
             <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('{% trans 'Cancel this booking?' %}');">

@@ -13,6 +13,24 @@
     <div><strong>Mentor rate:</strong> ₹{{ booking.amount }}</div>
     <div><strong>Created:</strong> {{ booking.created_at|date:"d M Y H:i" }}</div>
     {% if booking.cancellation_reason %}<div><strong>Cancellation reason:</strong> {{ booking.cancellation_reason }}</div>{% endif %}
+    {% if booking.decline_reason %}<div><strong>Decline reason:</strong> {{ booking.decline_reason }}</div>{% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Google Meet link</h2>
+  <div style="padding:1.25rem; max-width:560px;">
+    <p style="font-size:0.88rem; color:var(--muted); margin-bottom:0.75rem;">
+      Paste the video link for this session. It becomes visible to the mentor and mentee once the booking is confirmed.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="set_meet_link">
+      <input type="url" name="meet_link" value="{{ booking.meet_link }}" placeholder="https://meet.google.com/xxx-xxxx-xxx"
+             style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; margin-bottom:0.75rem;">
+      <button type="submit" style="padding:0.55rem 1.2rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Save link</button>
+      {% if booking.meet_link %}<a href="{{ booking.meet_link }}" target="_blank" style="margin-left:0.75rem; font-size:0.88rem;">Open link ↗</a>{% endif %}
+    </form>
   </div>
 </div>
 

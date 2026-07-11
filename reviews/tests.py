@@ -6,7 +6,7 @@ from accounts.models import User
 from profiles.models import MentorProfile, MenteeProfile
 from interests.models import Interest, MenteeInterest
 from bookings.models import AvailabilitySlot, Booking
-from bookings.services import create_booking, confirm_payment, complete_booking
+from bookings.services import create_booking, confirm_payment, complete_booking, approve_booking
 from reviews.models import Review
 
 
@@ -20,6 +20,7 @@ def completed_booking(mentor, email="me@b.com"):
     slot = AvailabilitySlot.objects.create(mentor=mentor, start=start, end=start+timedelta(hours=1))
     b = create_booking(mentee=me, slot_id=slot.id)
     confirm_payment(booking_id=b.id)
+    approve_booking(booking_id=b.id, actor=mentor)
     complete_booking(booking_id=b.id)
     return b, me
 

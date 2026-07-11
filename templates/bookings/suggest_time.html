@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Suggest a new time" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;">
+  <h1>{% trans "Suggest a new time" %}</h1>
+  <p class="sub">{% blocktrans with name=booking.mentee.full_name %}Propose a different slot to {{ name }} instead of declining.{% endblocktrans %}</p>
+
+  {% if slots %}
+  <form method="post">
+    {% csrf_token %}
+    <label style="display:block; font-weight:600; margin-bottom:0.5rem;">{% trans "Pick a slot to suggest" %}</label>
+    <select name="new_slot_id" required style="width:100%; padding:0.6rem 0.75rem; border:1px solid rgba(15,15,16,0.15); border-radius:8px; font-family:inherit; margin-bottom:1rem;">
+      <option value="">{% trans "— choose —" %}</option>
+      {% for s in slots %}<option value="{{ s.id }}">{{ s.start|date:"l, d M Y · H:i" }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn">{% trans "Suggest this time" %}</button>
+    <a href="{% url 'my_bookings' %}" style="margin-left:0.75rem; opacity:0.6;">{% trans "Cancel" %}</a>
+  </form>
+  {% else %}
+    <div class="empty">{% trans "You have no other open slots to suggest. Add availability first, or decline the booking." %}</div>
+    <a href="{% url 'my_bookings' %}" style="display:inline-block; margin-top:1rem;">← {% trans "Back" %}</a>
+  {% endif %}
+</div>
+{% endblock %}
