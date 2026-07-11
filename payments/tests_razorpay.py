@@ -62,7 +62,8 @@ class RazorpayPayViewTest(TestCase):
             "razorpay_payment_id": "pay_1", "razorpay_order_id": "order_TEST123",
             "razorpay_signature": "sig_ok"})
         self.b.refresh_from_db()
-        self.assertEqual(self.b.status, Booking.STATUS_CONFIRMED)
+        # After the approval flow, a paid booking now AWAITS mentor approval.
+        self.assertEqual(self.b.status, Booking.STATUS_AWAITING_APPROVAL)
         p.refresh_from_db()
         self.assertFalse(p.is_simulated)
         self.assertEqual(p.razorpay_payment_id, "pay_1")
