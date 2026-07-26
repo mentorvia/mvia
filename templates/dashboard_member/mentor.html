@@ -1,0 +1,13 @@
+{% load i18n %}
+<div class="dash-grid">
+  <div class="dash-main">
+    {% include "dashboard_member/_mentor_attention.html" %}
+    {% include "dashboard_member/_mentor_next_up.html" %}
+    {% include "dashboard_member/_mentor_sessions.html" %}
+    {% include "dashboard_member/_mentor_availability.html" %}
+  </div>
+  <div class="dash-side">
+    {% include "dashboard_member/_mentor_sidebar_earnings.html" %}
+    {% include "dashboard_member/_mentor_sidebar_profile.html" %}
+  </div>
+</div>

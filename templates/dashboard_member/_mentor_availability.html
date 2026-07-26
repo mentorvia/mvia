@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="panel">
+  <div class="panel-head">
+    <h2>{% trans "My availability" %}</h2>
+    <a href="{% url 'my_availability' %}" class="panel-link">{% trans "Manage availability" %}</a>
+  </div>
+  {% if week_slots %}
+    <div class="avail-list">
+      {% for slot in week_slots %}
+        <div class="avail-row">
+          <span class="avail-date">{{ slot.start|date:"D, d M" }}</span>
+          <span class="avail-time">{{ slot.start|date:"H:i" }}–{{ slot.end|date:"H:i" }}</span>
+          {% if slot.is_taken %}<span class="badge yes">{% trans "Booked" %}</span>
+          {% elif slot.is_confirmed %}<span class="badge neutral">{% trans "Open" %}</span>
+          {% else %}<span class="badge pending">{% trans "Unconfirmed" %}</span>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">{% trans "No slots declared for this week yet." %}</div>
+  {% endif %}
+</div>

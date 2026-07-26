@@ -1,0 +1,77 @@
+{% load i18n %}
+{% if bookings %}
+  <div class="session-rows">
+    {% for b in bookings %}
+      <div class="session-row">
+        <div class="sr-main">
+          <div class="sr-name">{{ b.mentee.full_name }}</div>
+          <div class="sr-meta">{{ b.slot.start|date:"D, d M Y · H:i" }} · ₹{{ b.amount }}</div>
+        </div>
+        <div class="sr-actions">
+          {% if b.status == 'pending_payment' %}
+            <span class="badge pending">{% trans "Awaiting mentee payment" %}</span>
+
+          {% elif b.status == 'awaiting_approval' %}
+            <span class="badge pending">{% trans "Awaiting your approval" %}</span>
+            <form method="post" action="{% url 'approve_booking' b.id %}" class="inline-form">
+              {% csrf_token %}<button type="submit" class="btn-mini btn-approve">{% trans "Approve" %}</button>
+            </form>
+            <a href="{% url 'suggest_time' b.id %}" class="link-mini">{% trans "Suggest new time" %}</a>
+            <form method="post" action="{% url 'decline_booking' b.id %}" class="inline-form"
+                  onsubmit="return confirm('{% trans "Decline this session? The mentee will be refunded." %}');">
+              {% csrf_token %}<button type="submit" class="link-mini link-danger">{% trans "Decline" %}</button>
+            </form>
+
+          {% elif b.status == 'confirmed' %}
+            <span class="badge yes">{% trans "Confirmed" %}</span>
+            {% if b.meet_link %}
+              <a href="{{ b.meet_link }}" target="_blank" class="link-mini">{% trans "Join link" %}</a>
+            {% else %}
+              <form method="post" action="{% url 'set_meet_link' b.id %}" class="inline-form">
+                {% csrf_token %}
+                <input type="url" name="meet_link" class="mini-input" placeholder="{% trans 'Meeting link…' %}" required>
+                <button type="submit" class="btn-mini">{% trans "Save" %}</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{% url 'cancel_booking' b.id %}" class="inline-form"
+                  onsubmit="return confirm('{% trans "Cancel this booking?" %}');">
+              {% csrf_token %}<button type="submit" class="link-mini link-danger">{% trans "Cancel" %}</button>
+            </form>
+            {% if b.slot.start < now %}
+              <form method="post" action="{% url 'complete_booking' b.id %}" class="inline-form">
+                {% csrf_token %}<button type="submit" class="link-mini link-success">{% trans "Mark complete" %}</button>
+              </form>
+              <form method="post" action="{% url 'mark_no_show' b.id %}" class="inline-form"
+                    onsubmit="return confirm('{% trans "Mark this session as a no-show?" %}');">
+                {% csrf_token %}<button type="submit" class="link-mini">{% trans "Mark no-show" %}</button>
+              </form>
+            {% endif %}
+
+          {% elif b.status == 'completed' %}
+            <span class="badge neutral">{% trans "Completed" %}</span>
+            {% if b.recording_url or b.session_notes %}
+              <span class="link-mini link-muted">{% trans "Recording/notes added" %}</span>
+            {% else %}
+              <details class="recording-details">
+                <summary class="link-mini">{% trans "Add recording/notes" %}</summary>
+                <form method="post" action="{% url 'set_recording' b.id %}" class="recording-form">
+                  {% csrf_token %}
+                  <input type="url" name="recording_url" placeholder="{% trans 'Recording link (optional)' %}">
+                  <textarea name="session_notes" placeholder="{% trans 'Session notes (optional)' %}" rows="2"></textarea>
+                  <button type="submit" class="btn-mini">{% trans "Save" %}</button>
+                </form>
+              </details>
+            {% endif %}
+
+          {% elif b.status == 'cancelled' %}<span class="badge no">{% trans "Cancelled" %}</span>
+          {% elif b.status == 'declined' %}<span class="badge no">{% trans "Declined" %}</span>
+          {% elif b.status == 'expired' %}<span class="badge neutral">{% trans "Expired" %}</span>
+          {% elif b.status == 'no_show' %}<span class="badge no">{% trans "No-show" %}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="empty-text">{% trans "Nothing here yet." %}</p>
+{% endif %}

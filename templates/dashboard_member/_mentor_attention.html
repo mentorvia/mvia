@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="hero-card {% if pending_count %}hero-attention{% if pending_requests.0.urgency == 'critical' %} hero-critical{% elif pending_requests.0.urgency == 'high' %} hero-high{% endif %}{% endif %}">
+  {% if pending_count %}
+    <div class="hero-label">{% trans "Attention needed" %}</div>
+    <div class="hero-body">
+      <div class="hero-count">{{ pending_count }}</div>
+      <div>
+        <div class="hero-name">
+          {% blocktrans count counter=pending_count %}booking request waiting{% plural %}booking requests waiting{% endblocktrans %}
+        </div>
+        <a href="#mentor-sessions" class="btn-primary">{% trans "Review requests" %}</a>
+      </div>
+    </div>
+  {% else %}
+    <div class="hero-empty"><p>{% trans "No pending requests — you're all caught up." %}</p></div>
+  {% endif %}
+</div>

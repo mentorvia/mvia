@@ -633,6 +633,64 @@ def set_meet_link(*, booking_id, link, actor):
     return booking
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# Mentor session wrap-up: no-shows and recordings
+# ──────────────────────────────────────────────────────────────────────────
+
+def mark_no_show(*, booking_id, actor):
+    """
+    Mentor marks a confirmed booking as a no-show (the mentee didn't attend).
+    Only allowed once the session's scheduled end time has passed — mirrors
+    auto_complete_past_sessions' own timing check, so a mentor can't pre-empt
+    a session that hasn't happened yet.
+    """
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related(
+            "slot", "mentee", "mentor").get(pk=booking_id)
+        if not booking.can_transition_to(Booking.STATUS_NO_SHOW):
+            raise BookingError("This booking can't be marked as a no-show.")
+        if booking.slot.end > timezone.now():
+            raise BookingError("You can only mark a no-show after the session's scheduled time.")
+
+        booking.status = Booking.STATUS_NO_SHOW
+        booking.save(update_fields=["status"])
+
+        try:
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=actor, action="booking.no_show",
+                target=f"Booking #{booking.id}: {booking.mentee.get_short_name()} marked as "
+                       f"no-show by {booking.mentor.get_short_name()}")
+        except Exception:  # noqa: BLE001 — audit failure shouldn't block the update
+            pass
+    return booking
+
+
+def set_recording(*, booking_id, actor, recording_url="", session_notes=""):
+    """
+    Mentor attaches a recording link and/or notes to a session that has
+    happened. Allowed on confirmed (already past) or completed bookings only.
+    """
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().select_related(
+            "mentee", "mentor").get(pk=booking_id)
+        if booking.status not in (Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED):
+            raise BookingError("Recordings and notes can only be added to confirmed or completed sessions.")
+
+        booking.recording_url = (recording_url or "").strip()
+        booking.session_notes = (session_notes or "").strip()
+        booking.save(update_fields=["recording_url", "session_notes"])
+
+        try:
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=actor, action="booking.recording_added",
+                target=f"Booking #{booking.id}: recording/notes updated by {booking.mentor.get_short_name()}")
+        except Exception:  # noqa: BLE001 — audit failure shouldn't block the update
+            pass
+    return booking
+
+
 def auto_decline_expired_approvals():
     """
     Auto-decline (and refund) bookings whose 48h approval window passed without

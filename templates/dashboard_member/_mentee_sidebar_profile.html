@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if profile_incomplete %}
+<div class="panel side-panel">
+  <div class="panel-head"><h2>{% trans "Complete your profile" %}</h2></div>
+  <ul class="checklist">
+    {% for item in profile_checklist %}
+      <li class="{% if item.done %}done{% endif %}">
+        <span class="check-icon">{% if item.done %}✓{% else %}○{% endif %}</span>
+        {{ item.label }}
+      </li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'mentee_profile' %}" class="btn-secondary">{% trans "Edit profile" %}</a>
+</div>
+{% endif %}

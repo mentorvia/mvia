@@ -96,6 +96,7 @@ class Booking(models.Model):
     STATUS_CANCELLED = "cancelled"
     STATUS_EXPIRED = "expired"
     STATUS_DECLINED = "declined"
+    STATUS_NO_SHOW = "no_show"
     STATUS_CHOICES = [
         (STATUS_PENDING_PAYMENT, "Pending payment"),
         (STATUS_AWAITING_APPROVAL, "Awaiting mentor approval"),
@@ -104,6 +105,7 @@ class Booking(models.Model):
         (STATUS_CANCELLED, "Cancelled"),
         (STATUS_EXPIRED, "Expired"),
         (STATUS_DECLINED, "Declined by mentor"),
+        (STATUS_NO_SHOW, "No-show"),
     ]
 
     # Which terminal/next states each state may move to. The state machine
@@ -113,11 +115,12 @@ class Booking(models.Model):
         STATUS_PENDING_PAYMENT: {STATUS_AWAITING_APPROVAL, STATUS_CONFIRMED, STATUS_EXPIRED, STATUS_CANCELLED},
         # Mentor approves -> confirmed; declines -> declined; or it can be cancelled.
         STATUS_AWAITING_APPROVAL: {STATUS_CONFIRMED, STATUS_DECLINED, STATUS_CANCELLED},
-        STATUS_CONFIRMED: {STATUS_COMPLETED, STATUS_CANCELLED},
+        STATUS_CONFIRMED: {STATUS_COMPLETED, STATUS_CANCELLED, STATUS_NO_SHOW},
         STATUS_COMPLETED: set(),
         STATUS_CANCELLED: set(),
         STATUS_EXPIRED: set(),
         STATUS_DECLINED: set(),
+        STATUS_NO_SHOW: set(),
     }
 
     mentee = models.ForeignKey(
@@ -158,6 +161,10 @@ class Booking(models.Model):
     # Google Meet (or other video) link for the session. Added by admin; visible
     # to admin, mentor, and mentee once set.
     meet_link = models.URLField(blank=True)
+
+    # Post-session recording + mentor notes, added from the mentor dashboard.
+    recording_url = models.URLField(blank=True)
+    session_notes = models.TextField(blank=True)
 
     # Mentor approval flow (session must be approved after payment).
     approved_at = models.DateTimeField(null=True, blank=True)

@@ -1,0 +1,24 @@
+{% load i18n %}
+<div class="hero-card">
+  {% if next_session %}
+    <div class="hero-label">{% trans "Next up" %}</div>
+    <div class="hero-body">
+      <div class="hero-avatar hero-avatar-fallback">{{ next_session.mentee.get_short_name|first|upper }}</div>
+      <div>
+        <div class="hero-name">{{ next_session.mentee.full_name }}</div>
+        <div class="hero-time">{{ next_session.slot.start|date:"D, d M Y · H:i" }}</div>
+      </div>
+      {% if can_join_next_session %}
+        <a class="btn-join" href="{{ next_session.meet_link }}" target="_blank">{% trans "Join session" %}</a>
+      {% elif not next_session.meet_link %}
+        <form method="post" action="{% url 'set_meet_link' next_session.id %}" class="meet-link-form">
+          {% csrf_token %}
+          <input type="url" name="meet_link" placeholder="{% trans 'Paste meeting link…' %}" required>
+          <button type="submit">{% trans "Save" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="hero-empty"><p>{% trans "No upcoming confirmed sessions." %}</p></div>
+  {% endif %}
+</div>

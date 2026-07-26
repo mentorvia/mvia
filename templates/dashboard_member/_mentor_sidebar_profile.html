@@ -1,0 +1,10 @@
+{% load i18n %}
+{% if profile_status %}
+<div class="panel side-panel">
+  <div class="panel-head"><h2>{% trans "Profile status" %}</h2></div>
+  <div class="status-msg status-{{ profile_status.kind }}">{{ profile_status.message }}</div>
+  {% if profile_status.kind == 'nudge' %}
+    <a href="{% url 'become_mentor' %}" class="btn-secondary">{% trans "View my mentor profile" %}</a>
+  {% endif %}
+</div>
+{% endif %}

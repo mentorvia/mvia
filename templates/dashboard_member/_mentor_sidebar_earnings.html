@@ -1,0 +1,12 @@
+{% load i18n %}
+<div class="panel side-panel">
+  <div class="panel-head"><h2>{% trans "Earnings" %}</h2></div>
+  <div class="earn-figure">₹{{ earnings_this_month }}</div>
+  <div class="earn-label">{% trans "This month" %}</div>
+  <div class="earn-row"><span>{% trans "Pending payout" %}</span><strong>₹{{ pending_payout }}</strong></div>
+  <div class="earn-row">
+    <span>{% trans "Last payout" %}</span>
+    <strong>{% if last_payout %}{{ last_payout.created_at|date:"d M Y" }}{% else %}—{% endif %}</strong>
+  </div>
+  <a href="{% url 'my_earnings' %}" class="btn-secondary">{% trans "View earnings history" %}</a>
+</div>

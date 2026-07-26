@@ -1,0 +1,25 @@
+{% load i18n %}
+<div class="panel">
+  <div class="panel-head">
+    <h2>{% trans "Recommended for you" %}</h2>
+    <a href="{% url 'directory' %}" class="panel-link">{% trans "Browse all mentors" %}</a>
+  </div>
+  {% if recommended %}
+    <div class="rec-row">
+      {% for card in recommended %}
+        <a href="{% url 'mentor_profile' card.mentor.user_id %}" class="mentor-card-sm">
+          {% if card.mentor.display_photo %}
+            <div class="mc-photo"><img src="{{ card.mentor.display_photo }}" alt="{{ card.mentor.user.full_name }}"></div>
+          {% else %}
+            <div class="mc-avatar">{{ card.mentor.user.get_short_name|first|upper }}</div>
+          {% endif %}
+          <div class="mc-name">{{ card.mentor.user.full_name }}</div>
+          <div class="mc-role">{{ card.mentor.current_role }}</div>
+          <div class="mc-rate">₹{{ card.mentor.hourly_rate }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">{% trans "No mentors yet — check back soon." %}</div>
+  {% endif %}
+</div>
