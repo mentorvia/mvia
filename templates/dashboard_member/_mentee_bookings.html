@@ -1,0 +1,23 @@
+{% load i18n %}
+<div class="panel">
+  <div class="panel-head"><h2>{% trans "My bookings" %}</h2></div>
+  <div class="tabs">
+    <input type="radio" name="mentee-tab" id="mt-upcoming" class="tab-input" checked>
+    <input type="radio" name="mentee-tab" id="mt-past" class="tab-input">
+    <input type="radio" name="mentee-tab" id="mt-all" class="tab-input">
+    <div class="tab-bar">
+      <label for="mt-upcoming">{% trans "Upcoming" %}</label>
+      <label for="mt-past">{% trans "Past" %}</label>
+      <label for="mt-all">{% trans "All" %}</label>
+    </div>
+    <div class="tab-panel tab-panel-upcoming">
+      {% include "bookings/_booking_list.html" with bookings=bookings_upcoming role="mentee" %}
+    </div>
+    <div class="tab-panel tab-panel-past">
+      {% include "bookings/_booking_list.html" with bookings=bookings_past role="mentee" %}
+    </div>
+    <div class="tab-panel tab-panel-all">
+      {% include "bookings/_booking_list.html" with bookings=bookings_all role="mentee" %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mvia-dev",
+      "runtimeExecutable": "/Users/arun/Documents/mvia/.venv/bin/python3.12",
+      "runtimeArgs": ["manage.py", "runserver", "8000"],
+      "port": 8000
+    }
+  ]
+}

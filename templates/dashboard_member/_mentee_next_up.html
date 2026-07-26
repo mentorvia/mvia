@@ -1,0 +1,32 @@
+{% load i18n %}
+<div class="hero-card">
+  {% if next_session %}
+    <div class="hero-label">{% trans "Next up" %}</div>
+    <div class="hero-body">
+      {% with photo=next_session.mentor.mentor_profile.display_photo %}
+        {% if photo %}
+          <img class="hero-avatar" src="{{ photo }}" alt="{{ next_session.mentor.full_name }}">
+        {% else %}
+          <div class="hero-avatar hero-avatar-fallback">{{ next_session.mentor.get_short_name|first|upper }}</div>
+        {% endif %}
+      {% endwith %}
+      <div>
+        <div class="hero-name">{{ next_session.mentor.full_name }}</div>
+        <div class="hero-time">{{ next_session.slot.start|date:"D, d M Y · H:i" }}</div>
+      </div>
+      {% if can_join_next_session %}
+        <a class="btn-join" href="{{ next_session.meet_link }}" target="_blank">{% trans "Join session" %}</a>
+      {% endif %}
+    </div>
+  {% elif next_pending %}
+    <div class="hero-label">{% trans "Next up" %}</div>
+    <div class="hero-pending">
+      {% blocktrans with name=next_pending.mentor.full_name hours=next_pending.hours_remaining %}Waiting for {{ name }} to accept ({{ hours }}h remaining){% endblocktrans %}
+    </div>
+  {% else %}
+    <div class="hero-empty">
+      <p>{% trans "No upcoming sessions yet." %}</p>
+      <a href="{% url 'directory' %}" class="btn-primary">{% trans "Browse mentors" %}</a>
+    </div>
+  {% endif %}
+</div>

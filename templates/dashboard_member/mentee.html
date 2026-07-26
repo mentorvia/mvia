@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="dash-grid">
+  <div class="dash-main">
+    {% include "dashboard_member/_mentee_next_up.html" %}
+    {% include "dashboard_member/_mentee_bookings.html" %}
+    {% include "dashboard_member/_mentee_recommended.html" %}
+  </div>
+  <div class="dash-side">
+    {% include "dashboard_member/_mentee_sidebar_profile.html" %}
+  </div>
+</div>
