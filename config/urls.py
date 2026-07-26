@@ -15,6 +15,7 @@ urlpatterns = [
     path("", include("core.urls")),
     path("accounts/", include("accounts.urls")),
     path("profile/", include("profiles.urls")),
+    path("", include("payments.urls")),
     path("", include("directory.urls")),
     path("", include("bookings.urls")),
     path("", include("reviews.urls")),

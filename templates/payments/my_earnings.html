@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "My earnings" %} — mVia{% endblock %}
+{% block content %}
+<div class="earn-wrap">
+  <a href="{% url 'dashboard' %}" class="earn-back">← {% trans "Back to dashboard" %}</a>
+  <h1>{% trans "My earnings" %}</h1>
+
+  <div class="earn-summary">
+    <div class="es-stat"><div class="es-num">₹{{ total_earned }}</div><div class="es-label">{% trans "Total earned" %}</div></div>
+    <div class="es-stat"><div class="es-num">₹{{ total_paid }}</div><div class="es-label">{% trans "Paid out" %}</div></div>
+    <div class="es-stat"><div class="es-num">₹{{ total_pending }}</div><div class="es-label">{% trans "Pending payout" %}</div></div>
+  </div>
+
+  {% if groups %}
+    {% for month, entries in groups.items %}
+      <div class="earn-month-panel">
+        <div class="earn-month-head">{{ month }}</div>
+        {% for e in entries %}
+          <div class="ledger-row">
+            <div class="er-main">
+              <div class="er-mentee">{{ e.booking.mentee.full_name }}</div>
+              <div class="er-date">{{ e.booking.slot.start|date:"D, d M Y" }}</div>
+            </div>
+            <div class="er-amount">₹{{ e.amount }}</div>
+            <div class="er-status">
+              {% if e.payout %}
+                <span class="badge yes">{% trans "Paid" %}</span>
+                <span class="er-payout-date">{{ e.payout.created_at|date:"d M Y" }}</span>
+              {% else %}
+                <span class="badge pending">{% trans "Pending" %}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="earn-empty">{% trans "No earnings yet — completed sessions will show up here." %}</div>
+  {% endif %}
+</div>
+
+<style>
+  main { align-items:stretch; }
+  .earn-wrap { width:100%; max-width:760px; margin:0 auto; }
+  .earn-back { display:inline-block; color:var(--ink); opacity:0.6; text-decoration:none; font-size:0.88rem; margin-bottom:1rem; }
+  .earn-back:hover { opacity:1; color:var(--red); }
+  .earn-wrap h1 { font-family:'Geist',sans-serif; font-size:1.9rem; letter-spacing:-0.02em; margin-bottom:1.5rem; }
+
+  .earn-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; }
+  .es-stat { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:12px; padding:1.1rem; }
+  .es-num { font-family:'Geist',sans-serif; font-size:1.5rem; font-weight:700; }
+  .es-label { color:rgba(15,15,16,0.55); font-size:0.82rem; margin-top:0.2rem; }
+  @media (max-width:600px) { .earn-summary { grid-template-columns:1fr; } }
+
+  .earn-month-panel { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; overflow:hidden; margin-bottom:1.25rem; }
+  .earn-month-head { font-family:'Geist',sans-serif; font-weight:600; font-size:0.95rem; padding:0.9rem 1.25rem; border-bottom:1px solid rgba(15,15,16,0.08); background:var(--paper); }
+  .ledger-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.9rem 1.25rem; border-bottom:1px solid rgba(15,15,16,0.06); flex-wrap:wrap; }
+  .ledger-row:last-child { border-bottom:none; }
+  .er-mentee { font-weight:600; font-size:0.92rem; }
+  .er-date { font-size:0.82rem; opacity:0.6; margin-top:0.1rem; }
+  .er-amount { font-family:'Geist',sans-serif; font-weight:700; font-size:0.95rem; }
+  .er-status { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; }
+  .er-payout-date { opacity:0.55; }
+
+  .badge { font-size:0.72rem; font-weight:600; padding:0.2rem 0.55rem; border-radius:99px; }
+  .badge.yes { background:#e7f6ec; color:#1a7f37; }
+  .badge.pending { background:#fff4e5; color:#9a5b00; }
+
+  .earn-empty { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; padding:3rem; text-align:center; color:rgba(15,15,16,0.5); }
+</style>
+{% endblock %}
