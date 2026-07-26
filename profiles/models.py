@@ -18,6 +18,12 @@ class MenteeProfile(models.Model):
     company = models.CharField(max_length=120, blank=True)
     years_experience = models.PositiveIntegerField(null=True, blank=True)
     career_goals = models.TextField(blank=True)
+
+    # Social links, shown on the dashboard's profile-completion checklist.
+    linkedin_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    behance_url = models.URLField(blank=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def is_complete(self):

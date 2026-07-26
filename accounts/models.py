@@ -92,6 +92,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     date_joined = models.DateTimeField(default=timezone.now)
 
+    # IANA timezone name (e.g. "Asia/Kolkata"), used to render session times on
+    # the member dashboard. Defaults to the server timezone; auto-detected and
+    # saved client-side on first dashboard visit (see core.views.set_timezone).
+    timezone = models.CharField(max_length=64, default="Asia/Kolkata", blank=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"          # log in with email
