@@ -309,3 +309,44 @@ def accept_suggestion(request, booking_id):
         except BookingError as e:
             messages.error(request, str(e))
     return redirect("my_bookings")
+
+
+# ---------- Mentor: session wrap-up (meeting link / no-show / recording) ----------
+
+@login_required
+def set_link(request, booking_id):
+    from .services import set_meet_link
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        set_meet_link(booking_id=booking.id, link=request.POST.get("meet_link", ""), actor=request.user)
+        messages.success(request, "Meeting link saved.")
+    return redirect("my_bookings")
+
+
+@login_required
+def no_show(request, booking_id):
+    from .services import mark_no_show
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        try:
+            mark_no_show(booking_id=booking.id, actor=request.user)
+            messages.success(request, "Marked as a no-show.")
+        except BookingError as e:
+            messages.error(request, str(e))
+    return redirect("my_bookings")
+
+
+@login_required
+def add_recording(request, booking_id):
+    from .services import set_recording
+    booking = get_object_or_404(Booking, pk=booking_id, mentor=request.user)
+    if request.method == "POST":
+        try:
+            set_recording(
+                booking_id=booking.id, actor=request.user,
+                recording_url=request.POST.get("recording_url", ""),
+                session_notes=request.POST.get("session_notes", ""))
+            messages.success(request, "Recording and notes saved.")
+        except BookingError as e:
+            messages.error(request, str(e))
+    return redirect("my_bookings")

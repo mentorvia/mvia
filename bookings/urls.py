@@ -14,4 +14,7 @@ urlpatterns = [
     path("booking/<int:booking_id>/decline/", views.decline, name="decline_booking"),
     path("booking/<int:booking_id>/suggest/", views.suggest_time, name="suggest_time"),
     path("booking/<int:booking_id>/accept-suggestion/", views.accept_suggestion, name="accept_suggestion"),
+    path("booking/<int:booking_id>/no-show/", views.no_show, name="mark_no_show"),
+    path("booking/<int:booking_id>/recording/", views.add_recording, name="set_recording"),
+    path("booking/<int:booking_id>/set-link/", views.set_link, name="set_meet_link"),
 ]
