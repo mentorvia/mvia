@@ -1,9 +1,11 @@
 """
 Admin audit log (requirement 4.10 / 9.2).
 
-An append-only record of admin actions that change data: who did it, what they
-did, when, the target, and an optional reason. We never edit or delete entries.
-Reused across the app — mentor approvals now, settings/payouts/promo codes later.
+An append-only record of actions that change data: who did it, what they did,
+when, the target, and an optional reason. We never edit or delete entries.
+Primarily admin actions (mentor approvals, settings/payouts/promo codes), but
+also covers certain user-initiated actions worth auditing on the same trail —
+e.g. a mentor requesting review of a locked profile field.
 """
 
 from django.conf import settings

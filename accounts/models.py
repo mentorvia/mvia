@@ -97,6 +97,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     # saved client-side on first dashboard visit (see core.views.set_timezone).
     timezone = models.CharField(max_length=64, default="Asia/Kolkata", blank=True)
 
+    # Set True when staff activates a login for a placeholder mentor (a
+    # system-generated temporary password). Forces a "set your password" step
+    # on next login before the user can reach their dashboard.
+    must_change_password = models.BooleanField(default=False)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"          # log in with email
