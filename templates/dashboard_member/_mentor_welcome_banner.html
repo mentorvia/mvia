@@ -1,0 +1,12 @@
+{% load i18n %}
+{% if needs_welcome_banner %}
+<div class="hero-card hero-welcome">
+  <div class="hero-label">{% trans "Welcome" %}</div>
+  <div class="hero-body">
+    <div>
+      <div class="hero-name">{% trans "Welcome to mVia! Complete your profile to start receiving mentee requests." %}</div>
+      <a href="{% url 'mentor_profile_edit' %}" class="btn-primary">{% trans "Edit profile" %} →</a>
+    </div>
+  </div>
+</div>
+{% endif %}
