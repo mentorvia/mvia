@@ -85,6 +85,17 @@ class MentorProfile(models.Model):
         max_length=120, blank=True, default="Exclusive of 18% GST",
         help_text="Shown next to the price, e.g. 'Exclusive of 18% GST'.")
 
+    # --- Identity fields (Pattern C: locked, edited only via admin re-review) ---
+    industry = models.CharField(max_length=120, blank=True, default="")
+    credentials = models.TextField(
+        blank=True, default="",
+        help_text="Certifications, degrees, or other credentials, e.g. 'MBA — IIM Ahmedabad; PMP certified'.")
+
+    # --- Session settings ---
+    availability_note = models.CharField(
+        max_length=240, blank=True, default="",
+        help_text="Free-text description of when this mentor is generally available, e.g. 'Weekday evenings, IST'.")
+
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
     is_available = models.BooleanField(
         default=True, help_text="Mentor can toggle this to pause new bookings.")
@@ -95,6 +106,15 @@ class MentorProfile(models.Model):
         related_name="mentor_reviews")
     reviewed_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True)
+
+    # A mentor-submitted request to change their locked identity fields
+    # (full name, industry, years of experience, credentials, current role &
+    # company). Staged here rather than written directly to the live fields
+    # above, so the public profile keeps showing the previously-approved
+    # values until an admin approves the request. Keys are a subset of:
+    # full_name, industry, years_experience, credentials, current_role, company.
+    pending_identity_changes = models.JSONField(null=True, blank=True)
+    pending_review_requested_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

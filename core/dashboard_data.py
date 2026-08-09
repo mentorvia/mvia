@@ -14,7 +14,7 @@ from django.utils import timezone
 from bookings.models import AvailabilitySlot, Booking
 from interests.models import MentorInterest
 from payments.models import LedgerEntry, Payout
-from profiles.models import MentorProfile
+from profiles.models import MentorProfile, ProfilePoint
 
 UPCOMING_STATUSES = [
     Booking.STATUS_PENDING_PAYMENT, Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED,
@@ -234,6 +234,20 @@ def mentor_context(user):
                     "message": "Add " + ", ".join(nudges) + " to stand out in the directory.",
                 }
 
+    # First-login welcome banner: a stricter, more prominent check than the
+    # sidebar nudge above. Shows only for an already-approved mentor whose
+    # profile is missing something a mentee would actually need to decide
+    # whether to book them. Disappears once all four are present, at which
+    # point the sidebar nudge (looser criteria, always-on) takes back over.
+    needs_welcome_banner = False
+    if mentor_profile and mentor_profile.status == MentorProfile.STATUS_APPROVED:
+        has_bio = bool(mentor_profile.bio and mentor_profile.bio.strip())
+        has_specializations = user.mentor_interests.exists()
+        has_photo = bool(mentor_profile.display_photo)
+        has_enough_points = mentor_profile.points.filter(
+            category=ProfilePoint.CATEGORY_EXPERTISE).count() >= 2
+        needs_welcome_banner = not (has_bio and has_specializations and has_photo and has_enough_points)
+
     return {
         "now": now,
         "pending_requests": pending_requests,
@@ -249,4 +263,5 @@ def mentor_context(user):
         "last_payout": last_payout,
         "mentor_profile": mentor_profile,
         "profile_status": profile_status,
+        "needs_welcome_banner": needs_welcome_banner,
     }

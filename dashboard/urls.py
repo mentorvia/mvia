@@ -34,6 +34,7 @@ urlpatterns = [
     path("mentors/<int:mentor_id>/", profile_views.mentor_review, name="mentor_review"),
     path("mentors/<int:mentor_id>/edit-profile/", profile_editor.edit_mentor_profile, name="edit_mentor_profile"),
     path("mentors/<int:mentor_id>/activate-login/", profile_views.activate_mentor_login, name="activate_mentor_login"),
+    path("mentors/<int:mentor_id>/review-identity-change/", profile_views.review_identity_change, name="review_identity_change"),
     # Audit log
     path("audit/", profile_views.audit_log, name="audit"),
 ]

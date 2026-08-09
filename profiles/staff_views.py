@@ -22,6 +22,10 @@ def mentor_queue(request):
     pending = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_PENDING).select_related("user").order_by("created_at")
 
+    pending_identity_changes = MentorProfile.objects.filter(
+        pending_identity_changes__isnull=False
+    ).select_related("user").order_by("pending_review_requested_at")
+
     approved = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_APPROVED).select_related("user").order_by("user__full_name")
 
@@ -43,6 +47,7 @@ def mentor_queue(request):
     page_obj = paginate(request, approved)
     return render(request, "profiles/staff_mentor_queue.html", {
         "pending": pending, "approved": page_obj, "page_obj": page_obj,
+        "pending_identity_changes": pending_identity_changes,
         "qs": querystring_without_page(request),
         "search_value": q, "search_placeholder": "Search name, role, company…",
         "filters": [{"name": "only", "label": "Show", "options": only_opts}],
@@ -191,9 +196,7 @@ def add_placeholder_mentor(request):
 # ---------- Staff: activate login for a placeholder mentor ----------
 
 class ActivateLoginForm(forms.Form):
-    email = forms.EmailField(label="Mentor's email")
-    password = forms.CharField(min_length=8, widget=forms.PasswordInput,
-                               label="Set a password (min 8 chars)")
+    email = forms.EmailField(label="Mentor's real email address")
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -205,8 +208,13 @@ class ActivateLoginForm(forms.Form):
 
 @staff_required
 def activate_mentor_login(request, mentor_id):
-    from profiles.models import MentorProfile
+    import secrets
+
+    from django.urls import reverse
+
+    from accounts.emails import send_email
     from auditlog.models import AdminAuditLog
+    from profiles.models import MentorProfile
 
     profile = get_object_or_404(MentorProfile, pk=mentor_id)
     user = profile.user
@@ -218,18 +226,110 @@ def activate_mentor_login(request, mentor_id):
     if request.method == "POST":
         form = ActivateLoginForm(request.POST)
         if form.is_valid():
-            user.activate_login(form.cleaned_data["email"], form.cleaned_data["password"])
+            email = form.cleaned_data["email"]
+            temp_password = secrets.token_urlsafe(12)
+
+            user.activate_login(email, temp_password)
+            user.must_change_password = True
+            user.save(update_fields=["must_change_password"])
+
+            login_url = request.build_absolute_uri(reverse("login"))
+            send_email(
+                to_email=email,
+                subject="Welcome to mVia — Set up your account",
+                template_name="mentor_login_activated",
+                body=(
+                    f"Hi {user.get_short_name()},\n\n"
+                    f"Your mVia mentor account is ready. Here are your login details:\n\n"
+                    f"Email: {email}\n"
+                    f"Temporary password: {temp_password}\n\n"
+                    f"Log in here: {login_url}\n\n"
+                    f"You'll be asked to set a new password the first time you log in.\n\n"
+                    f"— The mVia team"
+                ),
+            )
+
             AdminAuditLog.record(
                 actor=request.user, action="mentor.login_activated",
-                target=f"{user.full_name} <{user.email}>")
-            messages.success(
-                request,
-                f"Login activated for {user.full_name}. Share the email and password with them "
-                f"and ask them to change the password after first login.")
+                target=f"{user.full_name} <{email}>")
+            messages.success(request, f"Login activated. Welcome email sent to {email}.")
             return redirect("staff:edit_mentor_profile", mentor_id=profile.id)
     else:
         form = ActivateLoginForm()
 
     return render(request, "profiles/staff_activate_login.html", {
         "form": form, "mentor": profile, "active_nav": "mentors",
+    })
+
+
+# ---------- Staff: review a mentor-submitted identity-field change request ----------
+
+IDENTITY_FIELD_LABELS = [
+    ("full_name", "Full name"),
+    ("industry", "Industry"),
+    ("years_experience", "Years of experience"),
+    ("credentials", "Credentials"),
+    ("current_role", "Current role"),
+    ("company", "Current company"),
+]
+
+
+@staff_required
+def review_identity_change(request, mentor_id):
+    from profiles.models import MentorProfile
+
+    profile = get_object_or_404(MentorProfile, pk=mentor_id)
+
+    if not profile.pending_identity_changes:
+        messages.info(request, "No pending profile change for this mentor.")
+        return redirect("staff:mentor_review", mentor_id=profile.id)
+
+    pending = profile.pending_identity_changes
+    current = {
+        "full_name": profile.user.full_name,
+        "industry": profile.industry,
+        "years_experience": profile.years_experience,
+        "credentials": profile.credentials,
+        "current_role": profile.current_role,
+        "company": profile.company,
+    }
+    diff_rows = [
+        {"key": key, "label": label, "current": current[key], "proposed": pending.get(key)}
+        for key, label in IDENTITY_FIELD_LABELS
+    ]
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        target = f"{profile.user.full_name} <{profile.user.email}>"
+
+        if action == "approve":
+            if pending.get("full_name") and pending["full_name"] != profile.user.full_name:
+                profile.user.full_name = pending["full_name"]
+                profile.user.save(update_fields=["full_name"])
+            profile.industry = pending.get("industry", profile.industry)
+            profile.years_experience = pending.get("years_experience", profile.years_experience)
+            profile.credentials = pending.get("credentials", profile.credentials)
+            profile.current_role = pending.get("current_role", profile.current_role)
+            profile.company = pending.get("company", profile.company)
+            profile.pending_identity_changes = None
+            profile.pending_review_requested_at = None
+            profile.save()
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.identity_change_approved", target=target)
+            messages.success(request, f"Approved profile changes for {profile.user.get_short_name()}.")
+            return redirect("staff:mentor_queue")
+
+        elif action == "reject":
+            reason = request.POST.get("reason", "").strip()
+            profile.pending_identity_changes = None
+            profile.pending_review_requested_at = None
+            profile.save(update_fields=["pending_identity_changes", "pending_review_requested_at"])
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.identity_change_rejected",
+                target=target, reason=reason)
+            messages.success(request, f"Rejected profile changes for {profile.user.get_short_name()}.")
+            return redirect("staff:mentor_queue")
+
+    return render(request, "profiles/staff_review_identity_change.html", {
+        "mentor": profile, "diff_rows": diff_rows, "active_nav": "mentors",
     })

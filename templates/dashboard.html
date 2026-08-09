@@ -4,7 +4,12 @@
 {% block content %}
 <div class="dash-wrap">
   <div class="dash-header">
-    <h1>{% blocktrans with name=user.get_short_name %}Welcome back, {{ name }}{% endblocktrans %}</h1>
+    <div class="dash-header-title">
+      <h1>{% blocktrans with name=user.get_short_name %}Welcome back, {{ name }}{% endblocktrans %}</h1>
+      {% if active_role == 'mentor' %}
+        <a href="{% url 'mentor_profile_edit' %}" class="btn-secondary">{% trans "Edit profile" %}</a>
+      {% endif %}
+    </div>
     {% if can_toggle %}
       <div class="role-toggle">
         <span class="role-toggle-label">{% trans "View as" %}</span>
@@ -33,6 +38,7 @@
 
   .dash-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.75rem; }
   .dash-header h1 { font-family:'Geist',sans-serif; font-size:1.9rem; letter-spacing:-0.02em; }
+  .dash-header-title { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
 
   .role-toggle { display:flex; align-items:center; gap:0.5rem; background:#fff; border:1px solid rgba(15,15,16,0.1); border-radius:99px; padding:0.25rem 0.9rem 0.25rem 0.25rem; }
   .role-toggle-label { font-size:0.78rem; opacity:0.55; margin-left:0.4rem; }
@@ -59,6 +65,10 @@
   .hero-attention { border-color:rgba(215,25,32,0.25); }
   .hero-attention.hero-high { border-color:rgba(215,25,32,0.5); background:#fff8f6; }
   .hero-attention.hero-critical { border-color:var(--red); background:#fdeceb; }
+
+  .hero-welcome { border-color:rgba(215,25,32,0.15); background:#fff9f0; margin-bottom:1.5rem; }
+  .hero-welcome .hero-name { font-size:1.15rem; margin-bottom:0.9rem; max-width:640px; }
+  .hero-welcome .btn-primary { margin-left:0; }
 
   .btn-join, .btn-primary { display:inline-block; margin-left:auto; padding:0.6rem 1.2rem; background:var(--red); color:#fff !important; border-radius:9px; text-decoration:none; font-weight:600; font-size:0.88rem; }
   .btn-join:hover, .btn-primary:hover { background:var(--deep-red); }

@@ -10,4 +10,5 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("password-reset/", views.password_reset_request, name="password_reset_request"),
     path("password-reset/<str:token>/", views.password_reset_confirm, name="password_reset_confirm"),
+    path("set-password/", views.force_set_password, name="force_set_password"),
 ]
