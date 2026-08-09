@@ -4,7 +4,12 @@
 {% block content %}
 <div class="dash-wrap">
   <div class="dash-header">
-    <h1>{% blocktrans with name=user.get_short_name %}Welcome back, {{ name }}{% endblocktrans %}</h1>
+    <div class="dash-header-title">
+      <h1>{% blocktrans with name=user.get_short_name %}Welcome back, {{ name }}{% endblocktrans %}</h1>
+      {% if active_role == 'mentor' %}
+        <a href="{% url 'mentor_profile_edit' %}" class="btn-secondary">{% trans "Edit profile" %}</a>
+      {% endif %}
+    </div>
     {% if can_toggle %}
       <div class="role-toggle">
         <span class="role-toggle-label">{% trans "View as" %}</span>
@@ -33,6 +38,7 @@
 
   .dash-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.75rem; }
   .dash-header h1 { font-family:'Geist',sans-serif; font-size:1.9rem; letter-spacing:-0.02em; }
+  .dash-header-title { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
 
   .role-toggle { display:flex; align-items:center; gap:0.5rem; background:#fff; border:1px solid rgba(15,15,16,0.1); border-radius:99px; padding:0.25rem 0.9rem 0.25rem 0.25rem; }
   .role-toggle-label { font-size:0.78rem; opacity:0.55; margin-left:0.4rem; }

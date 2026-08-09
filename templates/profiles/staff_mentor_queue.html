@@ -30,6 +30,24 @@
 </div>
 
 <div class="panel">
+  <h2>{{ pending_identity_changes.count }} pending profile change{{ pending_identity_changes.count|pluralize }}</h2>
+  {% if pending_identity_changes %}
+  <table>
+    <thead><tr><th>Mentor</th><th>Requested</th><th></th></tr></thead>
+    <tbody>
+      {% for m in pending_identity_changes %}
+      <tr>
+        <td><strong>{{ m.user.full_name }}</strong><br><span style="color:var(--muted); font-size:0.82rem;">{{ m.user.email }}</span></td>
+        <td>{{ m.pending_review_requested_at|date:"d M Y, H:i" }}</td>
+        <td><a href="{% url 'staff:review_identity_change' m.id %}">Review →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No pending profile changes.</div>{% endif %}
+</div>
+
+<div class="panel">
   <h2>Active mentors{% if page_obj %} <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page_obj.paginator.count }})</span>{% endif %}</h2>
   <div style="padding:0 0 0.5rem;">{% include "partials/_filter_bar.html" %}</div>
   {% if approved %}

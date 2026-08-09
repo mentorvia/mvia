@@ -22,6 +22,10 @@ def mentor_queue(request):
     pending = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_PENDING).select_related("user").order_by("created_at")
 
+    pending_identity_changes = MentorProfile.objects.filter(
+        pending_identity_changes__isnull=False
+    ).select_related("user").order_by("pending_review_requested_at")
+
     approved = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_APPROVED).select_related("user").order_by("user__full_name")
 
@@ -43,6 +47,7 @@ def mentor_queue(request):
     page_obj = paginate(request, approved)
     return render(request, "profiles/staff_mentor_queue.html", {
         "pending": pending, "approved": page_obj, "page_obj": page_obj,
+        "pending_identity_changes": pending_identity_changes,
         "qs": querystring_without_page(request),
         "search_value": q, "search_placeholder": "Search name, role, company…",
         "filters": [{"name": "only", "label": "Show", "options": only_opts}],
@@ -254,4 +259,77 @@ def activate_mentor_login(request, mentor_id):
 
     return render(request, "profiles/staff_activate_login.html", {
         "form": form, "mentor": profile, "active_nav": "mentors",
+    })
+
+
+# ---------- Staff: review a mentor-submitted identity-field change request ----------
+
+IDENTITY_FIELD_LABELS = [
+    ("full_name", "Full name"),
+    ("industry", "Industry"),
+    ("years_experience", "Years of experience"),
+    ("credentials", "Credentials"),
+    ("current_role", "Current role"),
+    ("company", "Current company"),
+]
+
+
+@staff_required
+def review_identity_change(request, mentor_id):
+    from profiles.models import MentorProfile
+
+    profile = get_object_or_404(MentorProfile, pk=mentor_id)
+
+    if not profile.pending_identity_changes:
+        messages.info(request, "No pending profile change for this mentor.")
+        return redirect("staff:mentor_review", mentor_id=profile.id)
+
+    pending = profile.pending_identity_changes
+    current = {
+        "full_name": profile.user.full_name,
+        "industry": profile.industry,
+        "years_experience": profile.years_experience,
+        "credentials": profile.credentials,
+        "current_role": profile.current_role,
+        "company": profile.company,
+    }
+    diff_rows = [
+        {"key": key, "label": label, "current": current[key], "proposed": pending.get(key)}
+        for key, label in IDENTITY_FIELD_LABELS
+    ]
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        target = f"{profile.user.full_name} <{profile.user.email}>"
+
+        if action == "approve":
+            if pending.get("full_name") and pending["full_name"] != profile.user.full_name:
+                profile.user.full_name = pending["full_name"]
+                profile.user.save(update_fields=["full_name"])
+            profile.industry = pending.get("industry", profile.industry)
+            profile.years_experience = pending.get("years_experience", profile.years_experience)
+            profile.credentials = pending.get("credentials", profile.credentials)
+            profile.current_role = pending.get("current_role", profile.current_role)
+            profile.company = pending.get("company", profile.company)
+            profile.pending_identity_changes = None
+            profile.pending_review_requested_at = None
+            profile.save()
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.identity_change_approved", target=target)
+            messages.success(request, f"Approved profile changes for {profile.user.get_short_name()}.")
+            return redirect("staff:mentor_queue")
+
+        elif action == "reject":
+            reason = request.POST.get("reason", "").strip()
+            profile.pending_identity_changes = None
+            profile.pending_review_requested_at = None
+            profile.save(update_fields=["pending_identity_changes", "pending_review_requested_at"])
+            AdminAuditLog.record(
+                actor=request.user, action="mentor.identity_change_rejected",
+                target=target, reason=reason)
+            messages.success(request, f"Rejected profile changes for {profile.user.get_short_name()}.")
+            return redirect("staff:mentor_queue")
+
+    return render(request, "profiles/staff_review_identity_change.html", {
+        "mentor": profile, "diff_rows": diff_rows, "active_nav": "mentors",
     })
