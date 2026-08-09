@@ -191,9 +191,7 @@ def add_placeholder_mentor(request):
 # ---------- Staff: activate login for a placeholder mentor ----------
 
 class ActivateLoginForm(forms.Form):
-    email = forms.EmailField(label="Mentor's email")
-    password = forms.CharField(min_length=8, widget=forms.PasswordInput,
-                               label="Set a password (min 8 chars)")
+    email = forms.EmailField(label="Mentor's real email address")
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -205,8 +203,13 @@ class ActivateLoginForm(forms.Form):
 
 @staff_required
 def activate_mentor_login(request, mentor_id):
-    from profiles.models import MentorProfile
+    import secrets
+
+    from django.urls import reverse
+
+    from accounts.emails import send_email
     from auditlog.models import AdminAuditLog
+    from profiles.models import MentorProfile
 
     profile = get_object_or_404(MentorProfile, pk=mentor_id)
     user = profile.user
@@ -218,14 +221,33 @@ def activate_mentor_login(request, mentor_id):
     if request.method == "POST":
         form = ActivateLoginForm(request.POST)
         if form.is_valid():
-            user.activate_login(form.cleaned_data["email"], form.cleaned_data["password"])
+            email = form.cleaned_data["email"]
+            temp_password = secrets.token_urlsafe(12)
+
+            user.activate_login(email, temp_password)
+            user.must_change_password = True
+            user.save(update_fields=["must_change_password"])
+
+            login_url = request.build_absolute_uri(reverse("login"))
+            send_email(
+                to_email=email,
+                subject="Welcome to mVia — Set up your account",
+                template_name="mentor_login_activated",
+                body=(
+                    f"Hi {user.get_short_name()},\n\n"
+                    f"Your mVia mentor account is ready. Here are your login details:\n\n"
+                    f"Email: {email}\n"
+                    f"Temporary password: {temp_password}\n\n"
+                    f"Log in here: {login_url}\n\n"
+                    f"You'll be asked to set a new password the first time you log in.\n\n"
+                    f"— The mVia team"
+                ),
+            )
+
             AdminAuditLog.record(
                 actor=request.user, action="mentor.login_activated",
-                target=f"{user.full_name} <{user.email}>")
-            messages.success(
-                request,
-                f"Login activated for {user.full_name}. Share the email and password with them "
-                f"and ask them to change the password after first login.")
+                target=f"{user.full_name} <{email}>")
+            messages.success(request, f"Login activated. Welcome email sent to {email}.")
             return redirect("staff:edit_mentor_profile", mentor_id=profile.id)
     else:
         form = ActivateLoginForm()

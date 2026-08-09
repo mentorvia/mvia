@@ -9,7 +9,7 @@
 <div class="panel">
   <div style="padding:1.25rem; max-width:520px;">
     <div class="msg info" style="margin-bottom:1rem;">
-      This sets an email and password for the mentor. Share these with them directly (WhatsApp/call), and ask them to change the password after their first login.
+      We'll generate a secure temporary password and email it to this address, along with a login link. The mentor will be required to set their own password the first time they log in.
     </div>
     <form method="post">
       {% csrf_token %}
@@ -17,9 +17,6 @@
       <label style="display:block; font-weight:600; font-size:0.88rem; margin-bottom:0.3rem;">{{ form.email.label }}</label>
       {{ form.email }}
       {% if form.email.errors %}<div class="err">{{ form.email.errors|striptags }}</div>{% endif %}
-      <label style="display:block; font-weight:600; font-size:0.88rem; margin:0.9rem 0 0.3rem;">{{ form.password.label }}</label>
-      {{ form.password }}
-      {% if form.password.errors %}<div class="err">{{ form.password.errors|striptags }}</div>{% endif %}
       <div style="margin-top:1.25rem;">
         <button type="submit" style="padding:0.65rem 1.4rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Activate login</button>
       </div>
@@ -27,7 +24,7 @@
   </div>
 </div>
 <style>
-  .panel input[type=email], .panel input[type=password]{width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem;}
+  .panel input[type=email]{width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem;}
   .err{color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem;}
 </style>
 {% endblock %}

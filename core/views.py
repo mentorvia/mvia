@@ -8,6 +8,8 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
+from accounts.decorators import redirect_if_must_change_password
+
 
 def home(request):
     # Show up to 4 real approved, available mentors (with photos preferred) in
@@ -26,6 +28,7 @@ def health(request):
 
 
 @login_required
+@redirect_if_must_change_password
 def dashboard(request):
     """The signed-in landing area: routes to the mentee or mentor dashboard."""
     from .dashboard_data import resolve_active_role, mentee_context, mentor_context

@@ -129,14 +129,18 @@ class ActivateLoginTest(TestCase):
         self.assertTrue(ph.is_placeholder)
         self.client.login(username="admin@mvia.in", password="Admin!2345")
         mp = ph.mentor_profile
-        r = self.client.post(f"/staff/mentors/{mp.id}/activate-login/", {
-            "email": "newmentor@example.com", "password": "SecurePass123"})
+        # Staff submits only the mentor's real email — no password field anymore;
+        # the view generates one. Patch it for a deterministic assertion below.
+        with patch("secrets.token_urlsafe", return_value="GeneratedTempPass123"):
+            r = self.client.post(f"/staff/mentors/{mp.id}/activate-login/", {
+                "email": "newmentor@example.com"})
         ph.refresh_from_db()
         self.assertFalse(ph.is_placeholder)
         self.assertEqual(ph.email, "newmentor@example.com")
         self.assertTrue(ph.is_email_verified)
-        # can now authenticate
-        self.assertTrue(self.client.login(username="newmentor@example.com", password="SecurePass123"))
+        self.assertTrue(ph.must_change_password)
+        # can now authenticate with the system-generated temporary password
+        self.assertTrue(self.client.login(username="newmentor@example.com", password="GeneratedTempPass123"))
 
     def test_duplicate_email_rejected(self):
         admin = User.objects.create_superuser(email="admin@mvia.in", password="Admin!2345", full_name="Admin")
@@ -146,6 +150,6 @@ class ActivateLoginTest(TestCase):
             years_experience=3, bio="B", hourly_rate=1000, status="approved")
         self.client.login(username="admin@mvia.in", password="Admin!2345")
         self.client.post(f"/staff/mentors/{mp.id}/activate-login/", {
-            "email": "taken@example.com", "password": "SecurePass123"})
+            "email": "taken@example.com"})
         ph.refresh_from_db()
         self.assertTrue(ph.is_placeholder)  # unchanged — rejected

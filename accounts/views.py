@@ -2,7 +2,10 @@
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth import (
+    login as auth_login, logout as auth_logout, update_session_auth_hash,
+)
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 
@@ -75,6 +78,10 @@ def login_view(request):
         form = LoginForm(request.POST, request=request)
         if form.is_valid():
             auth_login(request, form.user)
+            # A system-generated temporary password (e.g. mentor login activation)
+            # must be replaced before the user reaches anywhere else.
+            if form.user.must_change_password:
+                return redirect("force_set_password")
             messages.success(request, f"Welcome back, {form.user.get_short_name()}!")
             # Staff land in the staff console; everyone else in the member dashboard.
             if form.user.is_staff:
@@ -143,3 +150,33 @@ def password_reset_confirm(request, token):
     else:
         form = SetNewPasswordForm()
     return render(request, "accounts/password_reset_confirm.html", {"form": form})
+
+
+@login_required
+def force_set_password(request):
+    """
+    First-login checkpoint for accounts given a system-generated temporary
+    password (currently: staff activating a placeholder mentor's login).
+    Blocks nothing by URL — relies on must_change_password being cleared here
+    and checked at login (accounts.views.login_view) and on the dashboard
+    entry point (accounts.decorators.redirect_if_must_change_password).
+    """
+    if not request.user.must_change_password:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = SetNewPasswordForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.set_password(form.cleaned_data["password"])
+            user.must_change_password = False
+            user.save(update_fields=["password", "must_change_password"])
+            # Keep the session valid — set_password() rotates the hash Django
+            # uses to validate the session, which would otherwise log the
+            # user straight back out.
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password updated.")
+            return redirect("dashboard")
+    else:
+        form = SetNewPasswordForm()
+    return render(request, "accounts/force_set_password.html", {"form": form})
