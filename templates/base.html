@@ -55,7 +55,11 @@
         <a href="{% url 'directory' %}">{% trans "Find a mentor" %}</a>
         <a href="{% url 'my_bookings' %}">{% trans "My bookings" %}</a>
         {% if user.is_mentor %}<a href="{% url 'my_availability' %}">{% trans "Availability" %}</a>{% endif %}
-        <a href="{% url 'mentee_profile' %}">{% trans "My profile" %}</a>
+        {% if user.is_mentor %}
+          <a href="{% url 'mentor_profile_edit' %}">{% trans "My profile" %}</a>
+        {% else %}
+          <a href="{% url 'mentee_profile' %}">{% trans "My profile" %}</a>
+        {% endif %}
         <a href="{% url 'logout' %}">{% trans "Log out" %}</a>
       {% else %}
         <a href="{% url 'login' %}">{% trans "Log in" %}</a>
