@@ -64,10 +64,11 @@ class InterestStaffTest(TestCase):
         self.assertEqual(i.name, "New Name")
 
     def test_delete_cascades(self):
-        tech = Interest.objects.create(name="Tech")
-        Interest.objects.create(name="ML", parent=tech)
+        before = Interest.objects.count()
+        tech = Interest.objects.create(name="Tech Test Node")
+        Interest.objects.create(name="ML Test Node", parent=tech)
         self.client.post(f"/staff/interests/{tech.id}/delete/", follow=True)
-        self.assertEqual(Interest.objects.count(), 0)  # child gone too
+        self.assertEqual(Interest.objects.count(), before)  # both created rows gone, nothing else touched
 
     def test_cannot_make_self_parent(self):
         i = Interest.objects.create(name="X")

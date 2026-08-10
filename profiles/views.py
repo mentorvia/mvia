@@ -15,28 +15,59 @@ def _get_or_create_mentee_profile(user):
     return profile
 
 
-def _interest_tree():
-    """Approved interests as a (category, [descendants]) structure for selection UIs."""
+def _interest_categories():
+    """
+    Top-level Interest categories for the picker (category cards + optional
+    deep-dive expansion). Each entry carries every descendant flattened to a
+    single list (any depth — nothing is unreachable, it just moves into the
+    "expand" panel), and a live count of approved, available mentors linked
+    to the category itself or any of its descendants.
+    """
     approved = list(Interest.objects.filter(is_approved=True).order_by("name"))
     by_parent = {}
     for i in approved:
         by_parent.setdefault(i.parent_id, []).append(i)
 
-    def flatten(parent_id, depth=0):
+    def flatten(parent_id):
         rows = []
         for node in by_parent.get(parent_id, []):
-            rows.append({"node": node, "depth": depth})
-            rows.extend(flatten(node.id, depth + 1))
+            rows.append(node)
+            rows.extend(flatten(node.id))
         return rows
 
-    return flatten(None)
+    categories = []
+    for cat in by_parent.get(None, []):
+        descendants = flatten(cat.id)
+        all_ids = [cat.id] + [d.id for d in descendants]
+        mentor_count = MentorProfile.objects.filter(
+            status=MentorProfile.STATUS_APPROVED, is_available=True,
+            user__mentor_interests__interest_id__in=all_ids,
+        ).distinct().count()
+        categories.append({
+            "category": cat, "descendants": descendants, "mentor_count": mentor_count,
+        })
+    categories.sort(key=lambda entry: entry["category"].name.lower())
+    return categories
+
+
+def _mark_expansion(categories, selected_ids):
+    """
+    Auto-expand any category card whose subtree already has a selection, so a
+    pre-filled sub-interest choice (e.g. a mentor who picked "Machine
+    Learning" without ever checking the "Tech" category box) is never hidden
+    inside a collapsed panel on an edit page.
+    """
+    for entry in categories:
+        all_ids = {entry["category"].id} | {d.id for d in entry["descendants"]}
+        entry["initially_expanded"] = bool(all_ids & selected_ids)
+    return categories
 
 
 @login_required
 def mentee_profile(request):
     profile = _get_or_create_mentee_profile(request.user)
-    interest_rows = _interest_tree()
     selected_ids = set(request.user.mentee_interests.values_list("interest_id", flat=True))
+    categories = _mark_expansion(_interest_categories(), selected_ids)
 
     if request.method == "POST":
         form = MenteeProfileForm(request.POST, instance=profile)
@@ -65,7 +96,7 @@ def mentee_profile(request):
         form = MenteeProfileForm(instance=profile)
 
     return render(request, "profiles/mentee_profile.html", {
-        "form": form, "interest_rows": interest_rows,
+        "form": form, "categories": categories,
         "selected_ids": selected_ids, "profile": profile,
     })
 
@@ -77,14 +108,12 @@ def become_mentor(request):
     if existing:
         return render(request, "profiles/mentor_status.html", {"mentor": existing})
 
-    interest_rows = _interest_tree()
+    categories = _interest_categories()
 
     if request.method == "POST":
         form = MentorApplicationForm(request.POST)
         chosen = set(int(x) for x in request.POST.getlist("interests"))
-        if form.is_valid() and not chosen:
-            form.add_error(None, "Select at least one specialization.")
-        if form.is_valid() and chosen:
+        if form.is_valid():
             mentor = form.save(commit=False)
             mentor.user = request.user
             mentor.status = MentorProfile.STATUS_PENDING
@@ -97,5 +126,5 @@ def become_mentor(request):
         form = MentorApplicationForm()
 
     return render(request, "profiles/mentor_apply.html", {
-        "form": form, "interest_rows": interest_rows,
+        "form": form, "categories": categories, "selected_ids": set(),
     })

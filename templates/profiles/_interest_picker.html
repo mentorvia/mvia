@@ -1,10 +1,206 @@
-{# Reusable interest checklist. Expects: interest_rows, selected_ids (may be empty) #}
-<div style="border:1px solid rgba(15,15,16,0.15); border-radius:9px; max-height:280px; overflow-y:auto; padding:0.5rem 0.75rem; background:#fff;">
-  {% for row in interest_rows %}
-    <label style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; padding-left:{{ row.depth }}.5rem; font-weight:400; cursor:pointer;">
-      <input type="checkbox" name="interests" value="{{ row.node.id }}"
-        {% if row.node.id in selected_ids %}checked{% endif %}>
-      <span style="{% if not row.node.parent_id %}font-weight:600;{% endif %}">{{ row.node.name }}</span>
-    </label>
-  {% endfor %}
+{% load i18n %}
+{% comment %}
+  Reusable interest picker: category cards + optional deep-dive expansion.
+  Expects:
+    categories    — from profiles.views._interest_categories(), each entry
+                    a dict with category, descendants (all levels,
+                    flattened), mentor_count — optionally annotated with
+                    initially_expanded via profiles.views._mark_expansion().
+    selected_ids  — set of currently-selected Interest ids (may be empty).
+    allow_custom  — optional bool; shows the "add your own" affordance
+                    (mentee sites only).
+  Emits a checkbox input named "interests" for every selectable node
+  (category or descendant) — same contract the old flat picker used, so
+  existing POST-handling code needs no changes.
+{% endcomment %}
+<div class="interest-picker">
+  <h3 class="ip-title">{% trans "What are you interested in?" %}</h3>
+  <p class="ip-subtitle">{% trans "Pick 3-5 areas to see mentors matched to your goals. You can refine anytime." %}</p>
+
+  <div class="ip-grid">
+    {% for entry in categories %}
+      <div class="interest-card{% if entry.initially_expanded %} ic-expanded{% endif %}">
+        <label class="ic-select">
+          <input type="checkbox" name="interests" value="{{ entry.category.id }}" class="ic-checkbox"
+            {% if entry.category.id in selected_ids %}checked{% endif %}>
+          <span class="ic-check" aria-hidden="true">✓</span>
+          <span class="ic-name">{{ entry.category.name }}</span>
+          <span class="ic-count">{% blocktrans count n=entry.mentor_count %}· {{ n }} mentor{% plural %}· {{ n }} mentors{% endblocktrans %}</span>
+        </label>
+        {% if entry.descendants %}
+          <button type="button" class="ic-expand-toggle">
+            <span class="ic-expand-label-closed">▾ {% trans "Expand for specifics (optional)" %}</span>
+            <span class="ic-expand-label-open">▴ {% trans "Hide specifics" %}</span>
+          </button>
+          <div class="ic-descendants{% if entry.descendants|length > 12 %} ic-scroll{% endif %}">
+            {% for d in entry.descendants %}
+              <label class="ic-sub">
+                <input type="checkbox" name="interests" value="{{ d.id }}" class="ic-sub-checkbox"
+                  {% if d.id in selected_ids %}checked{% endif %}>
+                <span>{{ d.name }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if allow_custom %}
+    <div class="ip-custom">
+      <button type="button" class="ip-custom-toggle">{% trans "Don't see your interest? Add it" %} →</button>
+      <div class="ip-custom-panel" hidden>
+        <input type="text" name="custom_interest" placeholder="{% trans 'e.g. Robotics' %}">
+        <p class="hint">{% trans "Submitted for admin review before it's added to your interests." %}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="ip-nudge" hidden>
+    <p>{% trans "For better mentor matches, we recommend picking at least 3 areas. Continue anyway?" %}</p>
+    <div class="ip-nudge-actions">
+      <button type="button" class="btn-secondary ip-nudge-more">{% trans "Add more" %}</button>
+      <button type="button" class="btn-primary ip-nudge-continue">{% trans "Continue with what I have" %}</button>
+    </div>
+  </div>
 </div>
+
+<script>
+  (function () {
+    document.querySelectorAll('.interest-picker').forEach(function (picker) {
+      // Expand/collapse each category's descendant panel.
+      picker.querySelectorAll('.interest-card').forEach(function (card) {
+        var toggle = card.querySelector('.ic-expand-toggle');
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            card.classList.toggle('ic-expanded');
+          });
+        }
+        // Belt-and-suspenders visual "selected" state for browsers without
+        // CSS :has() support — the primary styling is CSS-driven (see below).
+        card.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+          cb.addEventListener('change', function () {
+            var anyChecked = Array.prototype.some.call(
+              card.querySelectorAll('input[type=checkbox]'), function (c) { return c.checked; });
+            card.classList.toggle('selected', anyChecked);
+          });
+        });
+      });
+
+      // Custom-interest collapsed affordance (mentee sites only).
+      var customToggle = picker.querySelector('.ip-custom-toggle');
+      if (customToggle) {
+        var customPanel = picker.querySelector('.ip-custom-panel');
+        customToggle.addEventListener('click', function () {
+          customPanel.hidden = !customPanel.hidden;
+          if (!customPanel.hidden) customPanel.querySelector('input').focus();
+        });
+      }
+
+      // Soft nudge: never blocks submission, just asks for confirmation
+      // below 3 top-level categories.
+      var form = picker.closest('form');
+      var nudge = picker.querySelector('.ip-nudge');
+      if (!form || !nudge) return;
+      var bypass = false;
+
+      form.addEventListener('submit', function (e) {
+        if (bypass) { bypass = false; return; }
+        var count = Array.prototype.filter.call(
+          picker.querySelectorAll('.ic-checkbox'), function (cb) { return cb.checked; }).length;
+        if (count < 3) {
+          e.preventDefault();
+          nudge.hidden = false;
+          nudge.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+
+      var moreBtn = nudge.querySelector('.ip-nudge-more');
+      var continueBtn = nudge.querySelector('.ip-nudge-continue');
+      moreBtn.addEventListener('click', function () { nudge.hidden = true; });
+      continueBtn.addEventListener('click', function () {
+        bypass = true;
+        nudge.hidden = true;
+        if (form.requestSubmit) { form.requestSubmit(); } else { form.submit(); }
+      });
+    });
+  })();
+</script>
+
+<style>
+  .interest-picker { margin: 0.5rem 0 1rem; }
+  .ip-title { font-family:'Geist',sans-serif; font-size:1.05rem; margin-bottom:0.3rem; }
+  .ip-subtitle { font-size:0.85rem; opacity:0.65; margin-bottom:1rem; }
+
+  .ip-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:0.75rem; }
+
+  .interest-card {
+    border:1.5px solid rgba(15,15,16,0.12); border-radius:12px; padding:0.9rem 1rem;
+    background:#fff; transition:border-color 0.12s, background 0.12s;
+  }
+  .interest-card.selected,
+  .interest-card:has(.ic-checkbox:checked),
+  .interest-card:has(.ic-sub-checkbox:checked) {
+    border-color:var(--red); background:#fdeceb;
+  }
+
+  .ic-select { display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:400; margin:0; }
+  .ic-select input[type=checkbox] {
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  .ic-check {
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    width:1.15rem; height:1.15rem; border-radius:50%; border:1.5px solid rgba(15,15,16,0.25);
+    font-size:0.7rem; color:transparent; background:#fff;
+  }
+  .interest-card.selected .ic-check,
+  .interest-card:has(.ic-checkbox:checked) .ic-check {
+    background:var(--red); border-color:var(--red); color:#fff;
+  }
+  .ic-name { font-weight:600; }
+  .ic-count { font-size:0.78rem; opacity:0.55; white-space:nowrap; }
+
+  .ic-expand-toggle {
+    display:none; background:none; border:none; padding:0.5rem 0 0; margin-top:0.35rem;
+    font-size:0.78rem; color:var(--deep-red); cursor:pointer; font-family:inherit;
+    border-top:1px solid rgba(15,15,16,0.08);
+  }
+  .interest-card.selected .ic-expand-toggle,
+  .interest-card:has(.ic-checkbox:checked) .ic-expand-toggle { display:block; }
+  .ic-expand-label-open { display:none; }
+  .interest-card.ic-expanded .ic-expand-label-closed { display:none; }
+  .interest-card.ic-expanded .ic-expand-label-open { display:inline; }
+
+  .ic-descendants { display:none; margin-top:0.6rem; padding-top:0.1rem; }
+  .interest-card.ic-expanded .ic-descendants { display:flex; flex-direction:column; gap:0.35rem; }
+  .ic-descendants.ic-scroll { max-height:220px; overflow-y:auto; padding-right:0.25rem; }
+  .ic-sub { display:flex; align-items:center; gap:0.45rem; font-size:0.85rem; font-weight:400; cursor:pointer; }
+
+  .ip-custom { margin-top:1rem; }
+  .ip-custom-toggle {
+    background:none; border:none; padding:0; color:var(--deep-red); font-size:0.85rem;
+    cursor:pointer; font-family:inherit; font-weight:600;
+  }
+  .ip-custom-panel { margin-top:0.6rem; max-width:360px; }
+  .ip-custom-panel input[type=text] {
+    width:100%; padding:0.6rem 0.75rem; border:1px solid rgba(15,15,16,0.15);
+    border-radius:8px; font-family:inherit; font-size:0.9rem;
+  }
+  .ip-custom-panel .hint { font-size:0.78rem; opacity:0.55; margin-top:0.3rem; }
+
+  .ip-nudge {
+    margin-top:1rem; padding:1rem; border-radius:10px; background:#fff4e5; color:#7a4a00; font-size:0.9rem;
+  }
+  .ip-nudge-actions { display:flex; gap:0.6rem; margin-top:0.75rem; flex-wrap:wrap; }
+  .ip-nudge .btn-secondary, .ip-nudge .btn-primary {
+    padding:0.5rem 0.9rem; border-radius:8px; font-size:0.85rem; font-weight:600;
+    cursor:pointer; font-family:inherit; border:none;
+  }
+  .ip-nudge .btn-secondary { background:#fff; border:1px solid rgba(15,15,16,0.2); color:var(--ink); }
+  .ip-nudge .btn-primary { background:var(--red); color:#fff; }
+
+  @media (max-width:480px) {
+    .ip-grid { grid-template-columns:1fr; }
+  }
+</style>

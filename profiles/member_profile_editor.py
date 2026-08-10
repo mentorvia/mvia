@@ -21,7 +21,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from .models import MentorProfile, ProfilePoint
-from .views import _interest_tree
+from .views import _interest_categories, _mark_expansion
 from interests.models import MentorInterest
 from auditlog.models import AdminAuditLog
 
@@ -135,9 +135,7 @@ def mentor_profile_edit(request):
         elif action == "save_presentation":
             pform = PresentationForm(request.POST, request.FILES, instance=profile)
             chosen = set(int(x) for x in request.POST.getlist("interests"))
-            if pform.is_valid() and not chosen:
-                pform.add_error(None, "Select at least one specialization.")
-            if pform.is_valid() and chosen:
+            if pform.is_valid():
                 pform.save()
                 MentorInterest.objects.filter(user=request.user).exclude(interest_id__in=chosen).delete()
                 for iid in chosen:
@@ -242,7 +240,10 @@ def _render(request, profile, identity_form=None, presentation_form=None,
         "contact_form": contact_form,
         "session_form": session_form,
         "reveal_identity": reveal_identity,
-        "interest_rows": _interest_tree(),
+        "categories": _mark_expansion(
+            _interest_categories(),
+            set(request.user.mentor_interests.values_list("interest_id", flat=True)),
+        ),
         "selected_ids": set(request.user.mentor_interests.values_list("interest_id", flat=True)),
         "expertise_points": profile.points.filter(category=ProfilePoint.CATEGORY_EXPERTISE),
     })

@@ -79,9 +79,7 @@
         {{ presentation_form.bio }}
         {% if presentation_form.bio.errors %}<ul class="errorlist">{% for e in presentation_form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 
-        <label style="margin-top:1rem;">{% trans "Areas of expertise / specializations" %}</label>
-        <p class="hint">{% trans "Select at least one — these are what mentees find you by." %}</p>
-        {% include "profiles/_interest_picker.html" %}
+        {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids %}
 
         <button type="submit" class="btn-primary" style="margin-top:1rem;">{% trans "Save changes" %}</button>
       </form>
