@@ -15,9 +15,7 @@
       {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     {% endfor %}
 
-    <label style="margin-top:1.2rem;">{% trans "Your specializations" %}</label>
-    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">{% trans "Select at least one — these are what mentees find you by." %}</p>
-    {% include "profiles/_interest_picker.html" with selected_ids=selected_ids|default:'' %}
+    {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids %}
 
     <button type="submit" class="btn">{% trans "Submit application" %}</button>
   </form>

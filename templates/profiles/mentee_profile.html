@@ -20,12 +20,7 @@
       {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     {% endfor %}
 
-    <label style="margin-top:1.2rem;">{% trans "Your interests" %}</label>
-    <p style="font-size:0.82rem; opacity:0.6; margin-bottom:0.4rem;">{% trans "Pick what you want guidance on. This powers mentor recommendations." %}</p>
-    {% include "profiles/_interest_picker.html" %}
-
-    <label style="margin-top:1rem;">{% trans "Don't see your interest? Add one" %}</label>
-    <input type="text" name="custom_interest" placeholder="{% trans 'e.g. Robotics (sent for review)' %}">
+    {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids allow_custom=True %}
 
     <button type="submit" class="btn">{% trans "Save profile" %}</button>
   </form>

@@ -69,14 +69,18 @@ class MentorFlowTest(TestCase):
         self.assertFalse(u.is_mentor)  # not a mentor until approved
         self.assertEqual(u.mentor_interests.count(), 1)
 
-    def test_apply_requires_specialization(self):
+    def test_apply_without_specialization_is_soft_not_blocked(self):
+        # The minimum-3-specializations rule is a client-side soft nudge only
+        # (see templates/profiles/_interest_picker.html) — the server never
+        # hard-blocks, so an application with zero interests still succeeds.
         u = make_user("cand2@b.com")
         self.client.login(username="cand2@b.com", password="StrongPass!234")
         r = self.client.post("/profile/become-a-mentor/", {
             "current_role": "Eng", "company": "Co", "years_experience": "5",
             "bio": "Bio", "hourly_rate": "1000",
         })
-        self.assertFalse(MentorProfile.objects.filter(user=u).exists())
+        self.assertTrue(MentorProfile.objects.filter(user=u).exists())
+        self.assertEqual(u.mentor_interests.count(), 0)
 
     def test_approval_flow_with_audit(self):
         u = make_user("cand3@b.com")
