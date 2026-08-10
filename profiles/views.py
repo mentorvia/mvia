@@ -46,6 +46,7 @@ def _interest_categories():
         categories.append({
             "category": cat, "descendants": descendants, "mentor_count": mentor_count,
         })
+    categories.sort(key=lambda entry: entry["category"].name.lower())
     return categories
 
 
