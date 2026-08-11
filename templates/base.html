@@ -66,6 +66,7 @@
         <a href="{% url 'directory' %}">{% trans "Find a mentor" %}</a>
         <a href="{% url 'my_bookings' %}">{% trans "My bookings" %}</a>
         {% if user.is_mentor %}<a href="{% url 'my_availability' %}">{% trans "Availability" %}</a>{% endif %}
+        {% if not user.is_mentor %}<a href="{% url 'become_mentor' %}">{% trans "Become a mentor" %}</a>{% endif %}
         {% if user.is_mentor %}
           <a href="{% url 'mentor_profile_edit' %}">{% trans "My profile" %}</a>
         {% else %}
@@ -73,6 +74,7 @@
         {% endif %}
         <a href="{% url 'logout' %}">{% trans "Log out" %}</a>
       {% else %}
+        <a href="{% url 'mentor_application_apply' %}">{% trans "Become a mentor" %}</a>
         <a href="{% url 'login' %}">{% trans "Log in" %}</a>
         <a href="{% url 'signup' %}" class="nav-cta">{% trans "Sign up" %}</a>
       {% endif %}

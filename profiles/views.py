@@ -5,8 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.shortcuts import render, redirect
 
-from .models import MenteeProfile, MentorProfile
-from .forms import MenteeProfileForm, MentorApplicationForm
+from .models import MenteeProfile, MentorProfile, MentorApplication
+from .forms import MenteeProfileForm, MentorApplicationForm, MentorApplicationPublicForm
 from interests.models import Interest, MenteeInterest, MentorInterest
 
 
@@ -128,3 +128,66 @@ def become_mentor(request):
     return render(request, "profiles/mentor_apply.html", {
         "form": form, "categories": categories, "selected_ids": set(),
     })
+
+
+# ---------- Public, pre-account mentor application (/become-a-mentor/) ----------
+
+def mentor_application_apply(request):
+    """
+    The public application form — no login required, doesn't touch the User
+    model at all. See MentorApplication's docstring for how this differs from
+    become_mentor above.
+    """
+    if request.method == "POST":
+        # Honeypot: a field real visitors never see or fill (hidden via CSS in
+        # the template), but a scripted bot filling every input will. Silently
+        # redirect to the same "thanks" page as a genuine submission, rather
+        # than surfacing a validation error — so the bot's script sees success
+        # and doesn't get signal to adapt, while nothing is actually created.
+        if request.POST.get("company_site", "").strip():
+            return redirect("mentor_application_thanks")
+
+        form = MentorApplicationPublicForm(request.POST)
+        if form.is_valid():
+            application = form.save()
+            _send_application_received_emails(request, application)
+            return redirect("mentor_application_thanks")
+    else:
+        form = MentorApplicationPublicForm()
+
+    return render(request, "profiles/mentor_application_apply.html", {"form": form})
+
+
+def _send_application_received_emails(request, application):
+    from django.urls import reverse
+    from accounts.emails import send_email
+    from accounts.models import User
+
+    send_email(
+        to_email=application.email,
+        subject="Application received — mVia",
+        template_name="mentor_application_received",
+        body=(
+            f"Hi {application.name},\n\n"
+            f"Thanks for applying to become a mentor at mVia. We've received your "
+            f"application and typically respond within 5-7 business days.\n\n"
+            f"— The mVia team"
+        ),
+    )
+
+    review_url = request.build_absolute_uri(
+        reverse("staff:mentor_application_review", args=[application.id]))
+    for staff_email in User.objects.filter(is_staff=True).values_list("email", flat=True):
+        send_email(
+            to_email=staff_email,
+            subject=f"New mentor application from {application.name}",
+            template_name="mentor_application_admin_notify",
+            body=(
+                f"New mentor application from {application.name} <{application.email}>.\n\n"
+                f"Review it here: {review_url}"
+            ),
+        )
+
+
+def mentor_application_thanks(request):
+    return render(request, "profiles/mentor_application_thanks.html")

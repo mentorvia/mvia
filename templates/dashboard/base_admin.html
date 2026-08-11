@@ -111,6 +111,7 @@
       <a href="{% url 'staff:users' %}" class="{% if active_nav == 'users' %}active{% endif %}">Users</a>
       <a href="{% url 'staff:interests' %}" class="{% if active_nav == 'interests' %}active{% endif %}">Interests</a>
       <a href="{% url 'staff:mentor_queue' %}" class="{% if active_nav == 'mentors' %}active{% endif %}">Mentors{% if pending_mentor_count %} <span style="background:var(--red); color:#fff; border-radius:99px; padding:0 0.4rem; font-size:0.72rem;">{{ pending_mentor_count }}</span>{% endif %}</a>
+      <a href="{% url 'staff:mentor_application_queue' %}" class="{% if active_nav == 'mentor_applications' %}active{% endif %}">Mentor Applications{% if pending_mentor_application_count %} <span style="background:var(--red); color:#fff; border-radius:99px; padding:0 0.4rem; font-size:0.72rem;">{{ pending_mentor_application_count }}</span>{% endif %}</a>
       <a href="{% url 'staff:bookings' %}" class="{% if active_nav == 'bookings' %}active{% endif %}">Bookings</a>
       <a href="{% url 'staff:ledger' %}" class="{% if active_nav == 'ledger' %}active{% endif %}">Money &amp; ledger</a>
       <a href="{% url 'staff:reviews' %}" class="{% if active_nav == 'reviews' %}active{% endif %}">Reviews</a>

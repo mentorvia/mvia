@@ -1,0 +1,152 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}{{ application.name }} — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:mentor_application_queue' %}" class="back">← Back to applications</a>
+<div class="page-head">
+  <h1>{{ application.name }}</h1>
+  <p>{{ application.email }} · applied {{ application.applied_at|date:"d M Y" }}</p>
+</div>
+
+{% if application.status == 'approved' and application.created_user %}
+<div class="toolbar" style="margin-bottom:1rem;">
+  <a href="{% url 'staff:user_detail' application.created_user_id %}"><button type="button">View account →</button></a>
+  {% if application.created_user.mentor_profile %}
+    <a href="{% url 'staff:edit_mentor_profile' application.created_user.mentor_profile.id %}"><button type="button">✏️ Edit rich profile</button></a>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="panel">
+  <h2>Application</h2>
+  <div style="padding:1.25rem;">
+    <dl class="detail-grid">
+      <dt>LinkedIn</dt><dd><a href="{{ application.linkedin_url }}" target="_blank" rel="noopener">{{ application.linkedin_url }}</a></dd>
+      <dt>Current role</dt><dd>{{ application.current_role }}</dd>
+      <dt>Company</dt><dd>{{ application.current_company }}</dd>
+      <dt>Industry</dt><dd>{{ application.industry }}</dd>
+      <dt>Experience</dt><dd>{{ application.experience_years }} years</dd>
+      <dt>Why mentor?</dt><dd style="white-space:pre-wrap;">{{ application.why_mentor }}</dd>
+      <dt>Bio</dt><dd style="white-space:pre-wrap;">{{ application.bio }}</dd>
+      <dt>Expertise notes</dt><dd style="white-space:pre-wrap;">{{ application.expertise|default:"—" }}</dd>
+      <dt>Status</dt><dd><span class="badge {% if application.status == 'approved' %}yes{% elif application.status == 'rejected' %}no{% else %}pending{% endif %}">{{ application.get_status_display }}</span></dd>
+    </dl>
+  </div>
+</div>
+
+{% if application.status == 'pending' %}
+<div class="panel">
+  <h2>Decision</h2>
+  <div style="padding:1.25rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+    <button type="button" class="amodal-trigger" data-modal="approve-modal" style="padding:0.65rem 1.4rem; background:#1a7f37; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Approve</button>
+    <button type="button" class="amodal-trigger" data-modal="reject-modal" style="padding:0.65rem 1.4rem; background:var(--deep-red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Reject</button>
+    <button type="button" class="amodal-trigger" data-modal="more-info-modal" style="padding:0.65rem 1.4rem; background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Request more info</button>
+  </div>
+</div>
+{% else %}
+<div class="panel"><div style="padding:1.25rem; color:var(--muted);">
+  Reviewed by {{ application.reviewed_by.email|default:"—" }} on {{ application.reviewed_at|date:"d M Y, H:i" }}.
+  {% if application.review_notes %}<br>Notes: {{ application.review_notes }}{% endif %}
+</div></div>
+{% endif %}
+
+{% if application.status == 'pending' %}
+<div class="amodal" id="approve-modal" hidden>
+  <div class="amodal-backdrop" data-modal-close="approve-modal"></div>
+  <div class="amodal-inner" style="max-width:680px;">
+    <h3>Approve {{ application.name }}?</h3>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">This creates their mentor account, sets their rate and specializations, and sends a welcome email with login credentials.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if approval_form.non_field_errors %}<div style="color:var(--deep-red); font-size:0.85rem; margin-bottom:0.75rem;">{{ approval_form.non_field_errors|striptags }}</div>{% endif %}
+      <label for="{{ approval_form.hourly_rate.id_for_label }}" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">{{ approval_form.hourly_rate.label }}</label>
+      {{ approval_form.hourly_rate }}
+      {% if approval_form.hourly_rate.errors %}<div style="color:var(--deep-red); font-size:0.83rem;">{{ approval_form.hourly_rate.errors|striptags }}</div>{% endif %}
+
+      {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids %}
+
+      <div class="amodal-actions">
+        <button type="button" class="amodal-cancel" data-modal-close="approve-modal">Cancel</button>
+        <button type="submit" name="action" value="approve" class="amodal-confirm" style="background:#1a7f37;">Approve</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="amodal" id="reject-modal" hidden>
+  <div class="amodal-backdrop" data-modal-close="reject-modal"></div>
+  <div class="amodal-inner">
+    <h3>Reject {{ application.name }}?</h3>
+    <form method="post">
+      {% csrf_token %}
+      <label for="reject-reason" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Reason (required, min 20 characters — internal notes only, not shown to the applicant)</label>
+      <textarea id="reject-reason" name="reason" rows="3" minlength="20" required style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;"></textarea>
+      <div class="amodal-actions">
+        <button type="button" class="amodal-cancel" data-modal-close="reject-modal">Cancel</button>
+        <button type="submit" name="action" value="reject" class="amodal-confirm" style="background:var(--deep-red);">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="amodal" id="more-info-modal" hidden>
+  <div class="amodal-backdrop" data-modal-close="more-info-modal"></div>
+  <div class="amodal-inner">
+    <h3>Request more info from {{ application.name }}?</h3>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">This sends a follow-up email with your questions. The application stays pending.</p>
+    <form method="post">
+      {% csrf_token %}
+      <label for="more-info-message" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Message to applicant (required)</label>
+      <textarea id="more-info-message" name="message" rows="4" required style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;"></textarea>
+      <div class="amodal-actions">
+        <button type="button" class="amodal-cancel" data-modal-close="more-info-modal">Cancel</button>
+        <button type="submit" name="action" value="request_more_info" class="amodal-confirm" style="background:var(--ink);">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  .amodal[hidden] { display: none; }
+  .amodal {
+    position: fixed; inset: 0; z-index: 100; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .amodal-backdrop { position: absolute; inset: 0; background: rgba(15,15,16,0.45); }
+  .amodal-inner {
+    position: relative; background: #fff; border-radius: 12px; padding: 1.5rem;
+    width: 100%; max-width: 420px; margin: 1rem; max-height: 85vh; overflow-y: auto;
+  }
+  .amodal-inner h3 { font-family: 'Geist', sans-serif; margin-bottom: 0.9rem; }
+  .amodal-inner input[type=number] {
+    width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--line);
+    border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+  }
+  .amodal-actions { display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: flex-end; }
+  .amodal-cancel {
+    background: #fff; border: 1px solid var(--line); color: var(--ink);
+    padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .amodal-confirm {
+    color: #fff; border: none;
+    padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+</style>
+
+<script>
+  (function () {
+    document.querySelectorAll('.amodal-trigger').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var modal = document.getElementById(btn.dataset.modal);
+        if (modal) modal.hidden = false;
+      });
+    });
+    document.querySelectorAll('[data-modal-close]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var modal = document.getElementById(el.dataset.modalClose);
+        if (modal) modal.hidden = true;
+      });
+    });
+  })();
+</script>
+{% endblock %}

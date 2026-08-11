@@ -5,6 +5,8 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve as static_serve
 
+from profiles import views as profile_views
+
 urlpatterns = [
     # Language switcher (Django's built-in view; the dropdown posts here).
     path("i18n/", include("django.conf.urls.i18n")),
@@ -19,6 +21,10 @@ urlpatterns = [
     path("", include("directory.urls")),
     path("", include("bookings.urls")),
     path("", include("reviews.urls")),
+    # Public, pre-account mentor application — deliberately NOT under /profile/
+    # (that prefix is the existing logged-in-mentee upgrade flow).
+    path("become-a-mentor/", profile_views.mentor_application_apply, name="mentor_application_apply"),
+    path("become-a-mentor/thanks/", profile_views.mentor_application_thanks, name="mentor_application_thanks"),
 ]
 
 # Serve user-uploaded media (mentor photos). Safe here: media is public profile

@@ -1,0 +1,40 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Mentor applications — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Mentor applications</h1>
+  <p>Review public applications submitted at /become-a-mentor/.</p>
+</div>
+
+<form method="get" class="toolbar" style="margin-bottom:1rem;">
+  <select name="status" onchange="this.form.submit()">
+    <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+    <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
+    <option value="approved" {% if status_filter == "approved" %}selected{% endif %}>Approved</option>
+    <option value="rejected" {% if status_filter == "rejected" %}selected{% endif %}>Rejected</option>
+  </select>
+</form>
+
+<div class="panel">
+  <h2>{{ page_obj.paginator.count }} application{{ page_obj.paginator.count|pluralize }}</h2>
+  {% if page_obj.object_list %}
+  <table>
+    <thead><tr><th>Applicant</th><th>Role</th><th>Industry</th><th>Experience</th><th>Applied</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for a in page_obj.object_list %}
+      <tr>
+        <td><strong>{{ a.name }}</strong><br><span style="color:var(--muted); font-size:0.82rem;">{{ a.email }}</span></td>
+        <td>{{ a.current_role }}<br><span style="color:var(--muted); font-size:0.82rem;">{{ a.current_company }}</span></td>
+        <td>{{ a.industry }}</td>
+        <td>{{ a.experience_years }} yrs</td>
+        <td>{{ a.applied_at|date:"d M Y" }}</td>
+        <td><span class="badge {% if a.status == 'approved' %}yes{% elif a.status == 'rejected' %}no{% else %}pending{% endif %}">{{ a.get_status_display }}</span></td>
+        <td><a href="{% url 'staff:mentor_application_review' a.id %}">Review →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No applications found.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

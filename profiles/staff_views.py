@@ -342,3 +342,171 @@ def review_identity_change(request, mentor_id):
     return render(request, "profiles/staff_review_identity_change.html", {
         "mentor": profile, "diff_rows": diff_rows, "active_nav": "mentors",
     })
+
+
+# ---------- Staff: review public mentor applications (/become-a-mentor/) ----------
+
+from .models import MentorApplication
+from .forms import MentorApplicationApprovalForm
+
+
+@staff_required
+def mentor_application_queue(request):
+    from core.pagination import paginate, querystring_without_page
+
+    status_filter = request.GET.get("status", MentorApplication.STATUS_PENDING)
+    applications = MentorApplication.objects.all()
+    if status_filter != "all":
+        applications = applications.filter(status=status_filter)
+
+    page_obj = paginate(request, applications)
+    return render(request, "profiles/staff_mentor_applications.html", {
+        "page_obj": page_obj, "status_filter": status_filter,
+        "qs": querystring_without_page(request),
+        "active_nav": "mentor_applications",
+    })
+
+
+@staff_required
+def mentor_application_review(request, application_id):
+    from accounts.emails import send_email
+    from accounts.models import User
+    from .views import _interest_categories, _mark_expansion
+
+    application = get_object_or_404(MentorApplication, pk=application_id)
+    target = f"{application.name} <{application.email}>"
+    approval_form = MentorApplicationApprovalForm()
+    selected_ids = set()
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "approve" and application.status == MentorApplication.STATUS_PENDING:
+            form = MentorApplicationApprovalForm(request.POST)
+            chosen = set(int(x) for x in request.POST.getlist("interests"))
+            if form.is_valid() and not chosen:
+                form.add_error(None, "Select at least one specialization.")
+            if User.objects.filter(email__iexact=application.email).exists():
+                form.add_error(None, f"{application.email} is already in use by another account.")
+            if form.is_valid() and chosen:
+                cd = form.cleaned_data
+                import secrets
+
+                user = User(
+                    email=application.email, full_name=application.name,
+                    is_mentee=False, is_mentor=True, is_placeholder=True,
+                )
+                user.set_unusable_password()
+                user.save()
+                temp_password = secrets.token_urlsafe(12)
+                user.activate_login(application.email, temp_password)
+                user.must_change_password = True
+                user.save(update_fields=["must_change_password"])
+
+                MentorProfile.objects.create(
+                    user=user,
+                    current_role=application.current_role,
+                    company=application.current_company,
+                    years_experience=application.experience_years,
+                    bio=application.bio,
+                    hourly_rate=cd["hourly_rate"],
+                    industry=application.industry,
+                    status=MentorProfile.STATUS_APPROVED,
+                    is_available=True,
+                    reviewed_by=request.user,
+                    reviewed_at=timezone.now(),
+                )
+                for iid in chosen:
+                    MentorInterest.objects.get_or_create(user=user, interest_id=iid)
+
+                application.status = MentorApplication.STATUS_APPROVED
+                application.reviewed_by = request.user
+                application.reviewed_at = timezone.now()
+                application.created_user = user
+                application.save()
+
+                from django.urls import reverse
+                login_url = request.build_absolute_uri(reverse("login"))
+                send_email(
+                    to_email=application.email,
+                    subject="Welcome to mVia — Set up your account",
+                    template_name="mentor_login_activated",
+                    body=(
+                        f"Hi {user.get_short_name()},\n\n"
+                        f"Your mentor application was approved! Your mVia mentor account is "
+                        f"ready. Here are your login details:\n\n"
+                        f"Email: {application.email}\n"
+                        f"Temporary password: {temp_password}\n\n"
+                        f"Log in here: {login_url}\n\n"
+                        f"You'll be asked to set a new password the first time you log in.\n\n"
+                        f"— The mVia team"
+                    ),
+                )
+                AdminAuditLog.record(
+                    actor=request.user, action="mentor_application.approved", target=target)
+                messages.success(request, f"Approved {application.name}. Welcome email sent to {application.email}.")
+                return redirect("staff:mentor_application_review", application_id=application.id)
+            approval_form = form
+            selected_ids = chosen
+
+        elif action == "reject" and application.status == MentorApplication.STATUS_PENDING:
+            reason = request.POST.get("reason", "").strip()
+            if len(reason) < 20:
+                messages.error(request, "Please provide a more detailed reason (at least 20 characters).")
+                return redirect("staff:mentor_application_review", application_id=application.id)
+
+            application.status = MentorApplication.STATUS_REJECTED
+            application.reviewed_by = request.user
+            application.reviewed_at = timezone.now()
+            application.review_notes = reason
+            application.save()
+            send_email(
+                to_email=application.email,
+                subject="Update on your mVia mentor application",
+                template_name="mentor_application_rejected",
+                body=(
+                    f"Hi {application.name},\n\n"
+                    f"Thank you for taking the time to apply to become a mentor at mVia, "
+                    f"and for sharing your experience with us. After careful review, we're "
+                    f"not able to move forward with your application at this time.\n\n"
+                    f"We appreciate your interest in mVia and wish you the best.\n\n"
+                    f"— The mVia team"
+                ),
+            )
+            AdminAuditLog.record(
+                actor=request.user, action="mentor_application.rejected",
+                target=target, reason=reason)
+            messages.success(request, f"Rejected {application.name}'s application.")
+            return redirect("staff:mentor_application_queue")
+
+        elif action == "request_more_info" and application.status == MentorApplication.STATUS_PENDING:
+            note = request.POST.get("message", "").strip()
+            if not note:
+                messages.error(request, "Enter a message describing what more you need.")
+                return redirect("staff:mentor_application_review", application_id=application.id)
+
+            send_email(
+                to_email=application.email,
+                subject="A quick follow-up on your mVia mentor application",
+                template_name="mentor_application_more_info",
+                body=(
+                    f"Hi {application.name},\n\n"
+                    f"Thanks again for applying to mentor with mVia. Before we can finish "
+                    f"reviewing your application, we have a couple of follow-up questions:\n\n"
+                    f"{note}\n\n"
+                    f"Just reply to this email (or write to info@mvia.in) with your answers, "
+                    f"and we'll pick up the review from there.\n\n— The mVia team"
+                ),
+            )
+            AdminAuditLog.record(
+                actor=request.user, action="mentor_application.more_info_requested",
+                target=target, reason=note)
+            messages.success(request, f"Follow-up email sent to {application.name}.")
+            return redirect("staff:mentor_application_review", application_id=application.id)
+
+    categories = _mark_expansion(_interest_categories(), selected_ids)
+    return render(request, "profiles/staff_mentor_application_review.html", {
+        "application": application, "approval_form": approval_form,
+        "categories": categories, "selected_ids": selected_ids,
+        "active_nav": "mentor_applications",
+    })

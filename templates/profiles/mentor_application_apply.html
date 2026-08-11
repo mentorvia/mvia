@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Become a mentor" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <h1>{% trans "Become a mentor" %}</h1>
+  <p class="sub">{% trans "Share your experience and earn by guiding others. Every application is reviewed by our team before an account is created — we typically respond within 5-7 business days." %}</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}{% for e in form.non_field_errors %}<div class="nonfield">{{ e }}</div>{% endfor %}{% endif %}
+
+    {% comment %}
+    Honeypot: real visitors never see this field (off-screen, no tab stop). A
+    bot's script that fills every input will populate it, and the view
+    silently drops the submission.
+    {% endcomment %}
+    <div class="hp-field" aria-hidden="true">
+      <label for="company_site">{% trans "Company site" %}</label>
+      <input type="text" id="company_site" name="company_site" tabindex="-1" autocomplete="off">
+    </div>
+
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% endfor %}
+
+    <button type="submit" class="btn">{% trans "Submit application" %}</button>
+  </form>
+</div>
+<style>
+  .card textarea, .card input[type=number], .card input[type=url] {
+    width:100%; padding:0.7rem 0.85rem; border:1px solid rgba(15,15,16,0.15);
+    border-radius:9px; font-size:0.95rem; font-family:inherit;
+  }
+  .hp-field { position:absolute; left:-9999px; top:-9999px; }
+</style>
+{% endblock %}
