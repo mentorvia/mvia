@@ -59,6 +59,14 @@ class LoginForm(forms.Form):
             user = authenticate(self.request, username=email, password=password)
             if user is None:
                 raise ValidationError("Incorrect email or password.")
+            # Checked right after a successful password check (not before —
+            # revealing account state to an unauthenticated guesser would be
+            # a user-enumeration leak) but before anything else happens with
+            # this login: no session gets created for an archived account.
+            if user.archived_at:
+                raise ValidationError(
+                    "Your account has been archived. Contact support if this is unexpected."
+                )
             if not user.is_email_verified:
                 raise ValidationError(
                     "Please verify your email before logging in. "

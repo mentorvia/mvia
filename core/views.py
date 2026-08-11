@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
-from accounts.decorators import redirect_if_must_change_password
+from accounts.decorators import redirect_if_must_change_password, redirect_if_archived
 
 
 def home(request):
@@ -17,7 +17,7 @@ def home(request):
     from profiles.models import MentorProfile
     featured = list(
         MentorProfile.objects.filter(
-            status=MentorProfile.STATUS_APPROVED, is_available=True
+            status=MentorProfile.STATUS_APPROVED, is_available=True, user__archived_at__isnull=True,
         ).select_related("user").order_by("-id")[:4]
     )
     return render(request, "home.html", {"featured_mentors": featured})
@@ -28,6 +28,7 @@ def health(request):
 
 
 @login_required
+@redirect_if_archived
 @redirect_if_must_change_password
 def dashboard(request):
     """The signed-in landing area: routes to the mentee or mentor dashboard."""

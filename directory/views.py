@@ -20,7 +20,7 @@ from interests.models import Interest, MentorInterest
 
 def directory(request):
     mentors = MentorProfile.objects.filter(
-        status=MentorProfile.STATUS_APPROVED, is_available=True
+        status=MentorProfile.STATUS_APPROVED, is_available=True, user__archived_at__isnull=True,
     ).select_related("user")
 
     query = request.GET.get("q", "").strip()
@@ -62,6 +62,10 @@ def directory(request):
 
     mentor_cards = []
     for m in mentors:
+        # Explicit, not just inherited from the queryset filter above — an
+        # archived mentor must never surface as a recommendation.
+        if m.user.archived_at:
+            continue
         specs = spec_map.get(m.user_id, [])
         spec_ids = {s.id for s in specs}
         overlap = len(spec_ids & my_interest_ids)
@@ -73,9 +77,11 @@ def directory(request):
     # Sort recommended first (by overlap), then alphabetical.
     mentor_cards.sort(key=lambda c: (-c["overlap"], c["mentor"].user.full_name))
 
-    # Interests that actually have at least one approved mentor (for the filter).
+    # Interests that actually have at least one approved, non-archived mentor
+    # (for the filter).
     interests_with_mentors = Interest.objects.filter(
-        mentor_links__user__mentor_profile__status=MentorProfile.STATUS_APPROVED
+        mentor_links__user__mentor_profile__status=MentorProfile.STATUS_APPROVED,
+        mentor_links__user__archived_at__isnull=True,
     ).distinct().order_by("name")
 
     # Paginate the mentor cards (12 per page fits a 3-col grid nicely).
@@ -98,7 +104,10 @@ def directory(request):
 
 
 def mentor_profile(request, user_id):
-    user = get_object_or_404(User, pk=user_id, is_mentor=True)
+    # archived_at__isnull=True right in the lookup — a direct URL to an
+    # archived mentor's page 404s cleanly, no separate placeholder page and
+    # no information leakage about the account's existence/state.
+    user = get_object_or_404(User, pk=user_id, is_mentor=True, archived_at__isnull=True)
     mentor = get_object_or_404(
         MentorProfile, user=user, status=MentorProfile.STATUS_APPROVED)
     specs = [mi.interest for mi in

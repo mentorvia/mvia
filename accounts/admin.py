@@ -14,7 +14,7 @@ class UserAdmin(BaseUserAdmin):
                     "is_email_verified", "is_staff", "date_joined"]
     list_filter = ["is_mentor", "is_email_verified", "is_staff", "is_active"]
     search_fields = ["email", "full_name"]
-    readonly_fields = ["date_joined", "last_login"]
+    readonly_fields = ["date_joined", "last_login", "archived_at", "archived_by", "archive_reason"]
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -22,6 +22,11 @@ class UserAdmin(BaseUserAdmin):
         ("Roles", {"fields": ("is_mentee", "is_mentor", "is_email_verified")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser",
                                     "groups", "user_permissions")}),
+        ("Archive", {
+            "fields": ("archived_at", "archived_by", "archive_reason"),
+            "description": "Read-only here — archive/unarchive through the staff console "
+                            "(/staff/users/&lt;id&gt;/) so the action is properly audited.",
+        }),
         ("Dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (

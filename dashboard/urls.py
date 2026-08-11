@@ -14,6 +14,8 @@ urlpatterns = [
     path("", views.overview, name="overview"),
     path("users/", views.users_list, name="users"),
     path("users/<int:user_id>/", views.user_detail, name="user_detail"),
+    path("users/<int:user_id>/archive/", views.archive_user, name="archive_user"),
+    path("users/<int:user_id>/unarchive/", views.unarchive_user, name="unarchive_user"),
     path("emails/", views.email_log, name="emails"),
     # Bookings & money
     path("bookings/", booking_views.bookings_list, name="bookings"),

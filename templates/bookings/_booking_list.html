@@ -5,7 +5,7 @@
       <div style="background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:12px; padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
         <div>
           <div style="font-weight:600;">
-            {% if role == 'mentor' %}{{ b.mentee.full_name }}{% else %}{{ b.mentor.full_name }}{% endif %}
+            {% if role == 'mentor' %}{{ b.mentee.full_name }}{% else %}{{ b.mentor.full_name }}{% if b.mentor.is_archived %} <span class="badge neutral">{% trans "no longer active" %}</span>{% endif %}{% endif %}
           </div>
           <div style="font-size:0.85rem; opacity:0.65;">{{ b.slot.start|date:"D, d M Y · H:i" }} · ₹{{ b.amount }}</div>
         </div>
@@ -52,7 +52,7 @@
             <form method="post" action="{% url 'cancel_booking' b.id %}" style="display:inline;" onsubmit="return confirm('{% trans 'Cancel this booking?' %}');">
               {% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.85rem;">{% trans "Cancel" %}</button>
             </form>
-            {% if role == 'mentee' and b.reschedule_count < 2 %}
+            {% if role == 'mentee' and b.reschedule_count < 2 and not b.mentor.is_archived %}
               <a href="{% url 'reschedule_booking' b.id %}" style="font-size:0.85rem; margin-left:0.5rem;">{% trans "Reschedule" %}</a>
             {% endif %}
             {% if b.slot.start < now %}

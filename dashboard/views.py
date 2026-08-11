@@ -8,10 +8,13 @@ later steps, each gets a new section wired into this same shell.
 Django's built-in admin still exists at /django-admin/ as a raw-data safety net.
 """
 
+from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.models import User, EmailLog
 
@@ -95,6 +98,77 @@ def user_detail(request, user_id):
     return render(request, "dashboard/user_detail.html", {
         "target": target, "emails": emails, "active_nav": "users",
     })
+
+
+@staff_required
+@require_POST
+def archive_user(request, user_id):
+    """
+    Archive a mentor or mentee account (the "danger zone" action). Gated on
+    zero active bookings — see bookings.services.active_bookings_for_user —
+    so an admin must cancel or wait out every pending_payment/
+    awaiting_approval/confirmed booking first. Enforced here, not just in the
+    UI, so the rule holds even if this endpoint is reached some other way.
+    """
+    from auditlog.models import AdminAuditLog
+    from bookings.services import active_bookings_for_user
+
+    target = get_object_or_404(User, pk=user_id)
+
+    if target.is_archived:
+        messages.info(request, f"{target.full_name} is already archived.")
+        return redirect("staff:user_detail", user_id=target.id)
+
+    active = active_bookings_for_user(target)
+    if active.exists():
+        messages.error(
+            request,
+            f"Cannot archive — {target.full_name} has {active.count()} active "
+            f"booking(s). Cancel or resolve them first.")
+        return redirect("staff:user_detail", user_id=target.id)
+
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        messages.error(request, "A reason is required to archive an account.")
+        return redirect("staff:user_detail", user_id=target.id)
+
+    target.archived_at = timezone.now()
+    target.archived_by = request.user
+    target.archive_reason = reason
+    target.save(update_fields=["archived_at", "archived_by", "archive_reason"])
+
+    AdminAuditLog.record(
+        actor=request.user, action="user.archived",
+        target=f"{target.full_name} <{target.email}>", reason=reason)
+    messages.success(request, f"{target.full_name} has been archived.")
+    return redirect("staff:user_detail", user_id=target.id)
+
+
+@staff_required
+@require_POST
+def unarchive_user(request, user_id):
+    """
+    Clear archived_at only. archived_by and archive_reason are deliberately
+    left in place — the "this account was archived once" history survives
+    the unarchive, and each archive/unarchive cycle gets its own
+    AdminAuditLog entry regardless.
+    """
+    from auditlog.models import AdminAuditLog
+
+    target = get_object_or_404(User, pk=user_id)
+
+    if not target.is_archived:
+        messages.info(request, f"{target.full_name} is not archived.")
+        return redirect("staff:user_detail", user_id=target.id)
+
+    target.archived_at = None
+    target.save(update_fields=["archived_at"])
+
+    AdminAuditLog.record(
+        actor=request.user, action="user.unarchived",
+        target=f"{target.full_name} <{target.email}>")
+    messages.success(request, f"{target.full_name} has been unarchived.")
+    return redirect("staff:user_detail", user_id=target.id)
 
 
 @staff_required

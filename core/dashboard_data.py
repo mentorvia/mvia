@@ -98,7 +98,9 @@ def mentee_context(user):
     # doesn't depend on that app's internals.
     my_interest_ids = set(user.mentee_interests.values_list("interest_id", flat=True))
     mentors = list(
-        MentorProfile.objects.filter(status=MentorProfile.STATUS_APPROVED, is_available=True)
+        MentorProfile.objects.filter(
+            status=MentorProfile.STATUS_APPROVED, is_available=True, user__archived_at__isnull=True,
+        )
         .exclude(user=user)
         .select_related("user")
     )
@@ -109,6 +111,10 @@ def mentee_context(user):
             spec_map.setdefault(mi.user_id, []).append(mi.interest)
     cards = []
     for m in mentors:
+        # Explicit check, not just inherited from the queryset filter above —
+        # an archived mentor must never surface as a recommendation.
+        if m.user.archived_at:
+            continue
         specs = spec_map.get(m.user_id, [])
         overlap = len({s.id for s in specs} & my_interest_ids)
         cards.append({"mentor": m, "specs": specs, "overlap": overlap})

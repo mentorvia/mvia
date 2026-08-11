@@ -40,7 +40,7 @@ def _interest_categories():
         descendants = flatten(cat.id)
         all_ids = [cat.id] + [d.id for d in descendants]
         mentor_count = MentorProfile.objects.filter(
-            status=MentorProfile.STATUS_APPROVED, is_available=True,
+            status=MentorProfile.STATUS_APPROVED, is_available=True, user__archived_at__isnull=True,
             user__mentor_interests__interest_id__in=all_ids,
         ).distinct().count()
         categories.append({
