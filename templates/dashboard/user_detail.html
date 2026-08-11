@@ -3,9 +3,11 @@
 {% block content %}
 <a href="{% url 'staff:users' %}" class="back">← Back to users</a>
 <div class="page-head">
-  <h1>{{ target.full_name }}</h1>
+  <h1>{{ target.full_name }}{% if target.is_archived %} <span class="badge no">Archived</span>{% endif %}</h1>
   <p>{{ target.email }}</p>
 </div>
+
+{% include "dashboard/_danger_zone.html" %}
 
 <div class="panel">
   <h2>Account</h2>

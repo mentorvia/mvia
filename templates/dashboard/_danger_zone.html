@@ -1,0 +1,132 @@
+{% load i18n %}
+{% comment %}
+Archive/unarchive "danger zone" — one implementation reused on both the
+generic staff user_detail page (the only account-management page mentees
+have) and the mentor rich-profile editor (which has real form fields to
+disable while archived). Expects: target (a User), active_bookings
+(queryset from bookings.services.active_bookings_for_user, or None if the
+caller didn't compute it).
+{% endcomment %}
+{% if target.is_archived %}
+  <div class="panel dz-banner">
+    <div class="dz-banner-body">
+      <div>
+        <strong>{% blocktrans with date=target.archived_at|date:"d M Y, H:i" admin=target.archived_by.full_name|default:"an admin" %}This account was archived on {{ date }} by {{ admin }}.{% endblocktrans %}</strong>
+        {% if target.archive_reason %}<div class="dz-reason">{% trans "Reason:" %} {{ target.archive_reason }}</div>{% endif %}
+      </div>
+      <form method="post" action="{% url 'staff:unarchive_user' target.id %}">
+        {% csrf_token %}
+        <button type="submit" class="dz-unarchive-btn">{% trans "Unarchive" %}</button>
+      </form>
+    </div>
+  </div>
+{% else %}
+  <div class="panel dz-zone">
+    <h2>{% trans "Danger zone" %}</h2>
+    <div class="dz-body">
+      {% if active_bookings %}
+        <div class="dz-blocked">
+          <p>{% blocktrans count n=active_bookings.count with name=target.get_short_name %}Cannot archive — {{ name }} has {{ n }} active booking. Cancel it first:{% plural %}Cannot archive — {{ name }} has {{ n }} active bookings. Cancel them first:{% endblocktrans %}</p>
+          <ul class="dz-booking-links">
+            {% for b in active_bookings %}
+              <li><a href="{% url 'staff:booking_detail' b.id %}">{{ b.slot.start|date:"d M Y, H:i" }} · {{ b.get_status_display }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <p class="dz-hint">{% trans "Archiving blocks login and removes this account from public listings. It can be reversed anytime." %}</p>
+        <button type="button" class="dz-archive-trigger" data-modal="archive-modal-{{ target.id }}">
+          {% trans "Archive this" %} {% if target.is_mentor %}{% trans "mentor" %}{% else %}{% trans "account" %}{% endif %}
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="dz-modal" id="archive-modal-{{ target.id }}" hidden>
+    <div class="dz-modal-backdrop" data-modal-close="archive-modal-{{ target.id }}"></div>
+    <div class="dz-modal-inner">
+      <h3>{% blocktrans with name=target.full_name %}Archive {{ name }}?{% endblocktrans %}</h3>
+      <form method="post" action="{% url 'staff:archive_user' target.id %}">
+        {% csrf_token %}
+        <label for="archive-reason-{{ target.id }}">{% trans "Reason (required)" %}</label>
+        <textarea id="archive-reason-{{ target.id }}" name="reason" rows="3" required></textarea>
+        <div class="dz-modal-actions">
+          <button type="button" class="dz-modal-cancel" data-modal-close="archive-modal-{{ target.id }}">{% trans "Cancel" %}</button>
+          <button type="submit" class="dz-modal-confirm">{% trans "Archive" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+<style>
+  .dz-zone h2 { color: var(--deep-red); }
+  .dz-body { padding: 1.25rem; }
+  .dz-hint { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.9rem; }
+  .dz-archive-trigger {
+    background: #fff; color: var(--deep-red); border: 1.5px solid var(--deep-red);
+    padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .dz-archive-trigger:hover { background: #fdeaea; }
+
+  .dz-blocked { font-size: 0.88rem; }
+  .dz-blocked p { margin-bottom: 0.6rem; }
+  .dz-booking-links { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+  .dz-booking-links a { color: var(--deep-red); font-weight: 600; text-decoration: none; }
+  .dz-booking-links a:hover { text-decoration: underline; }
+
+  .dz-banner { border-left: 3px solid var(--deep-red); background: #fdeaea; }
+  .dz-banner-body {
+    padding: 1rem 1.25rem; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 0.75rem;
+  }
+  .dz-banner-body strong { color: var(--deep-red); }
+  .dz-reason { font-size: 0.88rem; color: var(--ink); margin-top: 0.25rem; }
+  .dz-unarchive-btn {
+    background: var(--ink); color: #fff; border: none; padding: 0.6rem 1.2rem;
+    border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+
+  .dz-modal[hidden] { display: none; }
+  .dz-modal {
+    position: fixed; inset: 0; z-index: 100; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .dz-modal-backdrop { position: absolute; inset: 0; background: rgba(15,15,16,0.45); }
+  .dz-modal-inner {
+    position: relative; background: #fff; border-radius: 12px; padding: 1.5rem;
+    width: 100%; max-width: 420px; margin: 1rem;
+  }
+  .dz-modal-inner h3 { font-family: 'Geist', sans-serif; margin-bottom: 0.9rem; }
+  .dz-modal-inner label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .dz-modal-inner textarea {
+    width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--line);
+    border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+  }
+  .dz-modal-actions { display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: flex-end; }
+  .dz-modal-cancel {
+    background: #fff; border: 1px solid var(--line); color: var(--ink);
+    padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .dz-modal-confirm {
+    background: var(--deep-red); color: #fff; border: none;
+    padding: 0.55rem 1.1rem; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+</style>
+
+<script>
+  (function () {
+    document.querySelectorAll('.dz-archive-trigger').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var modal = document.getElementById(btn.dataset.modal);
+        if (modal) modal.hidden = false;
+      });
+    });
+    document.querySelectorAll('[data-modal-close]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var modal = document.getElementById(el.dataset.modalClose);
+        if (modal) modal.hidden = true;
+      });
+    });
+  })();
+</script>

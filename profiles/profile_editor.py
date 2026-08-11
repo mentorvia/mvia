@@ -41,6 +41,13 @@ def edit_mentor_profile(request, mentor_id):
     mentor = get_object_or_404(MentorProfile, pk=mentor_id)
 
     if request.method == "POST":
+        # Archived accounts are read-only sitewide in the staff console — the
+        # form fields are visually disabled, but this is the actual
+        # enforcement (defense in depth against a raw POST bypassing that).
+        if mentor.user.is_archived:
+            messages.error(request, "This account is archived. Unarchive it first to make changes.")
+            return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
+
         action = request.POST.get("action", "save_profile")
 
         if action == "save_profile":
@@ -68,10 +75,18 @@ def edit_mentor_profile(request, mentor_id):
             messages.success(request, "Point removed.")
             return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
 
+    from bookings.services import active_bookings_for_user
+
     form = MentorRichForm(instance=mentor)
+    if mentor.user.is_archived:
+        for field in form.fields.values():
+            field.disabled = True
+    active_bookings = None if mentor.user.is_archived else active_bookings_for_user(mentor.user)
     return render(request, "profiles/staff_edit_profile.html", {
         "mentor": mentor, "form": form,
         "expertise_points": mentor.expertise_points,
         "focus_points": mentor.focus_points,
         "active_nav": "mentors",
+        "target": mentor.user,
+        "active_bookings": active_bookings,
     })

@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 
+from .decorators import redirect_if_archived
 from .forms import (
     SignupForm, LoginForm, PasswordResetRequestForm, SetNewPasswordForm,
 )
@@ -153,6 +154,7 @@ def password_reset_confirm(request, token):
 
 
 @login_required
+@redirect_if_archived
 def force_set_password(request):
     """
     First-login checkpoint for accounts given a system-generated temporary

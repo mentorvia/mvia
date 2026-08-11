@@ -14,6 +14,8 @@ urlpatterns = [
     path("", views.overview, name="overview"),
     path("users/", views.users_list, name="users"),
     path("users/<int:user_id>/", views.user_detail, name="user_detail"),
+    path("users/<int:user_id>/archive/", views.archive_user, name="archive_user"),
+    path("users/<int:user_id>/unarchive/", views.unarchive_user, name="unarchive_user"),
     path("emails/", views.email_log, name="emails"),
     # Bookings & money
     path("bookings/", booking_views.bookings_list, name="bookings"),
@@ -35,6 +37,9 @@ urlpatterns = [
     path("mentors/<int:mentor_id>/edit-profile/", profile_editor.edit_mentor_profile, name="edit_mentor_profile"),
     path("mentors/<int:mentor_id>/activate-login/", profile_views.activate_mentor_login, name="activate_mentor_login"),
     path("mentors/<int:mentor_id>/review-identity-change/", profile_views.review_identity_change, name="review_identity_change"),
+    # Mentor applications (public /become-a-mentor/ pipeline)
+    path("mentor-applications/", profile_views.mentor_application_queue, name="mentor_application_queue"),
+    path("mentor-applications/<int:application_id>/", profile_views.mentor_application_review, name="mentor_application_review"),
     # Audit log
     path("audit/", profile_views.audit_log, name="audit"),
 ]

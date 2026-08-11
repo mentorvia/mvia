@@ -18,6 +18,28 @@ class BookingError(Exception):
     """Raised when a booking action isn't allowed (e.g. slot taken)."""
 
 
+# Statuses where the booking is still "live" — someone owes an action, a
+# payment is outstanding, or a session hasn't happened yet. Same partition
+# core.dashboard_data uses for "upcoming" vs. "past" (UPCOMING_STATUSES /
+# PAST_STATUSES) — kept as an independent constant here rather than importing
+# from core, since bookings is a lower-level domain app and core sits above it.
+ACTIVE_BOOKING_STATUSES = [
+    Booking.STATUS_PENDING_PAYMENT, Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED,
+]
+
+
+def active_bookings_for_user(user):
+    """
+    Bookings where this user — as mentor OR mentee — has an unresolved
+    booking. Used to gate account archiving: a mentor or mentee with any
+    active booking can't be archived until it's cancelled or resolved.
+    """
+    from django.db.models import Q
+    return Booking.objects.filter(
+        Q(mentor=user) | Q(mentee=user), status__in=ACTIVE_BOOKING_STATUSES,
+    ).select_related("mentor", "mentee", "slot")
+
+
 @transaction.atomic
 def create_booking(*, mentee, slot_id):
     """
@@ -33,6 +55,8 @@ def create_booking(*, mentee, slot_id):
         raise BookingError("You can't book your own slot.")
     if getattr(slot.mentor, "is_placeholder", False):
         raise BookingError("This mentor isn't accepting bookings yet.")
+    if getattr(slot.mentor, "is_archived", False):
+        raise BookingError("This mentor is no longer active on mVia.")
     if slot.is_taken:
         raise BookingError("Sorry, that slot was just booked by someone else.")
 
@@ -377,6 +401,8 @@ def reschedule_booking(*, booking_id, new_slot_id, actor):
 
         if booking.status != Booking.STATUS_CONFIRMED:
             raise BookingError("Only confirmed bookings can be rescheduled.")
+        if getattr(booking.mentor, "is_archived", False):
+            raise BookingError("This mentor is no longer active on mVia — rescheduling isn't available.")
         if booking.reschedule_count >= MAX_RESCHEDULES:
             raise BookingError(f"This booking has already been rescheduled {MAX_RESCHEDULES} times (the limit).")
 

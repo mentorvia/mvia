@@ -9,6 +9,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class MenteeProfile(models.Model):
@@ -198,3 +199,61 @@ class ProfilePoint(models.Model):
 
     def __str__(self):
         return f"{self.get_category_display()}: {self.title}"
+
+
+class MentorApplication(models.Model):
+    """
+    A public, pre-account application to become a mentor (submitted at
+    /become-a-mentor/ by someone with no mVia account yet). Deliberately NOT
+    tied to a User — no account exists until an admin approves it, at which
+    point a placeholder User + MentorProfile is created from these fields and
+    the existing "activate login" flow takes over.
+
+    This is a separate pipeline from the pre-existing logged-in
+    profiles.views.become_mentor flow, which lets an already-signed-up
+    mentee apply directly on their own account (reviewed via the existing
+    staff mentor queue). Both are intentional and coexist.
+    """
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending review"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+    ]
+
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    linkedin_url = models.URLField()
+    current_role = models.CharField(max_length=120)
+    current_company = models.CharField(max_length=120)
+    industry = models.CharField(max_length=120)
+    experience_years = models.PositiveIntegerField()
+    why_mentor = models.TextField()
+    bio = models.TextField()
+    expertise = models.TextField(
+        blank=True,
+        help_text="Free text — applicant's own words. Not linked to the structured "
+                   "Interest tree; staff pick real specializations when approving.")
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    applied_at = models.DateTimeField(default=timezone.now)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="mentor_applications_reviewed")
+    review_notes = models.TextField(blank=True)
+
+    # Set only on approval — the placeholder account created from this
+    # application, so staff can jump straight from the application to the
+    # live account it produced.
+    created_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="mentor_application")
+
+    class Meta:
+        ordering = ["-applied_at"]
+
+    def __str__(self):
+        return f"{self.name} <{self.email}> ({self.status})"

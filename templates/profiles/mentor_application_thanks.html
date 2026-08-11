@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Thanks for applying" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px; text-align:center;">
+  <h1>{% trans "Thanks — we'll be in touch" %}</h1>
+  <p class="sub">{% trans "Your mentor application has been received. Our team reviews every application personally, and we typically respond within 5-7 business days." %}</p>
+  <a href="{% url 'home' %}" class="btn" style="display:inline-block; text-decoration:none;">{% trans "Back to home" %}</a>
+</div>
+{% endblock %}

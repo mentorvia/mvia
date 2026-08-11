@@ -48,26 +48,34 @@
 </div>
 
 <div class="panel">
-  <h2>Active mentors{% if page_obj %} <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page_obj.paginator.count }})</span>{% endif %}</h2>
+  <h2 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+    <span>Active mentors{% if page_obj %} <span style="font-weight:400; color:var(--muted); font-size:0.9rem;">({{ page_obj.paginator.count }})</span>{% endif %}</span>
+    <a href="?{{ show_archived_toggle_qs }}" style="font-size:0.82rem; font-weight:600; color:var(--muted); text-decoration:none;">
+      {% if show_archived %}Hide archived{% else %}Show archived ({{ archived_count }}){% endif %}
+    </a>
+  </h2>
   <div style="padding:0 0 0.5rem;">{% include "partials/_filter_bar.html" %}</div>
   {% if approved %}
   <table>
     <thead><tr><th>Mentor</th><th>Role</th><th>Rate</th><th>Status</th><th></th></tr></thead>
     <tbody>
       {% for m in approved %}
-      <tr>
+      <tr {% if m.user.is_archived %}style="opacity:0.55;"{% endif %}>
         <td>
           <strong>{{ m.user.full_name }}</strong>
-          {% if m.user.is_placeholder %}<span class="badge neutral" style="margin-left:0.4rem;">No email yet</span>{% endif %}
+          {% if m.user.is_archived %}<span class="badge no" style="margin-left:0.4rem;">Archived</span>
+          {% elif m.user.is_placeholder %}<span class="badge neutral" style="margin-left:0.4rem;">No email yet</span>{% endif %}
           <br><span style="color:var(--muted); font-size:0.82rem;">{{ m.current_role }} · {{ m.company }}</span>
         </td>
         <td>{{ m.current_role }}</td>
         <td>₹{{ m.hourly_rate }}</td>
-        <td>{% if m.is_available %}<span class="badge yes">Live</span>{% else %}<span class="badge no">Hidden</span>{% endif %}</td>
+        <td>{% if m.user.is_archived %}<span class="badge no">Archived</span>{% elif m.is_available %}<span class="badge yes">Live</span>{% else %}<span class="badge no">Hidden</span>{% endif %}</td>
         <td style="white-space:nowrap;">
           <a href="{% url 'staff:edit_mentor_profile' m.id %}">Edit profile</a>
-          &nbsp;·&nbsp;
-          <a href="{% url 'mentor_profile' m.user_id %}" target="_blank">View ↗</a>
+          {% if not m.user.is_archived %}
+            &nbsp;·&nbsp;
+            <a href="{% url 'mentor_profile' m.user_id %}" target="_blank">View ↗</a>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
