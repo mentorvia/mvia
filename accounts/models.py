@@ -102,6 +102,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     # on next login before the user can reach their dashboard.
     must_change_password = models.BooleanField(default=False)
 
+    # Archiving (staff-only, admin-console "danger zone"): an alternative to
+    # deletion for a mentor/mentee account that's done using the platform.
+    # Independent of is_active (which nothing in the app ever sets) — archived
+    # users are blocked at login and hidden from public surfaces explicitly,
+    # rather than relying on Django's built-in is_active gate. archived_by and
+    # archive_reason are deliberately left in place after an unarchive, so the
+    # "this account was archived once" history survives across cycles.
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="archived_users",
+        help_text="The staff member who archived this account (most recently).")
+    archive_reason = models.TextField(blank=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"          # log in with email
@@ -119,6 +133,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def has_real_email(self):
         """False for placeholder accounts that don't yet have a real email."""
         return not self.is_placeholder and not self.email.endswith("@mvia.invalid")
+
+    @property
+    def is_archived(self):
+        return self.archived_at is not None
 
     def activate_login(self, email, raw_password):
         """
