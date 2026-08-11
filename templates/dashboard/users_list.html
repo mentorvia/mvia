@@ -13,14 +13,19 @@
 </form>
 
 <div class="panel">
-  <h2>{{ page.paginator.count }} user{{ page.paginator.count|pluralize }}{% if query %} matching “{{ query }}”{% endif %}</h2>
+  <h2 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+    <span>{{ page.paginator.count }} user{{ page.paginator.count|pluralize }}{% if query %} matching “{{ query }}”{% endif %}</span>
+    <a href="?{{ show_archived_toggle_qs }}" style="font-size:0.82rem; font-weight:600; color:var(--muted); text-decoration:none;">
+      {% if show_archived %}Hide archived{% else %}Show archived ({{ archived_count }}){% endif %}
+    </a>
+  </h2>
   {% if page.object_list %}
   <table>
     <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Verified</th><th>Joined</th></tr></thead>
     <tbody>
       {% for u in page.object_list %}
-      <tr>
-        <td><a href="{% url 'staff:user_detail' u.id %}">{{ u.full_name }}</a></td>
+      <tr {% if u.is_archived %}style="opacity:0.55;"{% endif %}>
+        <td><a href="{% url 'staff:user_detail' u.id %}">{{ u.full_name }}</a>{% if u.is_archived %} <span class="badge no">Archived</span>{% endif %}</td>
         <td>{{ u.email }}</td>
         <td>
           {% if u.is_mentor %}<span class="badge neutral">Mentor</span>{% endif %}
@@ -38,9 +43,9 @@
 
 {% if page.has_other_pages %}
 <div class="pager">
-  {% if page.has_previous %}<a href="?q={{ query }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+  {% if page.has_previous %}<a href="?q={{ query }}&page={{ page.previous_page_number }}{% if show_archived %}&show_archived=1{% endif %}">← Prev</a>{% endif %}
   <span class="cur">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
-  {% if page.has_next %}<a href="?q={{ query }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+  {% if page.has_next %}<a href="?q={{ query }}&page={{ page.next_page_number }}{% if show_archived %}&show_archived=1{% endif %}">Next →</a>{% endif %}
 </div>
 {% endif %}
 {% endblock %}

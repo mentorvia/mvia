@@ -1,16 +1,19 @@
 {% for p in points %}
   <div style="display:flex; justify-content:space-between; gap:1rem; padding:0.6rem 0; border-bottom:1px solid var(--line);">
     <div><strong>{{ p.title }}</strong>{% if p.description %} — <span style="color:var(--muted);">{{ p.description }}</span>{% endif %}</div>
+    {% if not archived %}
     <form method="post">
       {% csrf_token %}<input type="hidden" name="action" value="delete_point">
       <input type="hidden" name="point_id" value="{{ p.id }}">
       <button type="submit" style="background:none; border:none; color:var(--deep-red); cursor:pointer; font-size:0.8rem; white-space:nowrap;">Remove</button>
     </form>
+    {% endif %}
   </div>
 {% empty %}
   <p style="color:var(--muted); font-size:0.88rem; margin-bottom:0.5rem;">No points yet.</p>
 {% endfor %}
 
+{% if not archived %}
 <form method="post" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:start; margin-top:0.85rem;">
   {% csrf_token %}<input type="hidden" name="action" value="add_point">
   <input type="hidden" name="category" value="{{ category }}">
@@ -18,3 +21,4 @@
   <input type="text" name="description" placeholder="Description" style="flex:2; min-width:240px; padding:0.5rem 0.7rem; border:1px solid var(--line); border-radius:7px; font-family:inherit;">
   <button type="submit" style="padding:0.5rem 1rem; background:var(--ink); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-family:inherit;">Add point</button>
 </form>
+{% endif %}

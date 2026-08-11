@@ -32,3 +32,18 @@ def querystring_without_page(request):
     params.pop("page", None)
     encoded = params.urlencode()
     return ("&" + encoded) if encoded else ""
+
+
+def toggle_param_querystring(request, param, value="1"):
+    """
+    Return a full querystring (no leading '&', 'page' dropped) with `param`
+    flipped: added=value if absent, removed if present. For an on/off toggle
+    link (e.g. "Show archived") that needs to preserve other active filters.
+    """
+    params = request.GET.copy()
+    params.pop("page", None)
+    if params.get(param) == value:
+        params.pop(param, None)
+    else:
+        params[param] = value
+    return params.urlencode()

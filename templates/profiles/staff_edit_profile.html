@@ -7,7 +7,9 @@
   <p>Three sections make up every profile. <a href="{% url 'mentor_profile' mentor.user_id %}" target="_blank">View public page ↗</a></p>
 </div>
 
-{% if mentor.user.is_placeholder %}
+{% include "dashboard/_danger_zone.html" %}
+
+{% if mentor.user.is_placeholder and not mentor.user.is_archived %}
 <div class="panel" style="border-left:3px solid var(--red);">
   <div style="padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
     <div>
@@ -23,6 +25,9 @@
 <div class="panel">
   <h2>1 · About the Mentor &amp; details</h2>
   <div style="padding:1.5rem; max-width:680px;">
+    {% if mentor.user.is_archived %}
+      <div class="dz-hint" style="margin-bottom:1rem;">This account is archived — unarchive it above to make changes.</div>
+    {% endif %}
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" name="action" value="save_profile">
@@ -36,9 +41,11 @@
         {% if field.help_text %}<div style="font-size:0.78rem; color:var(--muted); margin-top:0.2rem;">{{ field.help_text }}</div>{% endif %}
         {% if field.errors %}<div style="color:var(--deep-red); font-size:0.82rem;">{{ field.errors|striptags }}</div>{% endif %}
       {% endfor %}
+      {% if not mentor.user.is_archived %}
       <div style="margin-top:1.3rem;">
         <button type="submit" style="padding:0.65rem 1.4rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Save details</button>
       </div>
+      {% endif %}
     </form>
   </div>
 </div>
@@ -47,7 +54,7 @@
 <div class="panel">
   <h2>2 · Core Industry Expertise</h2>
   <div style="padding:1.25rem;">
-    {% include "profiles/_point_editor.html" with points=expertise_points category="expertise" %}
+    {% include "profiles/_point_editor.html" with points=expertise_points category="expertise" archived=mentor.user.is_archived %}
   </div>
 </div>
 
@@ -55,7 +62,7 @@
 <div class="panel">
   <h2>3 · Mentorship Focus Areas</h2>
   <div style="padding:1.25rem;">
-    {% include "profiles/_point_editor.html" with points=focus_points category="focus" %}
+    {% include "profiles/_point_editor.html" with points=focus_points category="focus" archived=mentor.user.is_archived %}
   </div>
 </div>
 <style>

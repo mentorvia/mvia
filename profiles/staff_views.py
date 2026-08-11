@@ -16,7 +16,7 @@ def staff_required(view):
 
 @staff_required
 def mentor_queue(request):
-    from core.pagination import paginate, querystring_without_page
+    from core.pagination import paginate, querystring_without_page, toggle_param_querystring
     from django.db.models import Q
 
     pending = MentorProfile.objects.filter(
@@ -28,6 +28,12 @@ def mentor_queue(request):
 
     approved = MentorProfile.objects.filter(
         status=MentorProfile.STATUS_APPROVED).select_related("user").order_by("user__full_name")
+
+    archived_count = MentorProfile.objects.filter(
+        status=MentorProfile.STATUS_APPROVED, user__archived_at__isnull=False).count()
+    show_archived = request.GET.get("show_archived") == "1"
+    if not show_archived:
+        approved = approved.filter(user__archived_at__isnull=True)
 
     q = request.GET.get("q", "").strip()
     only = request.GET.get("only", "").strip()
@@ -53,6 +59,9 @@ def mentor_queue(request):
         "filters": [{"name": "only", "label": "Show", "options": only_opts}],
         "has_active": bool(q or only),
         "active_nav": "mentors",
+        "show_archived": show_archived,
+        "archived_count": archived_count,
+        "show_archived_toggle_qs": toggle_param_querystring(request, "show_archived"),
     })
 
 

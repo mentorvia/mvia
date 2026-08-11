@@ -76,8 +76,16 @@ def overview(request):
 @staff_required
 def users_list(request):
     """Searchable, paginated list of all users."""
+    from core.pagination import toggle_param_querystring
+
     query = request.GET.get("q", "").strip()
     users = User.objects.all()
+
+    archived_count = User.objects.filter(archived_at__isnull=False).count()
+    show_archived = request.GET.get("show_archived") == "1"
+    if not show_archived:
+        users = users.filter(archived_at__isnull=True)
+
     if query:
         users = users.filter(Q(full_name__icontains=query) | Q(email__icontains=query))
     users = users.order_by("-date_joined")
@@ -87,16 +95,22 @@ def users_list(request):
 
     return render(request, "dashboard/users_list.html", {
         "page": page, "query": query, "active_nav": "users",
+        "show_archived": show_archived, "archived_count": archived_count,
+        "show_archived_toggle_qs": toggle_param_querystring(request, "show_archived"),
     })
 
 
 @staff_required
 def user_detail(request, user_id):
     """Detail view for a single user, including their email history."""
+    from bookings.services import active_bookings_for_user
+
     target = get_object_or_404(User, pk=user_id)
     emails = EmailLog.objects.filter(recipient=target.email).order_by("-created_at")[:20]
+    active_bookings = None if target.is_archived else active_bookings_for_user(target)
     return render(request, "dashboard/user_detail.html", {
         "target": target, "emails": emails, "active_nav": "users",
+        "active_bookings": active_bookings,
     })
 
 
