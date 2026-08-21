@@ -77,20 +77,11 @@ class MentorApplicationPublicForm(forms.ModelForm):
             raise forms.ValidationError("Please enter a realistic number of years (0–60).")
         return years
 
-    def clean_experience_years(self):
-        years = self.cleaned_data["experience_years"]
-        if years is not None and years > 60:
-            raise forms.ValidationError("Please enter a realistic number of years (0–60).")
-        return years
-
     def clean_industry(self):
         industry = self.cleaned_data["industry"].strip()
         if len(industry) > 60:
             raise forms.ValidationError("Please keep the industry under 60 characters.")
         return industry
-
-
-class MentorApplicationApprovalForm(forms.Form):
 
 
 class MentorApplicationApprovalForm(forms.Form):
