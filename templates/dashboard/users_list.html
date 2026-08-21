@@ -25,7 +25,7 @@
     <tbody>
       {% for u in page.object_list %}
       <tr {% if u.is_archived %}style="opacity:0.55;"{% endif %}>
-        <td><a href="{% url 'staff:user_detail' u.id %}">{{ u.full_name }}</a>{% if u.is_archived %} <span class="badge no">Archived</span>{% endif %}</td>
+                <td style="max-width:280px;"><a href="{% url 'staff:user_detail' u.id %}" style="display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom;" title="{{ u.full_name }}">{{ u.full_name }}</a>{% if u.is_archived %} <span class="badge no">Archived</span>{% endif %}</td>
         <td>{{ u.email }}</td>
         <td>
           {% if u.is_mentor %}<span class="badge neutral">Mentor</span>{% endif %}
