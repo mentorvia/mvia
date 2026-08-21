@@ -73,8 +73,8 @@ class MentorApplicationPublicForm(forms.ModelForm):
 
     def clean_experience_years(self):
         years = self.cleaned_data["experience_years"]
-        if years is not None and years < 0:
-            raise forms.ValidationError("Years of experience can't be negative.")
+        if years is not None and years > 60:
+            raise forms.ValidationError("Please enter a realistic number of years (0–60).")
         return years
 
 
