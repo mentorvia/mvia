@@ -54,7 +54,7 @@ class MentorApplicationPublicForm(forms.ModelForm):
             "current_role": forms.TextInput(attrs={"placeholder": "e.g. VP Engineering"}),
             "current_company": forms.TextInput(attrs={"placeholder": "e.g. Acme Corp"}),
             "industry": forms.TextInput(attrs={"placeholder": "e.g. Technology, Finance, Consulting"}),
-            "experience_years": forms.NumberInput(attrs={"min": "0"}),
+            "experience_years": forms.NumberInput(attrs={"min": "0", "max": "60"}),
             "why_mentor": forms.Textarea(attrs={"rows": 4,
                 "placeholder": "What draws you to mentoring on mVia?"}),
             "bio": forms.Textarea(attrs={"rows": 5,
