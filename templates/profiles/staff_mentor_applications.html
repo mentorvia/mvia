@@ -25,7 +25,7 @@
       <tr>
         <td><strong>{{ a.name }}</strong><br><span style="color:var(--muted); font-size:0.82rem;">{{ a.email }}</span></td>
         <td>{{ a.current_role }}<br><span style="color:var(--muted); font-size:0.82rem;">{{ a.current_company }}</span></td>
-        <td>{{ a.industry }}</td>
+        <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ a.industry }}">{{ a.industry }}</td>
         <td>{{ a.experience_years }} yrs</td>
         <td>{{ a.applied_at|date:"d M Y" }}</td>
         <td><span class="badge {% if a.status == 'approved' %}yes{% elif a.status == 'rejected' %}no{% else %}pending{% endif %}">{{ a.get_status_display }}</span></td>
