@@ -392,16 +392,16 @@ def mentor_application_review(request, application_id):
                 cd = form.cleaned_data
                 import secrets
 
+                # NEW — set-your-password link approach
                 user = User(
-                    email=application.email, full_name=application.name,
-                    is_mentee=False, is_mentor=True, is_placeholder=True,
+                    email=application.email.strip().lower(),
+                    full_name=application.name,
+                    is_mentee=False, is_mentor=True,
+                    is_placeholder=False,
+                    is_email_verified=True,   # they proved the email via the application; link click re-confirms
                 )
-                user.set_unusable_password()
+                user.set_unusable_password()  # no password until they set one via the link
                 user.save()
-                temp_password = secrets.token_urlsafe(12)
-                user.activate_login(application.email, temp_password)
-                user.must_change_password = True
-                user.save(update_fields=["must_change_password"])
 
                 MentorProfile.objects.create(
                     user=user,
