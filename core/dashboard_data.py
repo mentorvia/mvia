@@ -196,8 +196,11 @@ def mentor_context(user):
     week_end = week_start + timedelta(days=7)
     week_start_dt = timezone.make_aware(datetime.combine(week_start, datetime.min.time()), tz)
     week_end_dt = timezone.make_aware(datetime.combine(week_end, datetime.min.time()), tz)
+    # Start from now (not the start of the calendar week) so past slots from
+    # earlier today / earlier this week never show as current availability.
+    avail_lower = max(now, week_start_dt)
     week_slots = list(
-        AvailabilitySlot.objects.filter(mentor=user, start__gte=week_start_dt, start__lt=week_end_dt)
+        AvailabilitySlot.objects.filter(mentor=user, start__gte=avail_lower, start__lt=week_end_dt)
         .order_by("start")
     )
 
