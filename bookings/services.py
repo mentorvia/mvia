@@ -468,14 +468,19 @@ def reschedule_booking(*, booking_id, new_slot_id, actor):
 
 
 def open_slots_for_mentor(mentor, exclude_booking=None):
-    """Future, un-booked slots for a mentor — the choices when rescheduling."""
+    """Future, confirmed, un-booked slots for a mentor — the choices when rescheduling."""
     now = timezone.now()
+    # A slot is unavailable if it has a booking that's awaiting approval,
+    # confirmed, or completed (matches AvailabilitySlot.is_taken).
     taken_slot_ids = Booking.objects.filter(
         mentor=mentor,
-        status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
+        status__in=[Booking.STATUS_AWAITING_APPROVAL, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED],
     ).values_list("slot_id", flat=True)
-    qs = AvailabilitySlot.objects.filter(mentor=mentor, start__gt=now).exclude(
-        pk__in=list(taken_slot_ids)).order_by("start")
+    # Only future AND mentor-confirmed slots are offered (RS-004: unconfirmed
+    # slots must never be shown to mentees).
+    qs = AvailabilitySlot.objects.filter(
+        mentor=mentor, start__gt=now, is_confirmed=True
+    ).exclude(pk__in=list(taken_slot_ids)).order_by("start")
     return qs
 
 
