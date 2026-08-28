@@ -17,6 +17,37 @@
   </div>
 </div>
 
+{% if booking.status == 'awaiting_approval' %}
+  <div class="panel">
+    <h2>Mentor approval (on behalf)</h2>
+    <div style="padding:1.25rem; max-width:560px;">
+      <div class="msg info" style="margin-bottom:1rem;">
+        This session is waiting for the mentor's approval. If the mentor has asked you to act on their behalf (e.g. they're travelling), you can approve or decline here. Both actions are recorded in the audit log.
+      </div>
+
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <button type="submit" onclick="return confirm('Approve this session on the mentor\u2019s behalf?');"
+                style="padding:0.65rem 1.4rem; background:#1a7f37; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Approve on behalf</button>
+      </form>
+
+      <div style="margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--line);">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="decline">
+          <label style="display:block; font-weight:600; font-size:0.85rem; margin-bottom:0.35rem;">Reason for declining (optional)</label>
+          <textarea name="reason" rows="2" style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit;"></textarea>
+          <div style="margin-top:0.9rem;">
+            <button type="submit" onclick="return confirm('Decline on the mentor\u2019s behalf? The mentee will be refunded.');"
+                    style="padding:0.6rem 1.3rem; background:var(--deep-red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Decline on behalf (refunds mentee)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
 <div class="panel">
   <h2>Google Meet link</h2>
   <div style="padding:1.25rem; max-width:560px;">
@@ -79,10 +110,10 @@
 
 {% if reschedule_slots is not None %}
   <div class="panel">
-    <h2>Reschedule</h2>
+    <h2>Reschedule (admin override)</h2>
     <div style="padding:1.25rem; max-width:560px;">
       <div style="font-size:0.88rem; color:var(--muted); margin-bottom:0.75rem;">
-        Move this confirmed session to another open slot of the same mentor (no re-payment). Allowed up to 24h before, max 2 times. Rescheduled so far: {{ booking.reschedule_count }}/2.
+        Move this confirmed session to another open slot of the same mentor (no re-payment). As an admin you can override the usual 24h-before and 2-times limits for emergencies. Rescheduled so far: {{ booking.reschedule_count }}.
       </div>
       {% if reschedule_slots %}
       <form method="post">
@@ -94,7 +125,7 @@
           <option value="{{ s.id }}">{{ s.start|date:"d M Y · H:i" }}–{{ s.end|date:"H:i" }}</option>
           {% endfor %}
         </select>
-        <button type="submit" onclick="return confirm('Reschedule this booking?');" style="padding:0.6rem 1.3rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Reschedule</button>
+        <button type="submit" onclick="return confirm('Reschedule this booking (admin override)?');" style="padding:0.6rem 1.3rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Reschedule</button>
       </form>
       {% else %}
         <div class="empty">No other open slots for this mentor.</div>
