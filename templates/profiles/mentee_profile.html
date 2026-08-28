@@ -5,13 +5,11 @@
 <div class="card" style="max-width:600px;">
   <h1>{% trans "My profile" %}</h1>
   <p class="sub">{% trans "Complete this so you can book sessions with mentors." %}</p>
-
   {% if not profile.is_complete %}
     <div class="msg info" style="margin-bottom:1rem;">
       {% blocktrans with fields=profile.missing_fields|join:", " %}To book, please add: {{ fields }}.{% endblocktrans %}
     </div>
   {% endif %}
-
   <form method="post" novalidate>
     {% csrf_token %}
     {% for field in form %}
@@ -19,9 +17,10 @@
       {{ field }}
       {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     {% endfor %}
-
+    <p class="sub" style="margin-top:1.5rem; margin-bottom:0.5rem;">
+      {% trans "Select at least one interest so we can match you with the right mentors." %}
+    </p>
     {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids allow_custom=True %}
-
     <button type="submit" class="btn">{% trans "Save profile" %}</button>
   </form>
 </div>
