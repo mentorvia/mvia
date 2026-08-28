@@ -13,9 +13,9 @@ from .models import User
 
 # A "letter" in any script (Unicode), plus spaces and the few punctuation marks
 # that legitimately appear in names (hyphen, apostrophe, period). Deliberately
-# script-agnostic so names in Tamil, Devanagari, etc. are accepted, while
-# commas, digits, brackets and other symbols are rejected.
-_NAME_ALLOWED = re.compile(r"^[^\W\d_][\w\s\-'.]*$", re.UNICODE)
+# script-agnostic so names in Tamil, Devanagari, etc. are accepted. No digits,
+# no underscores, no other symbols — real names don't contain numbers.
+_NAME_ALLOWED = re.compile(r"^[^\W\d_][^\d_]*$", re.UNICODE)
 
 
 class SignupForm(forms.Form):
@@ -37,7 +37,7 @@ class SignupForm(forms.Form):
         if any(len(part) > 40 for part in name.split(" ")):
             raise ValidationError("That doesn't look like a valid name.")
         # Allow letters of ANY script + spaces, hyphens, apostrophes, periods.
-        # Rejects digits, commas, brackets and other symbols.
+        # Rejects digits, underscores, commas, brackets and other symbols.
         if not _NAME_ALLOWED.match(name):
             raise ValidationError(
                 "Names can only contain letters, spaces, hyphens and apostrophes.")
