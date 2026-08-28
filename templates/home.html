@@ -220,7 +220,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
     <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>
     <li><a class="btn btn-red btn-noarrow" href="{% url 'signup' %}">{% trans "Apply" %}</a></li>
    {% endif %}
-   <li>{% include "partials/_language_dropdown.html" %}</li>
+      {# <li>{% include "partials/_language_dropdown.html" %}</li> #}  {# Hidden until Kannada is ready #}
   </ul>
   <button class="burger" onclick="document.getElementById('navlinks').classList.toggle('open')">≡</button>
  </div>
