@@ -1,16 +1,16 @@
 """Booking and availability views."""
+
 import json
 import logging
-
-from django.http import HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from .models import AvailabilitySlot, Booking
 from .services import create_booking, confirm_payment, confirm_payment_and_notify, cancel_booking, complete_booking, BookingError
@@ -40,7 +40,7 @@ def my_availability(request):
                     mentor=request.user, weekday=int(weekday), start_time=start_time)
                 messages.success(request, "Added to your weekly availability.")
             except Exception:
-                messages.error(request, "Couldn't add that — check the day and time.")
+                messages.error(request, "Couldn't add that - check the day and time.")
             return redirect("my_availability")
 
         # 2) Remove a weekly pattern entry.
@@ -120,7 +120,7 @@ def pay_booking(request, booking_id):
         if request.method == "POST":
             try:
                 confirm_payment_and_notify(booking_id=booking.id, simulated=True)
-                messages.success(request, "Payment simulated — your booking is confirmed!")
+                messages.success(request, "Payment simulated - your booking is confirmed!")
             except BookingError as e:
                 messages.error(request, str(e))
             return redirect("my_bookings")
@@ -152,7 +152,7 @@ def pay_booking(request, booking_id):
             confirm_payment_and_notify(
                 booking_id=booking.id, simulated=False,
                 razorpay_payment_id=rp_payment_id, razorpay_signature=rp_signature)
-            messages.success(request, "Payment successful — your booking is confirmed!")
+            messages.success(request, "Payment successful - your booking is confirmed!")
         except BookingError as e:
             messages.error(request, str(e))
         return redirect("my_bookings")
@@ -161,7 +161,6 @@ def pay_booking(request, booking_id):
     try:
         order = create_order(booking)
     except Exception as exc:
-        import logging
         logging.getLogger("mvia.payments").exception(
             "Razorpay order creation failed for booking %s: %s", booking.id, exc)
         messages.error(request, "Could not start payment right now. Please try again in a moment.")
@@ -187,6 +186,10 @@ def pay_booking(request, booking_id):
         "fee_amount": fee_amount,
         "fee_percent": fee_percent,
     })
+
+
+# ---------- Razorpay webhook: server-side payment reconciliation ----------
+
 @csrf_exempt
 @require_POST
 def razorpay_webhook(request):
@@ -195,24 +198,26 @@ def razorpay_webhook(request):
     regardless of what the mentee's browser did, so a refresh during checkout
     can't leave a paid booking unconfirmed (PAY-018 / BOOK-011).
 
-    Idempotent: confirm_payment's status guard means if the browser callback
-    already confirmed this booking, this no-ops safely.
+    Idempotent: confirm_payment's status guard means that if the browser
+    callback already confirmed this booking, this no-ops safely.
     """
     import hmac
     import hashlib
 
+    log = logging.getLogger("mvia.payments")
+
     secret = getattr(settings, "RAZORPAY_WEBHOOK_SECRET", "")
     if not secret:
-        logging.getLogger("mvia.payments").error("Webhook hit but RAZORPAY_WEBHOOK_SECRET not set.")
+        log.error("Razorpay webhook hit but RAZORPAY_WEBHOOK_SECRET is not set.")
         return HttpResponse(status=503)
 
-    body = request.body  # raw bytes — must verify against the raw payload
+    body = request.body  # raw bytes - must verify against the raw payload
     signature = request.headers.get("X-Razorpay-Signature", "")
 
     # Verify the webhook signature (HMAC-SHA256 of the raw body with the secret).
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, signature):
-        logging.getLogger("mvia.payments").warning("Razorpay webhook signature mismatch.")
+        log.warning("Razorpay webhook signature mismatch.")
         return HttpResponseBadRequest("bad signature")
 
     try:
@@ -238,24 +243,23 @@ def razorpay_webhook(request):
     from payments.models import Payment
     payment = Payment.objects.filter(razorpay_order_id=rp_order_id).order_by("-created_at").first()
     if not payment:
-        logging.getLogger("mvia.payments").error(
-            "Webhook: no Payment for order %s", rp_order_id)
-        return HttpResponse(status=200)  # ack — nothing we can do, don't retry forever
+        log.error("Razorpay webhook: no Payment found for order %s", rp_order_id)
+        return HttpResponse(status=200)  # ack - nothing we can do, don't retry forever
 
-    # Already confirmed by the browser callback? confirm_payment's guard will
-    # raise BookingError; we treat that as success (idempotent no-op).
+    # Already confirmed by the browser callback? confirm_payment's guard raises
+    # BookingError; we treat that as success (idempotent no-op).
     try:
         confirm_payment_and_notify(
             booking_id=payment.booking_id, simulated=False,
             razorpay_payment_id=rp_payment_id, razorpay_signature="")
     except BookingError:
-        pass  # already processed — fine
+        pass  # already processed - fine
     except Exception:  # noqa: BLE001
-        logging.getLogger("mvia.payments").exception(
-            "Webhook confirm failed for booking %s", payment.booking_id)
+        log.exception("Razorpay webhook confirm failed for booking %s", payment.booking_id)
         return HttpResponse(status=500)  # let Razorpay retry
 
     return HttpResponse(status=200)
+
 
 # ---------- Both: my bookings ----------
 
@@ -350,7 +354,7 @@ def decline(request, booking_id):
         try:
             decline_booking(booking_id=booking.id, actor=request.user,
                             reason=request.POST.get("reason", ""))
-            messages.success(request, "Session declined — the mentee will be refunded.")
+            messages.success(request, "Session declined - the mentee will be refunded.")
         except BookingError as e:
             messages.error(request, str(e))
     return redirect("my_bookings")
@@ -364,7 +368,7 @@ def suggest_time(request, booking_id):
         try:
             suggest_new_slot(booking_id=booking.id,
                              new_slot_id=request.POST.get("new_slot_id"), actor=request.user)
-            messages.success(request, "Suggested a new time — the mentee will be notified.")
+            messages.success(request, "Suggested a new time - the mentee will be notified.")
             return redirect("my_bookings")
         except BookingError as e:
             messages.error(request, str(e))
@@ -379,7 +383,7 @@ def accept_suggestion(request, booking_id):
     if request.method == "POST":
         try:
             accept_suggested_slot(booking_id=booking.id, actor=request.user)
-            messages.success(request, "New time accepted — now awaiting mentor confirmation.")
+            messages.success(request, "New time accepted - now awaiting mentor confirmation.")
         except BookingError as e:
             messages.error(request, str(e))
     return redirect("my_bookings")
