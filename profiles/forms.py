@@ -1,6 +1,8 @@
 """Forms for mentee profiles and mentor applications."""
 
 from decimal import Decimal
+from urllib.parse import urlparse
+
 from django import forms
 
 from .models import MenteeProfile, MentorProfile, MentorApplication
@@ -70,6 +72,29 @@ class MentorApplicationPublicForm(forms.ModelForm):
             "bio": "Brief bio / background",
             "expertise": "Any specific areas of expertise or interests (optional)",
         }
+
+    def clean_email(self):
+        # BM-015: block a second application while an earlier one is still
+        # pending. Rejected applicants CAN reapply (we only look at pending).
+        email = self.cleaned_data["email"].strip().lower()
+        if MentorApplication.objects.filter(
+            email__iexact=email, status=MentorApplication.STATUS_PENDING
+        ).exists():
+            raise forms.ValidationError(
+                "We already have a pending application for this email. "
+                "We'll be in touch — please don't submit another just yet.")
+        return email
+
+    def clean_linkedin_url(self):
+        # BM-017: only accept links on a linkedin.com domain.
+        url = self.cleaned_data["linkedin_url"].strip()
+        host = (urlparse(url).netloc or "").lower()
+        # Strip a leading "www." (or any subdomain like in.linkedin.com) and
+        # check the registrable domain is linkedin.com.
+        if not (host == "linkedin.com" or host.endswith(".linkedin.com")):
+            raise forms.ValidationError(
+                "Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/your-name).")
+        return url
 
     def clean_experience_years(self):
         years = self.cleaned_data["experience_years"]
