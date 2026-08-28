@@ -6,6 +6,7 @@ urlpatterns = [
     path("availability/", views.my_availability, name="my_availability"),
     path("book/<int:slot_id>/", views.book_slot, name="book_slot"),
     path("pay/<int:booking_id>/", views.pay_booking, name="pay_booking"),
+    path("pay/webhook/razorpay/", views.razorpay_webhook, name="razorpay_webhook"),
     path("my-bookings/", views.my_bookings, name="my_bookings"),
     path("booking/<int:booking_id>/cancel/", views.cancel, name="cancel_booking"),
     path("booking/<int:booking_id>/complete/", views.complete, name="complete_booking"),
