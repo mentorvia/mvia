@@ -187,7 +187,75 @@ def pay_booking(request, booking_id):
         "fee_amount": fee_amount,
         "fee_percent": fee_percent,
     })
+@csrf_exempt
+@require_POST
+def razorpay_webhook(request):
+    """
+    Server-to-server confirmation from Razorpay. Fires on payment.captured
+    regardless of what the mentee's browser did, so a refresh during checkout
+    can't leave a paid booking unconfirmed (PAY-018 / BOOK-011).
 
+    Idempotent: confirm_payment's status guard means if the browser callback
+    already confirmed this booking, this no-ops safely.
+    """
+    import hmac
+    import hashlib
+
+    secret = getattr(settings, "RAZORPAY_WEBHOOK_SECRET", "")
+    if not secret:
+        logging.getLogger("mvia.payments").error("Webhook hit but RAZORPAY_WEBHOOK_SECRET not set.")
+        return HttpResponse(status=503)
+
+    body = request.body  # raw bytes — must verify against the raw payload
+    signature = request.headers.get("X-Razorpay-Signature", "")
+
+    # Verify the webhook signature (HMAC-SHA256 of the raw body with the secret).
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        logging.getLogger("mvia.payments").warning("Razorpay webhook signature mismatch.")
+        return HttpResponseBadRequest("bad signature")
+
+    try:
+        payload = json.loads(body)
+    except ValueError:
+        return HttpResponseBadRequest("bad json")
+
+    event = payload.get("event")
+    if event != "payment.captured":
+        # We only act on captured payments; acknowledge everything else so
+        # Razorpay doesn't retry.
+        return HttpResponse(status=200)
+
+    # Pull the order + payment ids from the event.
+    try:
+        entity = payload["payload"]["payment"]["entity"]
+        rp_order_id = entity["order_id"]
+        rp_payment_id = entity["id"]
+    except (KeyError, TypeError):
+        return HttpResponseBadRequest("unexpected payload")
+
+    # Find the Payment by order id, then confirm its booking.
+    from payments.models import Payment
+    payment = Payment.objects.filter(razorpay_order_id=rp_order_id).order_by("-created_at").first()
+    if not payment:
+        logging.getLogger("mvia.payments").error(
+            "Webhook: no Payment for order %s", rp_order_id)
+        return HttpResponse(status=200)  # ack — nothing we can do, don't retry forever
+
+    # Already confirmed by the browser callback? confirm_payment's guard will
+    # raise BookingError; we treat that as success (idempotent no-op).
+    try:
+        confirm_payment_and_notify(
+            booking_id=payment.booking_id, simulated=False,
+            razorpay_payment_id=rp_payment_id, razorpay_signature="")
+    except BookingError:
+        pass  # already processed — fine
+    except Exception:  # noqa: BLE001
+        logging.getLogger("mvia.payments").exception(
+            "Webhook confirm failed for booking %s", payment.booking_id)
+        return HttpResponse(status=500)  # let Razorpay retry
+
+    return HttpResponse(status=200)
 
 # ---------- Both: my bookings ----------
 
