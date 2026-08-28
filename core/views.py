@@ -33,13 +33,10 @@ def health(request):
 def dashboard(request):
     """The signed-in landing area: routes to the mentee or mentor dashboard."""
     from .dashboard_data import resolve_active_role, mentee_context, mentor_context
-
     user = request.user
     active_role = resolve_active_role(user, request.session)
-
     context = {"active_role": active_role, "can_toggle": user.is_mentee and user.is_mentor}
     context.update(mentor_context(user) if active_role == "mentor" else mentee_context(user))
-
     return render(request, "dashboard.html", context)
 
 
@@ -72,7 +69,6 @@ def set_timezone(request):
     except ValueError:
         data = {}
     tz_name = (data.get("timezone") or "").strip()
-
     if tz_name and request.user.timezone == "Asia/Kolkata":
         try:
             zoneinfo.ZoneInfo(tz_name)  # validate it's a real IANA name
@@ -81,14 +77,14 @@ def set_timezone(request):
         request.user.timezone = tz_name
         request.user.save(update_fields=["timezone"])
         return JsonResponse({"saved": True})
-
     return JsonResponse({"saved": False})
 
-   def custom_404(request, exception=None):
-       from django.shortcuts import render
-       return render(request, "404.html", status=404)
+
+def custom_404(request, exception=None):
+    """Friendly 404 page (renders when DEBUG is off). BUG-001 / BUG-002."""
+    return render(request, "404.html", status=404)
 
 
-   def custom_403(request, exception=None):
-       from django.shortcuts import render
-       return render(request, "403.html", status=403)
+def custom_403(request, exception=None):
+    """Friendly 403 page (renders when DEBUG is off)."""
+    return render(request, "403.html", status=403)
