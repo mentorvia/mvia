@@ -27,6 +27,9 @@ urlpatterns = [
     path("become-a-mentor/thanks/", profile_views.mentor_application_thanks, name="mentor_application_thanks"),
 ]
 
+# Custom, friendly error pages (used when DEBUG is off, i.e. in production).
+# Redirect-free: they render a branded page with a safe link so a stale or
+# cross-account URL never shows a raw 403/404 (BUG-001 / BUG-002 stale tab).
 handler404 = "core.views.custom_404"
 handler403 = "core.views.custom_403"
 
