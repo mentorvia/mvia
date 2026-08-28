@@ -12,13 +12,44 @@ from interests.models import Interest
 class MenteeProfileForm(forms.ModelForm):
     class Meta:
         model = MenteeProfile
-        fields = ["current_role", "company", "years_experience", "career_goals"]
+        fields = [
+            "current_role", "company", "years_experience", "career_goals",
+            "linkedin_url", "instagram_url",
+        ]
         widgets = {
-            "career_goals": forms.Textarea(attrs={"rows": 4,
+            "career_goals": forms.Textarea(attrs={"rows": 4, "maxlength": "1000",
                 "placeholder": "What do you want guidance on? Where are you headed?"}),
-            "current_role": forms.TextInput(attrs={"placeholder": "e.g. Final-year CS student"}),
-            "company": forms.TextInput(attrs={"placeholder": "e.g. NIT Trichy (or your employer)"}),
+            "current_role": forms.TextInput(attrs={"maxlength": "120",
+                "placeholder": "e.g. Final-year CS student"}),
+            "company": forms.TextInput(attrs={"maxlength": "120",
+                "placeholder": "e.g. NIT Trichy (or your employer)"}),
+            "years_experience": forms.NumberInput(attrs={"min": "0", "max": "60"}),
+            "linkedin_url": forms.URLInput(attrs={"placeholder": "https://linkedin.com/in/…"}),
+            "instagram_url": forms.URLInput(attrs={"placeholder": "https://instagram.com/…"}),
         }
+        labels = {
+            "linkedin_url": "LinkedIn URL",
+            "instagram_url": "Instagram URL",
+            "years_experience": "Years of experience",
+        }
+
+    def clean_current_role(self):
+        role = self.cleaned_data["current_role"].strip()
+        if len(role) > 120:
+            raise forms.ValidationError("Please keep your current role under 120 characters.")
+        return role
+
+    def clean_years_experience(self):
+        years = self.cleaned_data.get("years_experience")
+        if years is not None and years > 60:
+            raise forms.ValidationError("Please enter a realistic number of years (0-60).")
+        return years
+
+    def clean_career_goals(self):
+        goals = self.cleaned_data["career_goals"].strip()
+        if len(goals) > 1000:
+            raise forms.ValidationError("Please keep your career goals under 1000 characters.")
+        return goals
 
 
 class MentorApplicationForm(forms.ModelForm):
@@ -30,7 +61,7 @@ class MentorApplicationForm(forms.ModelForm):
                 "placeholder": "Tell mentees about your background and how you can help."}),
             "hourly_rate": forms.NumberInput(attrs={"placeholder": "e.g. 1500", "min": "0", "step": "1"}),
         }
-        labels = {"hourly_rate": "Rate per session (₹)"}
+        labels = {"hourly_rate": "Rate per session (INR)"}
 
     def clean_hourly_rate(self):
         rate = self.cleaned_data["hourly_rate"]
@@ -43,7 +74,7 @@ class MentorApplicationPublicForm(forms.ModelForm):
     """
     The public, no-account-needed /become-a-mentor/ form. A separate pipeline
     from MentorApplicationForm above (which is the existing logged-in-mentee
-    upgrade path) — see MentorApplication's docstring.
+    upgrade path) - see MentorApplication's docstring.
     """
     class Meta:
         model = MentorApplication
@@ -62,7 +93,7 @@ class MentorApplicationPublicForm(forms.ModelForm):
             "bio": forms.Textarea(attrs={"rows": 5,
                 "placeholder": "Tell us about your career background."}),
             "expertise": forms.Textarea(attrs={"rows": 3,
-                "placeholder": "Optional — any specific areas you'd want to focus on."}),
+                "placeholder": "Optional - any specific areas you'd want to focus on."}),
         }
         labels = {
             "linkedin_url": "LinkedIn URL",
@@ -82,15 +113,14 @@ class MentorApplicationPublicForm(forms.ModelForm):
         ).exists():
             raise forms.ValidationError(
                 "We already have a pending application for this email. "
-                "We'll be in touch — please don't submit another just yet.")
+                "We'll be in touch - please don't submit another just yet.")
         return email
 
     def clean_linkedin_url(self):
         # BM-017: only accept links on a linkedin.com domain.
         url = self.cleaned_data["linkedin_url"].strip()
         host = (urlparse(url).netloc or "").lower()
-        # Strip a leading "www." (or any subdomain like in.linkedin.com) and
-        # check the registrable domain is linkedin.com.
+        # Accept linkedin.com and any subdomain (www., in., etc.).
         if not (host == "linkedin.com" or host.endswith(".linkedin.com")):
             raise forms.ValidationError(
                 "Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/your-name).")
@@ -99,7 +129,7 @@ class MentorApplicationPublicForm(forms.ModelForm):
     def clean_experience_years(self):
         years = self.cleaned_data["experience_years"]
         if years is not None and years > 60:
-            raise forms.ValidationError("Please enter a realistic number of years (0–60).")
+            raise forms.ValidationError("Please enter a realistic number of years (0-60).")
         return years
 
     def clean_industry(self):
@@ -110,6 +140,6 @@ class MentorApplicationPublicForm(forms.ModelForm):
 
 
 class MentorApplicationApprovalForm(forms.Form):
-    """Collected in the staff 'Approve' modal — the two inputs the free-text
+    """Collected in the staff 'Approve' modal - the two inputs the free-text
     application can't supply on its own: a rate, and structured specializations."""
-    hourly_rate = forms.IntegerField(min_value=0, label="Rate per session (₹)")
+    hourly_rate = forms.IntegerField(min_value=0, label="Rate per session (INR)")
