@@ -14,6 +14,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import MentorProfile, ProfilePoint
+from .profile_validators import validate_bio, validate_linkedin_url, validate_website_url, validate_photo
 
 
 def staff_required(view):
@@ -30,10 +31,28 @@ class MentorRichForm(forms.ModelForm):
             "is_available",
         ]
         widgets = {
-            "bio": forms.Textarea(attrs={"rows": 6}),
+            "bio": forms.Textarea(attrs={"rows": 6, "maxlength": "1500"}),
             "headline": forms.TextInput(attrs={"placeholder": "e.g. Technology & business leader · 34+ years"}),
         }
         labels = {"bio": "About the Mentor"}
+
+    def clean_bio(self):
+        return validate_bio(self.cleaned_data.get("bio", ""))
+
+    def clean_linkedin_url(self):
+        return validate_linkedin_url(self.cleaned_data.get("linkedin_url", ""))
+
+    def clean_website_url(self):
+        return validate_website_url(self.cleaned_data.get("website_url", ""))
+
+    def clean_photo(self):
+        return validate_photo(self.cleaned_data.get("photo"))
+
+    def clean_years_experience(self):
+        years = self.cleaned_data.get("years_experience")
+        if years is not None and years > 60:
+            raise forms.ValidationError("Please enter a realistic number of years (0-60).")
+        return years
 
 
 @staff_required
@@ -41,7 +60,7 @@ def edit_mentor_profile(request, mentor_id):
     mentor = get_object_or_404(MentorProfile, pk=mentor_id)
 
     if request.method == "POST":
-        # Archived accounts are read-only sitewide in the staff console — the
+        # Archived accounts are read-only sitewide in the staff console - the
         # form fields are visually disabled, but this is the actual
         # enforcement (defense in depth against a raw POST bypassing that).
         if mentor.user.is_archived:
