@@ -384,7 +384,7 @@ MAX_RESCHEDULES = 2
 RESCHEDULE_CUTOFF_HOURS = 24
 
 
-def reschedule_booking(*, booking_id, new_slot_id, actor):
+def reschedule_booking(*, booking_id, new_slot_id, actor, override=False):
     """
     Move a confirmed booking to a different open slot of the SAME mentor.
     No new payment — the paid session simply moves. Rules:
@@ -403,12 +403,12 @@ def reschedule_booking(*, booking_id, new_slot_id, actor):
             raise BookingError("Only confirmed bookings can be rescheduled.")
         if getattr(booking.mentor, "is_archived", False):
             raise BookingError("This mentor is no longer active on mVia — rescheduling isn't available.")
-        if booking.reschedule_count >= MAX_RESCHEDULES:
+        if not override and booking.reschedule_count >= MAX_RESCHEDULES:
             raise BookingError(f"This booking has already been rescheduled {MAX_RESCHEDULES} times (the limit).")
 
         now = timezone.now()
         cutoff = booking.slot.start - timedelta(hours=RESCHEDULE_CUTOFF_HOURS)
-        if now >= cutoff:
+        if not override and now >= cutoff:
             raise BookingError(
                 f"Rescheduling must be done at least {RESCHEDULE_CUTOFF_HOURS} hours before the session.")
 
