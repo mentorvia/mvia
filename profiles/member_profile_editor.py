@@ -4,13 +4,13 @@ Member-facing mentor profile editor (/profile/mentor/edit/).
 Pattern C: identity fields (full name, industry, years of experience,
 credentials, current role & company) are locked. A mentor can only propose
 changes to them, staged in MentorProfile.pending_identity_changes until an
-admin approves — the live fields (and therefore the public profile) are
+admin approves - the live fields (and therefore the public profile) are
 untouched until then. Everything else on this page saves immediately.
 
 Mirrors the staff editor's (profiles/profile_editor.py) POST-action dispatch
 pattern: each section is its own <form> posting a distinct `action`, and each
 action is handled by a form/branch that only ever touches its own section's
-fields — so a tampered POST to a freely-editable action can never reach the
+fields - so a tampered POST to a freely-editable action can never reach the
 locked identity fields.
 """
 
@@ -21,6 +21,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from .models import MentorProfile, ProfilePoint
+from .profile_validators import validate_bio, validate_linkedin_url, validate_website_url, validate_photo
 from .views import _interest_categories, _mark_expansion
 from interests.models import MentorInterest
 from auditlog.models import AdminAuditLog
@@ -52,22 +53,40 @@ class IdentityRequestForm(forms.Form):
         required=False, widget=forms.Textarea(attrs={"rows": 2}),
         label="Note to admin (optional)")
 
+    def clean_years_experience(self):
+        years = self.cleaned_data["years_experience"]
+        if years is not None and years > 60:
+            raise forms.ValidationError("Please enter a realistic number of years (0-60).")
+        return years
+
 
 class PresentationForm(forms.ModelForm):
     class Meta:
         model = MentorProfile
         fields = ["photo", "headline", "bio"]
         widgets = {
-            "bio": forms.Textarea(attrs={"rows": 6}),
+            "bio": forms.Textarea(attrs={"rows": 6, "maxlength": "1500"}),
             "headline": forms.TextInput(attrs={"placeholder": "e.g. Technology & business leader · 34+ years"}),
         }
         labels = {"bio": "Bio"}
+
+    def clean_bio(self):
+        return validate_bio(self.cleaned_data.get("bio", ""))
+
+    def clean_photo(self):
+        return validate_photo(self.cleaned_data.get("photo"))
 
 
 class ContactForm(forms.ModelForm):
     class Meta:
         model = MentorProfile
         fields = ["linkedin_url", "website_url"]
+
+    def clean_linkedin_url(self):
+        return validate_linkedin_url(self.cleaned_data.get("linkedin_url", ""))
+
+    def clean_website_url(self):
+        return validate_website_url(self.cleaned_data.get("website_url", ""))
 
 
 class SessionForm(forms.ModelForm):
