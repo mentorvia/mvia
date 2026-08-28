@@ -1,5 +1,7 @@
 """Forms for signup, login, and password reset."""
 
+import re
+
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import authenticate
@@ -9,16 +11,44 @@ from django.core.exceptions import ValidationError
 from .models import User
 
 
+# A "letter" in any script (Unicode), plus spaces and the few punctuation marks
+# that legitimately appear in names (hyphen, apostrophe, period). Deliberately
+# script-agnostic so names in Tamil, Devanagari, etc. are accepted, while
+# commas, digits, brackets and other symbols are rejected.
+_NAME_ALLOWED = re.compile(r"^[^\W\d_][\w\s\-'.]*$", re.UNICODE)
+
+
 class SignupForm(forms.Form):
-    full_name = forms.CharField(max_length=150, label=_("Full name"))
+    full_name = forms.CharField(max_length=50, label=_("Full name"))
     email = forms.EmailField(label=_("Email"))
     password = forms.CharField(widget=forms.PasswordInput, label=_("Password"))
     password_confirm = forms.CharField(widget=forms.PasswordInput, label=_("Confirm password"))
 
+    def clean_full_name(self):
+        name = self.cleaned_data["full_name"].strip()
+        # Collapse any internal runs of whitespace to single spaces.
+        name = " ".join(name.split())
+
+        if len(name) < 2:
+            raise ValidationError("Please enter your full name.")
+        if len(name) > 50:
+            raise ValidationError("Please keep your name under 50 characters.")
+        # A single 40+ character run with no spaces is almost always junk/spam.
+        if any(len(part) > 40 for part in name.split(" ")):
+            raise ValidationError("That doesn't look like a valid name.")
+        # Allow letters of ANY script + spaces, hyphens, apostrophes, periods.
+        # Rejects digits, commas, brackets and other symbols.
+        if not _NAME_ALLOWED.match(name):
+            raise ValidationError(
+                "Names can only contain letters, spaces, hyphens and apostrophes.")
+        return name
+
     def clean_email(self):
         email = self.cleaned_data["email"].lower().strip()
         if User.objects.filter(email=email).exists():
-            raise ValidationError("An account with this email already exists.")
+            raise ValidationError(
+                "An account with this email already exists. Try logging in, or use "
+                "“Forgot password” on the login page if you've forgotten your password.")
         return email
 
     def clean_password(self):
