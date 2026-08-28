@@ -217,6 +217,7 @@ if not DEBUG:
 RAZORPAY_KEY_ID = env("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = env("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_ENABLED = bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
+RAZORPAY_WEBHOOK_SECRET = env("RAZORPAY_WEBHOOK_SECRET", "")
 
 # SendGrid (email) — sender is hello@mvia.in per the requirements.
 SENDGRID_API_KEY = env("SENDGRID_API_KEY", "")
