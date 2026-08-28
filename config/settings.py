@@ -152,7 +152,7 @@ LANGUAGE_CODE = "en-us"
 from django.utils.translation import gettext_lazy as _gl  # noqa: E402
 LANGUAGES = [
     ("en", _gl("English")),
-    ("kn", _gl("ಕನ್ನಡ")),  # Kannada
+    # ("kn", _gl("ಕನ್ನಡ")),  # Kannada — hidden until translation is complete (re-enable in ~1 month)
 ]
 
 # Where Django looks for translation (.po/.mo) files.
