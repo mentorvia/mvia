@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Page not found" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px; text-align:center;">
+  <h1>{% trans "We couldn't find that page" %}</h1>
+  <p class="sub" style="margin-bottom:1.5rem;">
+    {% trans "The page or booking you're looking for may have moved, been completed, or isn't available on this account." %}
+  </p>
+  {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="btn" style="display:inline-block; width:auto; padding:0.7rem 1.5rem;">{% trans "Go to my dashboard" %}</a>
+  {% else %}
+    <a href="{% url 'login' %}" class="btn" style="display:inline-block; width:auto; padding:0.7rem 1.5rem;">{% trans "Log in" %}</a>
+  {% endif %}
+</div>
+{% endblock %}
