@@ -69,14 +69,58 @@ def booking_detail(request, booking_id):
             messages.error(request, str(e))
         return redirect("staff:booking_detail", booking_id=booking.id)
 
+    # --- Admin approves on the mentor's behalf (e.g. mentor is travelling and
+    # asked ops to approve). Only valid while awaiting_approval. Audit-logged. ---
+    if request.method == "POST" and request.POST.get("action") == "approve":
+        from .services import approve_booking
+        try:
+            approve_booking(booking_id=booking.id, actor=request.user)
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=request.user, action="booking.approved_by_admin",
+                target=f"Booking #{booking.id}: approved on behalf of {booking.mentor.full_name} "
+                       f"(mentee {booking.mentee.full_name})")
+            messages.success(request, "Session approved on the mentor's behalf.")
+        except BookingError as e:
+            messages.error(request, str(e))
+        return redirect("staff:booking_detail", booking_id=booking.id)
+
+    # --- Admin declines on the mentor's behalf. Triggers the normal refund
+    # ledger entry (ops still performs the actual Razorpay refund). Only valid
+    # while awaiting_approval. Audit-logged. ---
+    if request.method == "POST" and request.POST.get("action") == "decline":
+        from .services import decline_booking
+        reason = request.POST.get("reason", "").strip()
+        try:
+            decline_booking(booking_id=booking.id, actor=request.user, reason=reason)
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=request.user, action="booking.declined_by_admin",
+                target=f"Booking #{booking.id}: declined on behalf of {booking.mentor.full_name} "
+                       f"(mentee {booking.mentee.full_name})",
+                reason=reason)
+            messages.success(request, "Session declined on the mentor's behalf. The mentee will be refunded.")
+        except BookingError as e:
+            messages.error(request, str(e))
+        return redirect("staff:booking_detail", booking_id=booking.id)
+
+    # --- Admin reschedule: OVERRIDES the normal 24h-cutoff and max-2 limits
+    # (this is an ops emergency tool). The double-booking guard still applies:
+    # you can never move onto a slot that's already taken. Audit-logged. ---
     if request.method == "POST" and request.POST.get("action") == "reschedule":
         from .services import reschedule_booking
         try:
             reschedule_booking(
                 booking_id=booking.id,
                 new_slot_id=request.POST.get("new_slot_id"),
-                actor=request.user)
-            messages.success(request, "Booking rescheduled.")
+                actor=request.user,
+                override=True)
+            from auditlog.models import AdminAuditLog
+            AdminAuditLog.record(
+                actor=request.user, action="booking.rescheduled_by_admin",
+                target=f"Booking #{booking.id}: rescheduled on behalf of {booking.mentor.full_name} "
+                       f"(mentee {booking.mentee.full_name})")
+            messages.success(request, "Booking rescheduled (admin override).")
         except BookingError as e:
             messages.error(request, str(e))
         except Exception:
@@ -90,6 +134,8 @@ def booking_detail(request, booking_id):
         messages.success(request, "Meeting link updated.")
         return redirect("staff:booking_detail", booking_id=booking.id)
 
+    # Reschedule slot options: offered for confirmed bookings (the natural
+    # reschedule case). awaiting_approval bookings get approve/decline instead.
     reschedule_slots = (
         open_slots_for_mentor(booking.mentor, exclude_booking=booking)
         if booking.status == Booking.STATUS_CONFIRMED else None)
