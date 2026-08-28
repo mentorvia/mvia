@@ -25,9 +25,10 @@ urlpatterns = [
     # (that prefix is the existing logged-in-mentee upgrade flow).
     path("become-a-mentor/", profile_views.mentor_application_apply, name="mentor_application_apply"),
     path("become-a-mentor/thanks/", profile_views.mentor_application_thanks, name="mentor_application_thanks"),
-    handler404 = "core.views.custom_404"
-    handler403 = "core.views.custom_403"
 ]
+
+handler404 = "core.views.custom_404"
+handler403 = "core.views.custom_403"
 
 # Serve user-uploaded media (mentor photos). Safe here: media is public profile
 # imagery. Files live on the persistent disk (MEDIA_ROOT) on Render.
