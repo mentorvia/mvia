@@ -83,3 +83,12 @@ def set_timezone(request):
         return JsonResponse({"saved": True})
 
     return JsonResponse({"saved": False})
+
+   def custom_404(request, exception=None):
+       from django.shortcuts import render
+       return render(request, "404.html", status=404)
+
+
+   def custom_403(request, exception=None):
+       from django.shortcuts import render
+       return render(request, "403.html", status=403)
