@@ -19,7 +19,7 @@ def _interest_categories():
     """
     Top-level Interest categories for the picker (category cards + optional
     deep-dive expansion). Each entry carries every descendant flattened to a
-    single list (any depth — nothing is unreachable, it just moves into the
+    single list (any depth - nothing is unreachable, it just moves into the
     "expand" panel), and a live count of approved, available mentors linked
     to the category itself or any of its descendants.
     """
@@ -71,16 +71,24 @@ def mentee_profile(request):
 
     if request.method == "POST":
         form = MenteeProfileForm(request.POST, instance=profile)
-        if form.is_valid():
+        chosen = set(int(x) for x in request.POST.getlist("interests"))
+        custom = request.POST.get("custom_interest", "").strip()
+
+        # MYPRO-023: a complete profile needs at least one interest. Block the
+        # save (rather than silently saving an incomplete profile) when nothing
+        # is selected and no custom interest was typed.
+        has_any_interest = bool(chosen) or bool(custom)
+
+        if form.is_valid() and not has_any_interest:
+            messages.error(request, "Please select at least one interest before saving.")
+        elif form.is_valid():
             form.save()
             # Update interest selections.
-            chosen = set(int(x) for x in request.POST.getlist("interests"))
             MenteeInterest.objects.filter(user=request.user).exclude(interest_id__in=chosen).delete()
             for iid in chosen:
                 MenteeInterest.objects.get_or_create(user=request.user, interest_id=iid)
 
             # Handle an optional custom interest typed by the user.
-            custom = request.POST.get("custom_interest", "").strip()
             if custom:
                 obj, created = Interest.objects.get_or_create(
                     name=custom, parent=None,
@@ -88,10 +96,14 @@ def mentee_profile(request):
                 )
                 MenteeInterest.objects.get_or_create(user=request.user, interest=obj)
                 if created:
-                    messages.info(request, f"“{custom}” was submitted for admin review and added to your interests.")
+                    messages.info(request, f'"{custom}" was submitted for admin review and added to your interests.')
 
             messages.success(request, "Profile saved.")
-            return redirect("mentee_profile")
+            # MYPRO-037: after a successful save, return the user to the dashboard.
+            return redirect("dashboard")
+        # Re-render the picker with the just-submitted selections on error.
+        categories = _mark_expansion(_interest_categories(), chosen or selected_ids)
+        selected_ids = chosen or selected_ids
     else:
         form = MenteeProfileForm(instance=profile)
 
@@ -134,7 +146,7 @@ def become_mentor(request):
 
 def mentor_application_apply(request):
     """
-    The public application form — no login required, doesn't touch the User
+    The public application form - no login required, doesn't touch the User
     model at all. See MentorApplication's docstring for how this differs from
     become_mentor above.
     """
@@ -142,7 +154,7 @@ def mentor_application_apply(request):
         # Honeypot: a field real visitors never see or fill (hidden via CSS in
         # the template), but a scripted bot filling every input will. Silently
         # redirect to the same "thanks" page as a genuine submission, rather
-        # than surfacing a validation error — so the bot's script sees success
+        # than surfacing a validation error - so the bot's script sees success
         # and doesn't get signal to adapt, while nothing is actually created.
         if request.POST.get("company_site", "").strip():
             return redirect("mentor_application_thanks")
@@ -165,13 +177,13 @@ def _send_application_received_emails(request, application):
 
     send_email(
         to_email=application.email,
-        subject="Application received — mVia",
+        subject="Application received - mVia",
         template_name="mentor_application_received",
         body=(
             f"Hi {application.name},\n\n"
             f"Thanks for applying to become a mentor at mVia. We've received your "
             f"application and typically respond within 5-7 business days.\n\n"
-            f"— The mVia team"
+            f"- The mVia team"
         ),
     )
 
