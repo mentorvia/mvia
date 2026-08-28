@@ -369,8 +369,10 @@ def mentor_application_queue(request):
 
 @staff_required
 def mentor_application_review(request, application_id):
+    from django.urls import reverse
+
     from accounts.emails import send_email
-    from accounts.models import User
+    from accounts.models import User, EmailToken
     from .views import _interest_categories, _mark_expansion
 
     application = get_object_or_404(MentorApplication, pk=application_id)
@@ -390,17 +392,20 @@ def mentor_application_review(request, application_id):
                 form.add_error(None, f"{application.email} is already in use by another account.")
             if form.is_valid() and chosen:
                 cd = form.cleaned_data
-                import secrets
 
-                # NEW — set-your-password link approach
+                # Create the mentor account WITHOUT a password. Instead of a
+                # system-generated temp password (clunky first login), we send
+                # them a "set your password" link (reusing the reset-token
+                # flow). is_email_verified=True because they proved the address
+                # via the application and re-confirm it by clicking the link.
                 user = User(
                     email=application.email.strip().lower(),
                     full_name=application.name,
                     is_mentee=False, is_mentor=True,
                     is_placeholder=False,
-                    is_email_verified=True,   # they proved the email via the application; link click re-confirms
+                    is_email_verified=True,
                 )
-                user.set_unusable_password()  # no password until they set one via the link
+                user.set_unusable_password()
                 user.save()
 
                 MentorProfile.objects.create(
@@ -425,26 +430,29 @@ def mentor_application_review(request, application_id):
                 application.created_user = user
                 application.save()
 
-                from django.urls import reverse
-                login_url = request.build_absolute_uri(reverse("login"))
+                # Email a "set your password" link (72h). If it expires, the
+                # mentor can use "Forgot password" on the login page.
+                token = EmailToken.issue(user, EmailToken.PURPOSE_RESET, hours_valid=72)
+                set_password_url = request.build_absolute_uri(
+                    reverse("password_reset_confirm", args=[token.token])
+                )
                 send_email(
-                    to_email=application.email,
-                    subject="Welcome to mVia — Set up your account",
-                    template_name="mentor_login_activated",
+                    to_email=user.email,
+                    subject="Welcome to mVia — set your password",
+                    template_name="mentor_welcome_set_password",
                     body=(
                         f"Hi {user.get_short_name()},\n\n"
-                        f"Your mentor application was approved! Your mVia mentor account is "
-                        f"ready. Here are your login details:\n\n"
-                        f"Email: {application.email}\n"
-                        f"Temporary password: {temp_password}\n\n"
-                        f"Log in here: {login_url}\n\n"
-                        f"You'll be asked to set a new password the first time you log in.\n\n"
+                        f"Your mentor application was approved — welcome to mVia!\n\n"
+                        f"To finish setting up your account, choose your password here:\n"
+                        f"{set_password_url}\n\n"
+                        f"This link expires in 72 hours. If it expires, you can use "
+                        f"“Forgot password” on the login page to get a new one.\n\n"
                         f"— The mVia team"
                     ),
                 )
                 AdminAuditLog.record(
                     actor=request.user, action="mentor_application.approved", target=target)
-                messages.success(request, f"Approved {application.name}. Welcome email sent to {application.email}.")
+                messages.success(request, f"Approved {application.name}. A set-password email was sent to {application.email}.")
                 return redirect("staff:mentor_application_review", application_id=application.id)
             approval_form = form
             selected_ids = chosen
