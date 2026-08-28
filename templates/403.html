@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Not available" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px; text-align:center;">
+  <h1>{% trans "This isn't available on your account" %}</h1>
+  <p class="sub" style="margin-bottom:1.5rem;">
+    {% trans "You may be signed in as a different user, or this action is no longer available. Please log in with the right account or head back to your dashboard." %}
+  </p>
+  {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="btn" style="display:inline-block; width:auto; padding:0.7rem 1.5rem;">{% trans "Go to my dashboard" %}</a>
+  {% else %}
+    <a href="{% url 'login' %}" class="btn" style="display:inline-block; width:auto; padding:0.7rem 1.5rem;">{% trans "Log in" %}</a>
+  {% endif %}
+</div>
+{% endblock %}
