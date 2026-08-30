@@ -7,7 +7,7 @@
   {% if recommended %}
     <div class="rec-row">
       {% for card in recommended %}
-        <a href="{% url 'mentor_profile' card.mentor.user_id %}" class="mentor-card-sm">
+        href="{{ card.mentor.user.get_mentor_url }}"
           {% if card.mentor.display_photo %}
             <div class="mc-photo"><img src="{{ card.mentor.display_photo }}" alt="{{ card.mentor.user.full_name }}"></div>
           {% else %}
