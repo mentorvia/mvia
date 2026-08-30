@@ -6,7 +6,6 @@
   <h1>Add a mentor (no email needed)</h1>
   <p>Create a display-only mentor for the directory. They can't log in or take bookings until an email is added later.</p>
 </div>
-
 <div class="panel">
   <div style="padding:1.5rem; max-width:620px;">
     <form method="post" novalidate>
@@ -17,15 +16,21 @@
         {{ field }}
         {% if field.errors %}<div style="color:var(--deep-red); font-size:0.83rem;">{{ field.errors|striptags }}</div>{% endif %}
       {% endfor %}
-
       <label style="display:block; font-size:0.85rem; font-weight:600; margin:1.1rem 0 0.35rem;">Specializations</label>
-      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:0.5rem;">Pick at least one.</p>
-      <div style="border:1px solid var(--line); border-radius:8px; max-height:240px; overflow-y:auto; padding:0.5rem 0.75rem;">
+      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:0.5rem;">Pick at least one. Type to filter the list.</p>
+
+      <input type="text" id="interest-search" placeholder="Search specializations (e.g. cardiology, AYUSH, surgery)…"
+             autocomplete="off"
+             style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.92rem; margin-bottom:0.5rem;">
+      <div id="interest-count" style="font-size:0.78rem; color:var(--muted); margin-bottom:0.5rem;"></div>
+
+      <div id="interest-list" style="border:1px solid var(--line); border-radius:8px; max-height:240px; overflow-y:auto; padding:0.5rem 0.75rem;">
         {% for i in interests %}
-          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; font-weight:400;">
+          <label class="interest-row" data-label="{{ i.breadcrumb|lower }}" style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; font-weight:400;">
             <input type="checkbox" name="interests" value="{{ i.id }}"> {{ i.breadcrumb }}
           </label>
         {% endfor %}
+        <div id="interest-no-match" style="display:none; padding:0.75rem 0; font-size:0.85rem; color:var(--muted);">No specializations match your search.</div>
       </div>
 
       <div style="margin-top:1.5rem;">
@@ -39,5 +44,44 @@
   .panel form input[type=text], .panel form input[type=number], .panel form textarea {
     width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.95rem;
   }
+  /* Search box uses its own width rule above; keep it full-width too. */
+  #interest-search { width:100%; }
 </style>
+<script>
+  (function () {
+    var search = document.getElementById('interest-search');
+    var list = document.getElementById('interest-list');
+    if (!search || !list) return;
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.interest-row'));
+    var noMatch = document.getElementById('interest-no-match');
+    var count = document.getElementById('interest-count');
+    var total = rows.length;
+
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var shown = 0;
+      rows.forEach(function (row) {
+        var checked = row.querySelector('input[type=checkbox]').checked;
+        var matches = q === '' || row.dataset.label.indexOf(q) !== -1;
+        // Always keep a checked item visible, even if it doesn't match the
+        // search — so the admin never loses sight of what they've selected.
+        if (matches || checked) {
+          row.style.display = 'flex';
+          shown++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      if (noMatch) noMatch.style.display = (shown === 0) ? 'block' : 'none';
+      if (count) {
+        count.textContent = (q === '')
+          ? total + ' specializations'
+          : shown + ' of ' + total + ' shown';
+      }
+    }
+
+    search.addEventListener('input', apply);
+    apply();
+  })();
+</script>
 {% endblock %}
