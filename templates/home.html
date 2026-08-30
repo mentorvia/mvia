@@ -369,7 +369,7 @@ footer .f-grid-foot a:hover{color:var(--red);}
   </div>
   <div class="mentor-row reveal reveal-d2">
    {% for m in featured_mentors %}
-   <a href="{% url 'mentor_profile' m.user_id %}" class="mentor-tile">
+   href="{{ m.user.get_mentor_url }}"
     {% if m.display_photo %}
       <img src="{{ m.display_photo }}" alt="{{ m.user.full_name }}">
     {% else %}
