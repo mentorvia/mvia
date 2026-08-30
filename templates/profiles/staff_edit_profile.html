@@ -129,9 +129,83 @@
     {% endif %}
   </div>
 </div>
+<!-- Section 5: Specializations -->
+<div class="panel">
+  <h2>5 · Specializations</h2>
+  <div style="padding:1.25rem; max-width:680px;">
+    <p style="font-size:0.88rem; color:var(--muted); margin-bottom:0.75rem;">
+      These drive the tags on the public profile and directory matching. Tick the mentor's specializations (at least one). Type to filter the list.
+    </p>
+    {% if not mentor.user.is_archived %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_specializations">
+
+      <input type="text" id="spec-search" placeholder="Search specializations (e.g. cardiology, AYUSH, research)…"
+             autocomplete="off"
+             style="width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.92rem; margin-bottom:0.5rem;">
+      <div id="spec-count" style="font-size:0.78rem; color:var(--muted); margin-bottom:0.5rem;"></div>
+
+      <div id="spec-list" style="border:1px solid var(--line); border-radius:8px; max-height:260px; overflow-y:auto; padding:0.5rem 0.75rem;">
+        {% for i in all_specializations %}
+          <label class="spec-row" data-label="{{ i.parent.name|lower }} {{ i.name|lower }}" style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; font-weight:400;">
+            <input type="checkbox" name="interests" value="{{ i.id }}" {% if i.id in selected_interest_ids %}checked{% endif %}>
+            {{ i.parent.name }} › {{ i.name }}
+          </label>
+        {% endfor %}
+        <div id="spec-no-match" style="display:none; padding:0.75rem 0; font-size:0.85rem; color:var(--muted);">No specializations match your search.</div>
+      </div>
+
+      <div style="margin-top:1.2rem;">
+        <button type="submit" style="padding:0.65rem 1.4rem; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">Save specializations</button>
+      </div>
+    </form>
+    {% else %}
+      <div class="dz-hint">This account is archived — unarchive it above to change specializations.</div>
+    {% endif %}
+  </div>
+</div>
 <style>
   .panel form input[type=text], .panel form input[type=url], .panel form input[type=number], .panel form textarea {
     width:100%; padding:0.6rem 0.75rem; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:0.93rem;
   }
+  #spec-search { width:100%; }
 </style>
+<script>
+  (function () {
+    var search = document.getElementById('spec-search');
+    var list = document.getElementById('spec-list');
+    if (!search || !list) return;
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.spec-row'));
+    var noMatch = document.getElementById('spec-no-match');
+    var count = document.getElementById('spec-count');
+    var total = rows.length;
+
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var shown = 0;
+      rows.forEach(function (row) {
+        var checked = row.querySelector('input[type=checkbox]').checked;
+        var matches = q === '' || row.dataset.label.indexOf(q) !== -1;
+        // Always keep a ticked item visible, even if it doesn't match, so the
+        // admin never loses sight of what's currently selected.
+        if (matches || checked) {
+          row.style.display = 'flex';
+          shown++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      if (noMatch) noMatch.style.display = (shown === 0) ? 'block' : 'none';
+      if (count) {
+        count.textContent = (q === '')
+          ? total + ' specializations'
+          : shown + ' of ' + total + ' shown';
+      }
+    }
+
+    search.addEventListener('input', apply);
+    apply();
+  })();
+</script>
 {% endblock %}
