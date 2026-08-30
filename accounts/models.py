@@ -130,6 +130,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.full_name.split(" ")[0] if self.full_name else self.email
 
+    def get_mentor_url(self):
+        """Canonical public profile URL: /mentors/<name-slug>-<id>/.
+        The id identifies the mentor; the name-slug is readable decoration
+        that auto-corrects if the name changes."""
+        from django.urls import reverse
+        from django.utils.text import slugify
+        name_slug = slugify(self.full_name) or "mentor"
+        return reverse("mentor_profile", kwargs={"name_slug": name_slug, "user_id": self.id})
+
     def has_real_email(self):
         """False for placeholder accounts that don't yet have a real email."""
         return not self.is_placeholder and not self.email.endswith("@mvia.invalid")
