@@ -7,6 +7,9 @@ Sections give every profile a uniform, modern structure:
   3. Mentorship Focus Areas   -> ProfilePoint(category="focus")
   4. Availability             -> AvailabilitySlot (admin adds/toggles slots on
                                  the mentor's behalf)
+  5. Specializations          -> MentorInterest (admin sets which interest-tree
+                                 specializations tag the mentor; drives the
+                                 public-profile chips and directory matching)
 Each expertise/focus point is a title + description (like the sample doc).
 """
 
@@ -64,6 +67,7 @@ class MentorRichForm(forms.ModelForm):
 @staff_required
 def edit_mentor_profile(request, mentor_id):
     from bookings.models import AvailabilitySlot
+    from interests.models import Interest, MentorInterest
 
     mentor = get_object_or_404(MentorProfile, pk=mentor_id)
 
@@ -127,7 +131,6 @@ def edit_mentor_profile(request, mentor_id):
             if created:
                 messages.success(request, f"Slot added for {timezone.localtime(start_dt):%d %b %Y %H:%M}.")
             else:
-                # A slot at this exact start already exists (unique constraint).
                 if not slot.is_confirmed:
                     slot.is_confirmed = True
                     slot.save(update_fields=["is_confirmed"])
@@ -137,9 +140,6 @@ def edit_mentor_profile(request, mentor_id):
             return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
 
         elif action == "toggle_slot":
-            # Flip a slot between available (is_confirmed=True) and unavailable
-            # (False). Booked slots are protected — never toggle one off from
-            # under an active booking.
             slot = get_object_or_404(AvailabilitySlot, pk=request.POST.get("slot_id"), mentor=mentor.user)
             if slot.is_taken:
                 messages.error(request, "That slot is booked — cancel the booking first if you need to free it.")
@@ -149,6 +149,32 @@ def edit_mentor_profile(request, mentor_id):
                 messages.success(
                     request,
                     "Slot marked available." if slot.is_confirmed else "Slot marked unavailable.")
+            return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
+
+        elif action == "save_specializations":
+            # Admin sets the mentor's specializations (interest-tree leaves).
+            # The submitted checkboxes become the mentor's complete set: newly
+            # ticked are added, un-ticked are removed. Requires at least one,
+            # matching the add-mentor form, so a mentor always has tags.
+            chosen = set()
+            for x in request.POST.getlist("interests"):
+                try:
+                    chosen.add(int(x))
+                except (TypeError, ValueError):
+                    continue
+            # Only accept real, approved specializations (not bare categories).
+            valid_ids = set(
+                Interest.objects.filter(
+                    id__in=chosen, is_approved=True, parent__isnull=False
+                ).values_list("id", flat=True))
+            if not valid_ids:
+                messages.error(request, "Pick at least one specialization before saving.")
+                return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
+
+            MentorInterest.objects.filter(user=mentor.user).exclude(interest_id__in=valid_ids).delete()
+            for iid in valid_ids:
+                MentorInterest.objects.get_or_create(user=mentor.user, interest_id=iid)
+            messages.success(request, "Specializations updated.")
             return redirect("staff:edit_mentor_profile", mentor_id=mentor.id)
 
     from bookings.services import active_bookings_for_user
@@ -163,11 +189,23 @@ def edit_mentor_profile(request, mentor_id):
     upcoming_slots = AvailabilitySlot.objects.filter(
         mentor=mentor.user, start__gt=timezone.now()).order_by("start")
 
+    # Specialization picker: all real (leaf) approved interests, grouped by
+    # category alphabetically; plus the set this mentor currently holds so the
+    # template can pre-tick them.
+    all_specializations = (
+        Interest.objects.filter(is_approved=True, parent__isnull=False)
+        .select_related("parent")
+        .order_by("parent__name", "name"))
+    selected_interest_ids = set(
+        MentorInterest.objects.filter(user=mentor.user).values_list("interest_id", flat=True))
+
     return render(request, "profiles/staff_edit_profile.html", {
         "mentor": mentor, "form": form,
         "expertise_points": mentor.expertise_points,
         "focus_points": mentor.focus_points,
         "upcoming_slots": upcoming_slots,
+        "all_specializations": all_specializations,
+        "selected_interest_ids": selected_interest_ids,
         "active_nav": "mentors",
         "target": mentor.user,
         "active_bookings": active_bookings,
