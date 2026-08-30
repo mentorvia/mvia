@@ -74,7 +74,7 @@
           <a href="{% url 'staff:edit_mentor_profile' m.id %}">Edit profile</a>
           {% if not m.user.is_archived %}
             &nbsp;·&nbsp;
-            <a href="{% url 'mentor_profile' m.user_id %}" target="_blank">View ↗</a>
+            href="{{ m.user.get_mentor_url }}"
           {% endif %}
         </td>
       </tr>
