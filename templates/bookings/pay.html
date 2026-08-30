@@ -68,6 +68,6 @@
     </script>
   {% endif %}
 
-  <p class="muted" style="margin-top:1rem;"><a href="{% url 'mentor_profile' booking.mentor_id %}">{% trans "Cancel" %}</a></p>
+  href="{{ booking.mentor.get_mentor_url }}"
 </div>
 {% endblock %}
