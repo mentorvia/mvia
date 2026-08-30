@@ -128,7 +128,13 @@ def archive_user(request, user_id):
     from bookings.services import active_bookings_for_user
 
     target = get_object_or_404(User, pk=user_id)
-
+    # Never archive a staff/superuser account — archiving blocks login, and a
+    # mis-click here previously locked an admin out of the console entirely.
+    # This is the real enforcement; the danger-zone template also hides the
+    # button for these accounts.
+    if target.is_staff or target.is_superuser:
+        messages.error(request, "Staff accounts can't be archived here (this prevents accidental admin lockouts).")
+        return redirect("staff:user_detail", user_id=target.id)
     if target.is_archived:
         messages.info(request, f"{target.full_name} is already archived.")
         return redirect("staff:user_detail", user_id=target.id)
