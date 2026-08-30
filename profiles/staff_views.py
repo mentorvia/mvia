@@ -163,7 +163,11 @@ def add_placeholder_mentor(request):
     from profiles.models import MentorProfile
     from django.utils import timezone
 
-    interests = Interest.objects.filter(is_approved=True).order_by("name")
+    interests = (
+        Interest.objects.filter(is_approved=True, parent__isnull=False)
+        .select_related("parent")
+        .order_by("parent__name", "name")
+    )
 
     if request.method == "POST":
         form = PlaceholderMentorForm(request.POST)
