@@ -4,7 +4,7 @@
 <a href="{% url 'staff:mentor_review' mentor.id %}" class="back">← Back to mentor</a>
 <div class="page-head">
   <h1>Edit profile: {{ mentor.user.full_name }}</h1>
-  <p>Sections make up every profile. <a href="{% url 'mentor_profile' mentor.user_id %}" target="_blank">View public page ↗</a></p>
+  href="{{ mentor.user.get_mentor_url }}"
 </div>
 {% include "dashboard/_danger_zone.html" %}
 {% if mentor.user.is_placeholder and not mentor.user.is_archived %}
