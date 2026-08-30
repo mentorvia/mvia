@@ -135,3 +135,9 @@ def mentor_profile(request, user_id, name_slug=None):
         "expertise_points": mentor.expertise_points,
         "focus_points": mentor.focus_points,
     })
+
+def mentor_profile_legacy(request, user_id):
+    """Old /mentors/6/ URL → 301 to the canonical /mentors/<slug>-6/."""
+    from django.shortcuts import redirect
+    user = get_object_or_404(User, pk=user_id, is_mentor=True, archived_at__isnull=True)
+    return redirect(user.get_mentor_url(), permanent=True)
