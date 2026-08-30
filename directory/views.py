@@ -103,11 +103,18 @@ def directory(request):
     })
 
 
-def mentor_profile(request, user_id):
+def mentor_profile(request, user_id, name_slug=None):
     # archived_at__isnull=True right in the lookup — a direct URL to an
     # archived mentor's page 404s cleanly, no separate placeholder page and
     # no information leakage about the account's existence/state.
     user = get_object_or_404(User, pk=user_id, is_mentor=True, archived_at__isnull=True)
+    # Canonical URL: if the name-slug is missing or outdated, 301 to the
+    # correct one (one true URL per mentor; auto-corrects renames).
+    from django.utils.text import slugify
+    from django.shortcuts import redirect
+    correct_slug = slugify(user.full_name) or "mentor"
+    if name_slug != correct_slug:
+        return redirect(user.get_mentor_url(), permanent=True)
     mentor = get_object_or_404(
         MentorProfile, user=user, status=MentorProfile.STATUS_APPROVED)
     specs = [mi.interest for mi in
