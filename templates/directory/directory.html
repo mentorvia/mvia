@@ -24,7 +24,7 @@
   {% if mentor_cards %}
     <div class="dir-grid">
       {% for card in mentor_cards %}
-        <a href="{% url 'mentor_profile' card.mentor.user_id %}" class="mentor-card">
+        <a href="{{ card.mentor.user.get_mentor_url }}" class="mentor-card">
           {% if card.recommended %}<span class="rec-badge">Recommended</span>{% endif %}
           {% if card.mentor.display_photo %}
             <div class="mc-photo"><img src="{{ card.mentor.display_photo }}" alt="{{ card.mentor.user.full_name }}"></div>
