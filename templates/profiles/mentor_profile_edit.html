@@ -5,7 +5,7 @@
 <div class="mpe-wrap">
   <div class="mpe-head">
     <h1>{% trans "Edit your mentor profile" %}</h1>
-    <p><a href="{% url 'mentor_profile' request.user.id %}" target="_blank">{% trans "View public profile" %} ↗</a></p>
+    <p><a href="{{ request.user.get_mentor_url }}" target="_blank">{% trans "View public profile" %} ↗</a></p>
   </div>
 
   <!-- Section 1: Identity -->
