@@ -1,278 +1,237 @@
-"""
-Member-facing mentor profile editor (/profile/mentor/edit/).
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Edit your mentor profile" %} — mVia{% endblock %}
+{% block content %}
+<div class="mpe-wrap">
+  <div class="mpe-head">
+    <h1>{% trans "Edit your mentor profile" %}</h1>
+    <p><a href="{% url 'mentor_profile' request.user.id %}" target="_blank">{% trans "View public profile" %} ↗</a></p>
+  </div>
 
-Pattern C: identity fields (full name, industry, years of experience,
-credentials, current role & company) are locked. A mentor can only propose
-changes to them, staged in MentorProfile.pending_identity_changes until an
-admin approves - the live fields (and therefore the public profile) are
-untouched until then. Everything else on this page saves immediately.
+  <!-- Section 1: Identity -->
+  <div class="panel">
+    <div class="panel-head"><h2>1 · {% trans "Identity" %}</h2></div>
+    <div class="panel-body">
+      {% if profile.pending_identity_changes %}
+        <div class="status-msg status-pending">
+          {% trans "Your changes are under review. Your public profile stays visible with previous values until approved." %}
+          <div style="opacity:.7; font-size:.85rem; margin-top:.35rem;">{% trans "Submitted" %} {{ profile.pending_review_requested_at|date:"d M Y, H:i" }}</div>
+        </div>
+        <table class="diff-table">
+          <tr><th>{% trans "Full name" %}</th><td>{{ profile.pending_identity_changes.full_name }}</td></tr>
+          <tr><th>{% trans "Industry" %}</th><td>{{ profile.pending_identity_changes.industry|default:"—" }}</td></tr>
+          <tr><th>{% trans "Years of experience" %}</th><td>{{ profile.pending_identity_changes.years_experience }}</td></tr>
+          <tr><th>{% trans "Credentials" %}</th><td>{{ profile.pending_identity_changes.credentials|default:"—" }}</td></tr>
+          <tr><th>{% trans "Current role" %}</th><td>{{ profile.pending_identity_changes.current_role }}</td></tr>
+          <tr><th>{% trans "Current company" %}</th><td>{{ profile.pending_identity_changes.company }}</td></tr>
+        </table>
+        <form method="post" style="margin-top:1rem;">
+          {% csrf_token %}<input type="hidden" name="action" value="cancel_pending_review">
+          <button type="submit" class="btn-secondary">{% trans "Cancel pending request" %}</button>
+        </form>
+      {% else %}
+        <div class="identity-locked" id="identity-locked" {% if reveal_identity %}style="display:none;"{% endif %}>
+          <div class="id-row"><span class="id-label">{% trans "Full name" %}</span><span class="id-value">{{ request.user.full_name }}</span></div>
+          <div class="id-row"><span class="id-label">{% trans "Industry" %}</span><span class="id-value">{{ profile.industry|default:"—" }}</span></div>
+          <div class="id-row"><span class="id-label">{% trans "Years of experience" %}</span><span class="id-value">{{ profile.years_experience }}</span></div>
+          <div class="id-row"><span class="id-label">{% trans "Credentials" %}</span><span class="id-value">{{ profile.credentials|default:"—" }}</span></div>
+          <div class="id-row"><span class="id-label">{% trans "Current role" %}</span><span class="id-value">{{ profile.current_role }}</span></div>
+          <div class="id-row"><span class="id-label">{% trans "Current company" %}</span><span class="id-value">{{ profile.company }}</span></div>
+        </div>
+        <button type="button" class="btn-secondary" id="reveal-identity-btn" {% if reveal_identity %}style="display:none;"{% endif %}>{% trans "Request review" %}</button>
 
-Mirrors the staff editor's (profiles/profile_editor.py) POST-action dispatch
-pattern: each section is its own <form> posting a distinct `action`, and each
-action is handled by a form/branch that only ever touches its own section's
-fields - so a tampered POST to a freely-editable action can never reach the
-locked identity fields.
+        <form method="post" id="identity-form" {% if not reveal_identity %}style="display:none;"{% endif %}>
+          {% csrf_token %}<input type="hidden" name="action" value="request_review">
+          <p class="hint">{% trans "Changing these fields sends them to admin for re-review. Your public profile keeps showing today's values until approved." %}</p>
+          {% if identity_form.non_field_errors %}<div class="errorlist">{{ identity_form.non_field_errors }}</div>{% endif %}
+          {% for field in identity_form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="hint">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          {% endfor %}
+          <button type="submit" class="btn-primary" style="margin-top:1rem;">{% trans "Request admin review" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
 
-Navigation (BUG-005): the three "Save changes" section actions
-(save_presentation / save_contact / save_session) redirect to the dashboard
-on success, so a mentor finishing a section lands somewhere clean instead of
-stacking repeated edit-page entries in browser history. The point-management
-actions (add/edit/move/delete) and the identity review flow deliberately stay
-on the edit page, since those are in-place list edits the mentor repeats.
-"""
+  <!-- Section 2: Presentation -->
+  <div class="panel">
+    <div class="panel-head"><h2>2 · {% trans "Presentation" %}</h2></div>
+    <div class="panel-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}<input type="hidden" name="action" value="save_presentation">
+        {% if presentation_form.non_field_errors %}<div class="errorlist">{{ presentation_form.non_field_errors }}</div>{% endif %}
 
-from django import forms
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
+        <label>{% trans "Profile photo" %}</label>
+        <img id="photo-preview-img" class="photo-preview" alt=""
+             src="{% if profile.display_photo %}{{ profile.display_photo }}{% endif %}"
+             style="{% if not profile.display_photo %}display:none;{% endif %}">
+        {{ presentation_form.photo }}
+        {% if presentation_form.photo.errors %}<ul class="errorlist">{% for e in presentation_form.photo.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 
-from .models import MentorProfile, ProfilePoint
-from .profile_validators import validate_bio, validate_linkedin_url, validate_website_url, validate_photo
-from .views import _interest_categories, _mark_expansion
-from interests.models import MentorInterest
-from auditlog.models import AdminAuditLog
+        <label for="{{ presentation_form.headline.id_for_label }}">{{ presentation_form.headline.label }}</label>
+        {{ presentation_form.headline }}
+        {% if presentation_form.headline.errors %}<ul class="errorlist">{% for e in presentation_form.headline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 
+        <label for="{{ presentation_form.bio.id_for_label }}">{{ presentation_form.bio.label }}</label>
+        {{ presentation_form.bio }}
+        {% if presentation_form.bio.errors %}<ul class="errorlist">{% for e in presentation_form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 
-def mentor_required(view):
-    """Only approved mentors may reach this page; everyone else goes to become_mentor
-    (which already shows the application form, or a pending/rejected status page)."""
-    @login_required
-    def wrapper(request, *args, **kwargs):
-        profile = MentorProfile.objects.filter(user=request.user).first()
-        if not profile or profile.status != MentorProfile.STATUS_APPROVED:
-            messages.error(request, "You need an approved mentor profile to edit it.")
-            return redirect("become_mentor")
-        return view(request, *args, **kwargs)
-    return wrapper
+        {% include "profiles/_interest_picker.html" with categories=categories selected_ids=selected_ids %}
 
+        <button type="submit" class="btn-primary" style="margin-top:1rem;">{% trans "Save changes" %}</button>
+      </form>
 
-class IdentityRequestForm(forms.Form):
-    full_name = forms.CharField(max_length=150, label="Full name")
-    industry = forms.CharField(max_length=120, required=False)
-    years_experience = forms.IntegerField(min_value=0, label="Years of experience")
-    credentials = forms.CharField(
-        required=False, widget=forms.Textarea(attrs={"rows": 3}),
-        help_text="Certifications, degrees, or other credentials.")
-    current_role = forms.CharField(max_length=120, label="Current role")
-    company = forms.CharField(max_length=120, label="Current company")
-    message = forms.CharField(
-        required=False, widget=forms.Textarea(attrs={"rows": 2}),
-        label="Note to admin (optional)")
+      <div class="points-block">
+        <h3>{% trans "Expertise bullet points" %}</h3>
+        {% for p in expertise_points %}
+          <div class="point-row">
+            <form method="post" class="point-edit-form">
+              {% csrf_token %}<input type="hidden" name="action" value="edit_point"><input type="hidden" name="point_id" value="{{ p.id }}">
+              <input type="text" name="title" value="{{ p.title }}" class="mini-input" placeholder="Title">
+              <input type="text" name="description" value="{{ p.description }}" class="mini-input mini-input-wide" placeholder="Description">
+              <button type="submit" class="btn-mini">{% trans "Save" %}</button>
+            </form>
+            <div class="point-actions">
+              <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="move_point"><input type="hidden" name="point_id" value="{{ p.id }}"><input type="hidden" name="direction" value="up"><button type="submit" class="link-mini" {% if forloop.first %}disabled{% endif %}>↑</button></form>
+              <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="move_point"><input type="hidden" name="point_id" value="{{ p.id }}"><input type="hidden" name="direction" value="down"><button type="submit" class="link-mini" {% if forloop.last %}disabled{% endif %}>↓</button></form>
+              <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="delete_point"><input type="hidden" name="point_id" value="{{ p.id }}"><button type="submit" class="link-mini link-danger">{% trans "Remove" %}</button></form>
+            </div>
+          </div>
+        {% empty %}
+          <p class="empty-text">{% trans "No expertise points yet." %}</p>
+        {% endfor %}
+        <form method="post" class="add-point-form">
+          {% csrf_token %}<input type="hidden" name="action" value="add_point">
+          <input type="text" name="title" placeholder="{% trans "Point title (e.g. Cloud, Data & AI Solutions)" %}" class="mini-input">
+          <input type="text" name="description" placeholder="{% trans "Description" %}" class="mini-input mini-input-wide">
+          <button type="submit" class="btn-mini">{% trans "Add point" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
-    def clean_years_experience(self):
-        years = self.cleaned_data["years_experience"]
-        if years is not None and years > 60:
-            raise forms.ValidationError("Please enter a realistic number of years (0-60).")
-        return years
+  <!-- Section 3: Contact & links -->
+  <div class="panel">
+    <div class="panel-head"><h2>3 · {% trans "Contact & links" %}</h2></div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}<input type="hidden" name="action" value="save_contact">
+        {% for field in contact_form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% endfor %}
+        <button type="submit" class="btn-primary" style="margin-top:1rem;">{% trans "Save changes" %}</button>
+      </form>
+    </div>
+  </div>
 
+  <!-- Section 4: Session settings -->
+  <div class="panel">
+    <div class="panel-head"><h2>4 · {% trans "Session settings" %}</h2></div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}<input type="hidden" name="action" value="save_session">
+        {% for field in session_form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% endfor %}
+        <button type="submit" class="btn-primary" style="margin-top:1rem;">{% trans "Save changes" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
 
-class PresentationForm(forms.ModelForm):
-    class Meta:
-        model = MentorProfile
-        fields = ["photo", "headline", "bio"]
-        widgets = {
-            "bio": forms.Textarea(attrs={"rows": 6, "maxlength": "1500"}),
-            "headline": forms.TextInput(attrs={"placeholder": "e.g. Technology & business leader · 34+ years"}),
-        }
-        labels = {"bio": "Bio"}
+<script>
+  document.getElementById('reveal-identity-btn')?.addEventListener('click', function () {
+    document.getElementById('identity-locked').style.display = 'none';
+    document.getElementById('identity-form').style.display = 'block';
+    this.style.display = 'none';
+  });
+  document.getElementById('id_photo')?.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    var img = document.getElementById('photo-preview-img');
+    reader.onload = function (ev) { img.src = ev.target.result; img.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  });
+</script>
 
-    def clean_bio(self):
-        return validate_bio(self.cleaned_data.get("bio", ""))
+<style>
+  main { align-items:stretch; }
+  .mpe-wrap { width:100%; max-width:760px; margin:0 auto; padding:0 1rem; }
+  .mpe-head { margin-bottom:1.5rem; }
+  .mpe-head h1 { font-family:'Geist',sans-serif; font-size:1.7rem; letter-spacing:-0.02em; margin-bottom:0.3rem; }
 
-    def clean_photo(self):
-        return validate_photo(self.cleaned_data.get("photo"))
+  .panel { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:16px; overflow:hidden; margin-bottom:1.5rem; }
+  .panel-head { padding:1.1rem 1.4rem; border-bottom:1px solid rgba(15,15,16,0.08); }
+  .panel-head h2 { font-family:'Geist',sans-serif; font-size:1.05rem; }
+  .panel-body { padding:1.4rem; }
 
+  .panel-body label { display:block; font-size:0.85rem; font-weight:600; margin:0.9rem 0 0.35rem; }
+  .panel-body label:first-of-type { margin-top:0; }
+  .panel-body input[type=text], .panel-body input[type=number], .panel-body input[type=url],
+  .panel-body textarea, .panel-body input[type=file] {
+    width:100%; padding:0.6rem 0.75rem; border:1px solid rgba(15,15,16,0.15);
+    border-radius:8px; font-family:inherit; font-size:0.92rem; background:#fff;
+  }
+  .panel-body textarea { resize:vertical; }
+  .hint { font-size:0.8rem; opacity:0.6; margin-top:0.25rem; }
+  .errorlist { list-style:none; color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem; }
 
-class ContactForm(forms.ModelForm):
-    class Meta:
-        model = MentorProfile
-        fields = ["linkedin_url", "website_url"]
+  .btn-primary { display:inline-block; padding:0.65rem 1.3rem; background:var(--red); color:#fff !important; border:none; border-radius:9px; text-decoration:none; font-weight:600; font-size:0.9rem; cursor:pointer; font-family:inherit; }
+  .btn-primary:hover { background:var(--deep-red); }
+  .btn-secondary { display:inline-block; padding:0.6rem 1.1rem; border:1px solid rgba(15,15,16,0.15); border-radius:9px; text-decoration:none; color:var(--ink); font-size:0.85rem; font-weight:600; background:#fff; cursor:pointer; font-family:inherit; }
 
-    def clean_linkedin_url(self):
-        return validate_linkedin_url(self.cleaned_data.get("linkedin_url", ""))
+  /* Identity section */
+  .identity-locked { display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem; }
+  .id-row { display:flex; justify-content:space-between; gap:1rem; padding:0.5rem 0; border-bottom:1px solid rgba(15,15,16,0.06); }
+  .id-label { font-size:0.85rem; opacity:0.6; }
+  .id-value { font-weight:600; text-align:right; }
+  .status-msg { font-size:0.9rem; padding:0.9rem; border-radius:10px; background:var(--beige); margin-bottom:1rem; }
+  .status-pending { background:#fff4e5; color:#9a5b00; }
+  .diff-table { width:100%; border-collapse:collapse; margin-bottom:1rem; font-size:0.88rem; }
+  .diff-table th, .diff-table td { text-align:left; padding:0.5rem 0.4rem; border-bottom:1px solid rgba(15,15,16,0.06); }
+  .diff-table th { opacity:0.6; font-weight:500; width:45%; }
 
-    def clean_website_url(self):
-        return validate_website_url(self.cleaned_data.get("website_url", ""))
+  /* Photo preview */
+  .photo-preview { width:88px; height:88px; border-radius:50%; object-fit:cover; display:block; margin-bottom:0.6rem; border:1px solid rgba(15,15,16,0.1); }
 
+  /* Interest picker spacing (shared partial has its own box styling) */
+  .panel-body .interests-note { font-size:0.8rem; opacity:0.6; }
 
-class SessionForm(forms.ModelForm):
-    class Meta:
-        model = MentorProfile
-        fields = ["hourly_rate", "availability_note"]
-        widgets = {
-            "availability_note": forms.TextInput(attrs={"placeholder": "e.g. Weekday evenings, IST"}),
-        }
-        labels = {"hourly_rate": "Price per session (₹)"}
+  /* Expertise points */
+  .points-block { margin-top:1.75rem; padding-top:1.5rem; border-top:1px solid rgba(15,15,16,0.08); }
+  .points-block h3 { font-family:'Geist',sans-serif; font-size:0.95rem; margin-bottom:0.75rem; }
+  .point-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.5rem 0; border-bottom:1px solid rgba(15,15,16,0.06); flex-wrap:wrap; }
+  .point-edit-form { display:flex; gap:0.5rem; flex:1; flex-wrap:wrap; align-items:center; }
+  .point-actions { display:flex; gap:0.5rem; align-items:center; }
+  .inline-form { display:inline-flex; margin:0; }
+  .mini-input { padding:0.4rem 0.6rem; border:1px solid rgba(15,15,16,0.15); border-radius:7px; font-size:0.83rem; font-family:inherit; width:160px; flex-shrink:0; }
+  .mini-input-wide { width:220px; flex:1 1 180px; min-width:180px; }
+  .btn-mini { padding:0.4rem 0.85rem; border:none; border-radius:7px; font-size:0.8rem; font-weight:600; cursor:pointer; background:var(--ink); color:#fff; font-family:inherit; flex-shrink:0; }
+  .link-mini { font-size:0.9rem; text-decoration:none; color:var(--ink); opacity:0.75; background:none; border:none; cursor:pointer; font-family:inherit; padding:0.2rem 0.4rem; }
+  .link-mini:hover { opacity:1; }
+  .link-mini:disabled { opacity:0.25; cursor:default; }
+  .link-danger { color:var(--deep-red); opacity:0.85; }
+  .empty-text { opacity:0.5; font-size:0.88rem; padding:0.5rem 0; }
+  .add-point-form { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; margin-top:0.9rem; }
 
-    def clean_hourly_rate(self):
-        rate = self.cleaned_data["hourly_rate"]
-        if rate is not None and rate < 0:
-            raise forms.ValidationError("Price can't be negative.")
-        return rate
-
-
-IDENTITY_JSON_FIELDS = (
-    "full_name", "industry", "years_experience", "credentials", "current_role", "company",
-)
-
-
-@mentor_required
-def mentor_profile_edit(request):
-    profile = request.user.mentor_profile
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "request_review":
-            form = IdentityRequestForm(request.POST)
-            if form.is_valid():
-                cd = form.cleaned_data
-                note = cd.get("message", "").strip()
-                profile.pending_identity_changes = {
-                    "full_name": cd["full_name"].strip(),
-                    "industry": cd["industry"].strip(),
-                    "years_experience": cd["years_experience"],
-                    "credentials": cd["credentials"].strip(),
-                    "current_role": cd["current_role"].strip(),
-                    "company": cd["company"].strip(),
-                }
-                profile.pending_review_requested_at = timezone.now()
-                profile.save(update_fields=["pending_identity_changes", "pending_review_requested_at"])
-                AdminAuditLog.record(
-                    actor=request.user, action="mentor.identity_change_requested",
-                    target=f"{request.user.full_name} <{request.user.email}>", reason=note)
-                messages.success(
-                    request,
-                    "Your changes are under review. Your public profile stays visible "
-                    "with previous values until approved.")
-            else:
-                messages.error(request, "Please fix the errors below.")
-                return _render(request, profile, identity_form=form, reveal_identity=True)
-            return redirect("mentor_profile_edit")
-
-        elif action == "cancel_pending_review":
-            profile.pending_identity_changes = None
-            profile.pending_review_requested_at = None
-            profile.save(update_fields=["pending_identity_changes", "pending_review_requested_at"])
-            messages.success(request, "Pending review request cancelled.")
-            return redirect("mentor_profile_edit")
-
-        elif action == "save_presentation":
-            pform = PresentationForm(request.POST, request.FILES, instance=profile)
-            chosen = set(int(x) for x in request.POST.getlist("interests"))
-            if pform.is_valid():
-                pform.save()
-                MentorInterest.objects.filter(user=request.user).exclude(interest_id__in=chosen).delete()
-                for iid in chosen:
-                    MentorInterest.objects.get_or_create(user=request.user, interest_id=iid)
-                messages.success(request, "Profile updated.")
-                # BUG-005: finishing a section returns to the dashboard.
-                return redirect("dashboard")
-            messages.error(request, "Please fix the errors below.")
-            return _render(request, profile, presentation_form=pform)
-
-        elif action == "save_contact":
-            cform = ContactForm(request.POST, instance=profile)
-            if cform.is_valid():
-                cform.save()
-                messages.success(request, "Contact details updated.")
-                # BUG-005: finishing a section returns to the dashboard.
-                return redirect("dashboard")
-            messages.error(request, "Please fix the errors below.")
-            return _render(request, profile, contact_form=cform)
-
-        elif action == "save_session":
-            sform = SessionForm(request.POST, instance=profile)
-            if sform.is_valid():
-                sform.save()
-                messages.success(request, "Session settings updated.")
-                # BUG-005: finishing a section returns to the dashboard.
-                return redirect("dashboard")
-            messages.error(request, "Please fix the errors below.")
-            return _render(request, profile, session_form=sform)
-
-        elif action == "add_point":
-            title = request.POST.get("title", "").strip()
-            description = request.POST.get("description", "").strip()
-            if title:
-                last = profile.points.filter(
-                    category=ProfilePoint.CATEGORY_EXPERTISE).order_by("-order").first()
-                ProfilePoint.objects.create(
-                    mentor=profile, category=ProfilePoint.CATEGORY_EXPERTISE,
-                    title=title, description=description, order=(last.order + 1) if last else 0)
-                messages.success(request, "Point added.")
-            return redirect("mentor_profile_edit")
-
-        elif action == "edit_point":
-            point = get_object_or_404(
-                ProfilePoint, pk=request.POST.get("point_id"),
-                mentor=profile, category=ProfilePoint.CATEGORY_EXPERTISE)
-            title = request.POST.get("title", "").strip()
-            if title:
-                point.title = title
-                point.description = request.POST.get("description", "").strip()
-                point.save(update_fields=["title", "description"])
-                messages.success(request, "Point updated.")
-            return redirect("mentor_profile_edit")
-
-        elif action == "delete_point":
-            point = get_object_or_404(
-                ProfilePoint, pk=request.POST.get("point_id"),
-                mentor=profile, category=ProfilePoint.CATEGORY_EXPERTISE)
-            point.delete()
-            messages.success(request, "Point removed.")
-            return redirect("mentor_profile_edit")
-
-        elif action == "move_point":
-            point = get_object_or_404(
-                ProfilePoint, pk=request.POST.get("point_id"),
-                mentor=profile, category=ProfilePoint.CATEGORY_EXPERTISE)
-            siblings = list(
-                profile.points.filter(category=ProfilePoint.CATEGORY_EXPERTISE).order_by("order", "id"))
-            idx = next(i for i, p in enumerate(siblings) if p.id == point.id)
-            swap_idx = idx - 1 if request.POST.get("direction") == "up" else idx + 1
-            if 0 <= swap_idx < len(siblings):
-                other = siblings[swap_idx]
-                point.order, other.order = other.order, point.order
-                point.save(update_fields=["order"])
-                other.save(update_fields=["order"])
-            return redirect("mentor_profile_edit")
-
-        return redirect("mentor_profile_edit")
-
-    return _render(request, profile)
-
-
-def _render(request, profile, identity_form=None, presentation_form=None,
-            contact_form=None, session_form=None, reveal_identity=False):
-    if identity_form is None:
-        identity_form = IdentityRequestForm(initial={
-            "full_name": request.user.full_name,
-            "industry": profile.industry,
-            "years_experience": profile.years_experience,
-            "credentials": profile.credentials,
-            "current_role": profile.current_role,
-            "company": profile.company,
-        })
-    if presentation_form is None:
-        presentation_form = PresentationForm(instance=profile)
-    if contact_form is None:
-        contact_form = ContactForm(instance=profile)
-    if session_form is None:
-        session_form = SessionForm(instance=profile)
-
-    return render(request, "profiles/mentor_profile_edit.html", {
-        "profile": profile,
-        "identity_form": identity_form,
-        "presentation_form": presentation_form,
-        "contact_form": contact_form,
-        "session_form": session_form,
-        "reveal_identity": reveal_identity,
-        "categories": _mark_expansion(
-            _interest_categories(),
-            set(request.user.mentor_interests.values_list("interest_id", flat=True)),
-        ),
-        "selected_ids": set(request.user.mentor_interests.values_list("interest_id", flat=True)),
-        "expertise_points": profile.points.filter(category=ProfilePoint.CATEGORY_EXPERTISE),
-    })
+  /* Narrow viewports: stack everything full-width instead of crushing inputs */
+  @media (max-width:600px) {
+    .point-row { flex-direction:column; align-items:stretch; gap:0.6rem; }
+    .point-edit-form { flex-direction:column; align-items:stretch; }
+    .mini-input, .mini-input-wide { width:100%; flex:none; }
+    .btn-mini { width:100%; }
+    .point-actions { justify-content:flex-end; }
+    .id-row { flex-direction:column; gap:0.15rem; }
+    .id-value { text-align:left; }
+    .diff-table { display:block; overflow-x:auto; }
+  }
+</style>
+{% endblock %}
