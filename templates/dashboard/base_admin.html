@@ -118,6 +118,8 @@
       <a href="{% url 'staff:reviews' %}" class="{% if active_nav == 'reviews' %}active{% endif %}">Reviews</a>
       <a href="{% url 'staff:audit' %}" class="{% if active_nav == 'audit' %}active{% endif %}">Audit log</a>
       <a href="{% url 'staff:emails' %}" class="{% if active_nav == 'emails' %}active{% endif %}">Email log</a>
+      <a href="{% url 'staff:leads' %}" class="{% if active_nav == 'leads' %}active{% endif %}">Leads</a>
+
     </nav>
     <div class="foot">
       {{ request.user.get_short_name }}<br>
