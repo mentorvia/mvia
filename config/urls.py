@@ -21,6 +21,7 @@ urlpatterns = [
     path("", include("directory.urls")),
     path("", include("bookings.urls")),
     path("", include("reviews.urls")),
+    path("", include("leads.urls")),
     # Public, pre-account mentor application — deliberately NOT under /profile/
     # (that prefix is the existing logged-in-mentee upgrade flow).
     path("become-a-mentor/", profile_views.mentor_application_apply, name="mentor_application_apply"),
