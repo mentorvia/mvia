@@ -1,0 +1,41 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}Leads — mVia Staff{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Leads</h1>
+  <p>Free-consultation survey leads. HOT = call fast; WARM = nurture; COLD = low intent.</p>
+</div>
+
+<div class="panel">
+  <h2>{{ page_obj.paginator.count }} lead{{ page_obj.paginator.count|pluralize }}</h2>
+  <div style="padding:0 1.25rem;">{% include "partials/_filter_bar.html" %}</div>
+  {% if page_obj.object_list %}
+  <table>
+    <thead><tr><th>Name</th><th>Priority</th><th>Contact</th><th>Domain</th><th>Quiz</th><th>Contacted</th><th>When</th><th></th></tr></thead>
+    <tbody>
+      {% for lead in page_obj.object_list %}
+      <tr>
+        <td><strong>{{ lead.name }}</strong></td>
+        <td>
+          {% if lead.priority == 'hot' %}<span class="badge no">HOT</span>
+          {% elif lead.priority == 'warm' %}<span class="badge pending">WARM</span>
+          {% elif lead.priority == 'cold' %}<span class="badge neutral">COLD</span>
+          {% else %}<span class="badge neutral">New</span>{% endif %}
+        </td>
+        <td style="font-size:0.85rem;">
+          {% if lead.whatsapp %}📱 {{ lead.whatsapp }}<br>{% endif %}
+          <span style="color:var(--muted);">{{ lead.email_or_linkedin|default:"—" }}</span>
+        </td>
+        <td>{{ lead.get_domain_display|default:"—" }}</td>
+        <td>{% if lead.quiz_completed %}<span class="badge yes">Done</span>{% else %}<span class="badge neutral">Pending</span>{% endif %}</td>
+        <td>{% if lead.is_contacted %}<span class="badge yes">Yes</span>{% else %}<span class="badge neutral">No</span>{% endif %}</td>
+        <td style="font-size:0.85rem; color:var(--muted);">{{ lead.created_at|date:"d M, H:i" }}</td>
+        <td><a href="{% url 'staff:lead_detail' lead.id %}">View →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty">No leads yet.</div>{% endif %}
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}
