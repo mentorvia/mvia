@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Thank you" %} — mVia{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px; text-align:center;">
+  <h1>{% trans "Thank you!" %}</h1>
+  <p class="sub" style="margin-bottom:1.5rem;">
+    {% trans "We've received your details. One of our consultants will reach out shortly to understand your goals and suggest the right mentor for you." %}
+  </p>
+  <a href="{% url 'home' %}" class="btn" style="display:inline-block; width:auto; padding:0.7rem 1.5rem;">{% trans "Back to home" %}</a>
+</div>
+{% endblock %}
