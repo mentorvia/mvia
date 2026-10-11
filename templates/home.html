@@ -508,5 +508,32 @@ const io = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: .12 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
+
+<!-- FREE CONSULTATION STRIP -->
+<div id="fc-strip" class="fc-strip">
+  <div class="fc-strip-in">
+    <span class="fc-strip-text">🎯 Not sure who your mentor should be? Take a 2-min audit &amp; get a <strong>free consultation</strong>.</span>
+    <div class="fc-strip-actions">
+      <a href="{% url 'consultation_landing' %}" class="fc-strip-btn">Get started →</a>
+      <button type="button" class="fc-strip-close" aria-label="Dismiss" onclick="document.getElementById('fc-strip').style.display='none';try{localStorage.setItem('fcStripDismissed','1')}catch(e){}">×</button>
+    </div>
+  </div>
+</div>
+<style>
+  .fc-strip{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--ink);color:#fff;box-shadow:0 -4px 20px rgba(0,0,0,0.18);}
+  .fc-strip-in{max-width:1180px;margin:0 auto;padding:0.8rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+  .fc-strip-text{font-size:0.92rem;}
+  .fc-strip-text strong{color:var(--pink);}
+  .fc-strip-actions{display:flex;align-items:center;gap:0.75rem;flex-shrink:0;}
+  .fc-strip-btn{background:var(--red);color:#fff;padding:0.55rem 1.2rem;border-radius:8px;font-weight:600;font-size:0.9rem;white-space:nowrap;}
+  .fc-strip-btn:hover{background:var(--deep-red);}
+  .fc-strip-close{background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.4rem;line-height:1;cursor:pointer;padding:0 0.3rem;}
+  .fc-strip-close:hover{color:#fff;}
+  @media(max-width:600px){.fc-strip-text{font-size:0.82rem;}.fc-strip-in{padding:0.7rem 1rem;}}
+</style>
+<script>
+  // Remember dismissal so the strip doesn't nag on repeat visits (per device).
+  try{if(localStorage.getItem('fcStripDismissed')==='1'){var s=document.getElementById('fc-strip');if(s)s.style.display='none';}}catch(e){}
+</script>
 </body>
 </html>
