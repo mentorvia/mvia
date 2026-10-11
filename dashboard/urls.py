@@ -7,6 +7,7 @@ from profiles import staff_views as profile_views
 from profiles import profile_editor
 from bookings import staff_views as booking_views
 from reviews import staff_views as review_views
+from leads import staff_views as lead_views
 
 app_name = "staff"
 
@@ -18,9 +19,9 @@ urlpatterns = [
     path("users/<int:user_id>/unarchive/", views.unarchive_user, name="unarchive_user"),
     path("emails/", views.email_log, name="emails"),
         # Leads (free-consultation funnel)
-    path("leads/", __import__("leads.staff_views", fromlist=["leads_list"]).leads_list, name="leads"),
-    path("leads/<int:lead_id>/", __import__("leads.staff_views", fromlist=["lead_detail"]).lead_detail, name="lead_detail"),
-    path("leads/<int:lead_id>/contacted/", __import__("leads.staff_views", fromlist=["toggle_contacted"]).toggle_contacted, name="lead_toggle_contacted"),
+    path("leads/", lead_views.leads_list, name="leads"),
+    path("leads/<int:lead_id>/", lead_views.lead_detail, name="lead_detail"),
+    path("leads/<int:lead_id>/contacted/", lead_views.toggle_contacted, name="lead_toggle_contacted"),
     # Bookings & money
     path("bookings/", booking_views.bookings_list, name="bookings"),
     path("bookings/<int:booking_id>/", booking_views.booking_detail, name="booking_detail"),
