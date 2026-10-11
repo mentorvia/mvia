@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Free Consultation" %} — mVia{% endblock %}
+{% block content %}
+<div class="fc-wrap">
+
+  <div class="fc-hero">
+    <div class="fc-eyebrow">{% trans "Free Career Consultation" %}</div>
+    <h1>{% trans "Meet mentors who've walked your path." %}</h1>
+    <p class="fc-lead">{% trans "Register below and take a 2-minute audit — we'll match you with the right mentor and set up a free consultation." %}</p>
+  </div>
+
+  {% if mentors %}
+  <div class="fc-carousel-wrap">
+    <div class="fc-carousel-label">{% trans "A few of our mentors" %}</div>
+    <div class="fc-carousel">
+      {% for m in mentors %}
+      <div class="fc-mentor">
+        <div class="fc-mentor-photo">
+          {% if m.display_photo %}
+            <img src="{{ m.display_photo }}" alt="{{ m.user.full_name }}">
+          {% else %}
+            <div class="fc-mentor-ph">{{ m.user.get_short_name|first|upper }}</div>
+          {% endif %}
+        </div>
+        <div class="fc-mentor-name">{{ m.user.full_name }}</div>
+        <div class="fc-mentor-role">{{ m.current_role }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="fc-card">
+    <h2>{% trans "Start here — it takes a minute" %}</h2>
+    {% if form.non_field_errors %}<div class="fc-err">{{ form.non_field_errors|striptags }}</div>{% endif %}
+    <form method="post" action="{% url 'consultation_landing' %}" novalidate>
+      {% csrf_token %}
+      {{ form.company_site }}
+
+      <label for="{{ form.name.id_for_label }}">{% trans "Full name" %}</label>
+      {{ form.name }}
+      {% if form.name.errors %}<div class="fc-err">{{ form.name.errors|striptags }}</div>{% endif %}
+
+      <label for="{{ form.whatsapp.id_for_label }}">{% trans "WhatsApp number" %}</label>
+      {{ form.whatsapp }}
+
+      <label for="{{ form.email_or_linkedin.id_for_label }}">{% trans "Work email / LinkedIn link" %}</label>
+      {{ form.email_or_linkedin }}
+
+      <label for="{{ form.domain.id_for_label }}">{% trans "Which career/domain are you currently pursuing or exploring?" %}</label>
+      {{ form.domain }}
+
+      <label for="{{ form.domain_other.id_for_label }}" class="fc-sublabel">{% trans "If Other, tell us" %}</label>
+      {{ form.domain_other }}
+
+      <button type="submit" class="fc-btn">{% trans "Continue to the 2-min audit →" %}</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  main { align-items:stretch; }
+  .fc-wrap { width:100%; max-width:860px; margin:0 auto; padding:0 1rem 3rem; }
+  .fc-hero { text-align:center; padding:2rem 0 1.5rem; }
+  .fc-eyebrow { font-size:0.72rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:0.8rem; }
+  .fc-hero h1 { font-family:'Geist',sans-serif; font-size:clamp(1.8rem,4vw,2.6rem); letter-spacing:-0.02em; margin-bottom:0.6rem; }
+  .fc-lead { color:rgba(15,15,16,0.6); font-size:1.02rem; max-width:48ch; margin:0 auto; }
+
+  .fc-carousel-wrap { margin:1.5rem 0 2.5rem; }
+  .fc-carousel-label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(15,15,16,0.45); text-align:center; margin-bottom:1rem; }
+  .fc-carousel { display:flex; gap:1rem; overflow-x:auto; padding:0.5rem 0.25rem 1rem; scroll-snap-type:x mandatory; }
+  .fc-carousel::-webkit-scrollbar { height:6px; }
+  .fc-carousel::-webkit-scrollbar-thumb { background:rgba(15,15,16,0.15); border-radius:99px; }
+  .fc-mentor { flex:0 0 140px; scroll-snap-align:start; background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; padding:1rem; text-align:center; }
+  .fc-mentor-photo { width:72px; height:72px; margin:0 auto 0.7rem; border-radius:50%; overflow:hidden; }
+  .fc-mentor-photo img { width:100%; height:100%; object-fit:cover; }
+  .fc-mentor-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--deep-red),var(--red)); color:#fff; font-family:'Geist',sans-serif; font-weight:700; font-size:1.8rem; }
+  .fc-mentor-name { font-family:'Geist',sans-serif; font-weight:600; font-size:0.92rem; }
+  .fc-mentor-role { font-size:0.78rem; color:rgba(15,15,16,0.55); margin-top:0.15rem; }
+
+  .fc-card { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:16px; padding:1.75rem; max-width:560px; margin:0 auto; }
+  .fc-card h2 { font-family:'Geist',sans-serif; font-size:1.2rem; margin-bottom:1rem; }
+  .fc-card label { display:block; font-size:0.85rem; font-weight:600; margin:1rem 0 0.35rem; }
+  .fc-card label.fc-sublabel { font-weight:500; font-size:0.8rem; color:rgba(15,15,16,0.6); }
+  .fc-card input[type=text], .fc-card input[type=email], .fc-card select {
+    width:100%; padding:0.7rem 0.8rem; border:1px solid rgba(15,15,16,0.15);
+    border-radius:9px; font-family:inherit; font-size:0.95rem; background:#fff;
+  }
+  .fc-card input:focus, .fc-card select:focus { outline:none; border-color:var(--red); }
+  .fc-btn { width:100%; margin-top:1.4rem; padding:0.85rem; background:var(--red); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:0.98rem; font-family:inherit; cursor:pointer; }
+  .fc-btn:hover { background:var(--deep-red); }
+  .fc-err { color:var(--deep-red); font-size:0.83rem; margin-top:0.3rem; }
+</style>
+{% endblock %}
