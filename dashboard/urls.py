@@ -17,6 +17,10 @@ urlpatterns = [
     path("users/<int:user_id>/archive/", views.archive_user, name="archive_user"),
     path("users/<int:user_id>/unarchive/", views.unarchive_user, name="unarchive_user"),
     path("emails/", views.email_log, name="emails"),
+        # Leads (free-consultation funnel)
+    path("leads/", __import__("leads.staff_views", fromlist=["leads_list"]).leads_list, name="leads"),
+    path("leads/<int:lead_id>/", __import__("leads.staff_views", fromlist=["lead_detail"]).lead_detail, name="lead_detail"),
+    path("leads/<int:lead_id>/contacted/", __import__("leads.staff_views", fromlist=["toggle_contacted"]).toggle_contacted, name="lead_toggle_contacted"),
     # Bookings & money
     path("bookings/", booking_views.bookings_list, name="bookings"),
     path("bookings/<int:booking_id>/", booking_views.booking_detail, name="booking_detail"),
