@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Career Navigation Audit" %} — mVia{% endblock %}
+{% block content %}
+<div class="qz-wrap">
+  <div class="qz-head">
+    <div class="qz-eyebrow">{% trans "2 minutes · almost there" %}</div>
+    <h1>{% trans "Navi's Career Navigation Audit" %}</h1>
+    <p class="qz-sub">{% trans "Your personalized career path + expert match." %}</p>
+  </div>
+
+  {% if form.non_field_errors %}<div class="qz-err">{{ form.non_field_errors|striptags }}</div>{% endif %}
+
+  <form method="post" action="{% url 'lead_quiz' lead.id %}" novalidate>
+    {% csrf_token %}
+
+    <div class="qz-q"><div class="qz-label">1. {% trans "Where are you in your career journey?" %}</div>{{ form.q1_stage }}</div>
+
+    <div class="qz-q"><div class="qz-label">2. {% trans "What would you like help with right now?" %}</div>{{ form.q2_help }}
+      <div class="qz-other"><label>{% trans "If Other:" %}</label>{{ form.q2_help_other }}</div>
+    </div>
+
+    <div class="qz-q"><div class="qz-label">3. {% trans "What is the biggest career question or challenge you are facing right now?" %}</div>{{ form.q3_challenge }}</div>
+
+    <div class="qz-q"><div class="qz-label">4. {% trans "What are you hoping to achieve through mentorship?" %}</div>{{ form.q4_goal }}</div>
+
+    <div class="qz-q"><div class="qz-label">5. {% trans "Are you actively looking to invest in structured mentorship in the next 30 days?" %}</div>{{ form.q6_intent }}</div>
+
+    <div class="qz-q"><div class="qz-label">6. {% trans "How much time can you give per week for your growth?" %}</div>{{ form.q7_time }}</div>
+
+    <div class="qz-q"><div class="qz-label">7. {% trans "What kind of mentor would you find most helpful?" %}</div>{{ form.q8_mentor_type }}</div>
+
+    <div class="qz-q"><div class="qz-label">8. {% trans "How are you making career decisions today?" %}</div>{{ form.q9_decisions }}</div>
+
+    <div class="qz-q"><div class="qz-label">9. {% trans "What is the best way for us to connect with you?" %}</div>{{ form.q10_contact_pref }}</div>
+
+    <button type="submit" class="qz-btn">{% trans "Submit & get my mentor match" %}</button>
+  </form>
+</div>
+
+<style>
+  main { align-items:stretch; }
+  .qz-wrap { width:100%; max-width:640px; margin:0 auto; padding:0 1rem 3rem; }
+  .qz-head { text-align:center; padding:2rem 0 1rem; }
+  .qz-eyebrow { font-size:0.72rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--red); margin-bottom:0.6rem; }
+  .qz-head h1 { font-family:'Geist',sans-serif; font-size:clamp(1.6rem,4vw,2.2rem); letter-spacing:-0.02em; margin-bottom:0.4rem; }
+  .qz-sub { color:rgba(15,15,16,0.6); font-size:0.98rem; }
+
+  .qz-q { background:#fff; border:1px solid rgba(15,15,16,0.08); border-radius:14px; padding:1.25rem 1.4rem; margin-bottom:1rem; }
+  .qz-label { font-family:'Geist',sans-serif; font-weight:600; font-size:1rem; margin-bottom:0.8rem; }
+
+  /* Radio lists Django renders as <ul> */
+  .qz-q ul { list-style:none; display:flex; flex-direction:column; gap:0.5rem; }
+  .qz-q ul li { display:flex; align-items:flex-start; }
+  .qz-q ul li label { display:flex; align-items:center; gap:0.6rem; font-size:0.93rem; cursor:pointer; font-weight:400; }
+  .qz-q input[type=radio] { width:1.1rem; height:1.1rem; accent-color:var(--red); flex-shrink:0; }
+  .qz-q textarea, .qz-q input[type=text] {
+    width:100%; padding:0.7rem 0.8rem; border:1px solid rgba(15,15,16,0.15);
+    border-radius:9px; font-family:inherit; font-size:0.95rem; resize:vertical;
+  }
+  .qz-q textarea:focus, .qz-q input:focus { outline:none; border-color:var(--red); }
+  .qz-other { margin-top:0.7rem; }
+  .qz-other label { font-size:0.8rem; color:rgba(15,15,16,0.6); display:block; margin-bottom:0.3rem; }
+
+  .qz-btn { width:100%; margin-top:0.5rem; padding:0.9rem; background:var(--red); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:1rem; font-family:inherit; cursor:pointer; }
+  .qz-btn:hover { background:var(--deep-red); }
+  .qz-err { color:var(--deep-red); font-size:0.85rem; margin-bottom:1rem; text-align:center; }
+</style>
+{% endblock %}
