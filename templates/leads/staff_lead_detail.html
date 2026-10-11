@@ -1,0 +1,59 @@
+{% extends "dashboard/base_admin.html" %}
+{% block title %}{{ lead.name }} — Lead — mVia Staff{% endblock %}
+{% block content %}
+<a href="{% url 'staff:leads' %}" class="back">← All leads</a>
+<div class="page-head">
+  <h1>{{ lead.name }}
+    {% if lead.priority == 'hot' %}<span class="badge no">HOT</span>
+    {% elif lead.priority == 'warm' %}<span class="badge pending">WARM</span>
+    {% elif lead.priority == 'cold' %}<span class="badge neutral">COLD</span>
+    {% else %}<span class="badge neutral">New</span>{% endif %}
+  </h1>
+  <p>Registered {{ lead.created_at|date:"d M Y, H:i" }}{% if lead.quiz_completed %} · quiz completed {{ lead.quiz_completed_at|date:"d M Y, H:i" }}{% endif %}</p>
+</div>
+
+<div class="panel">
+  <h2>Contact</h2>
+  <div style="padding:1.25rem; line-height:2;">
+    <div><strong>WhatsApp:</strong> {{ lead.whatsapp|default:"—" }}</div>
+    <div><strong>Email / LinkedIn:</strong> {{ lead.email_or_linkedin|default:"—" }}</div>
+    <div><strong>Preferred contact:</strong> {{ lead.q10_contact_pref|default:"—" }}</div>
+    <div><strong>Domain:</strong> {{ lead.get_domain_display|default:"—" }}{% if lead.domain_other %} ({{ lead.domain_other }}){% endif %}</div>
+  </div>
+</div>
+
+{% if lead.quiz_completed %}
+<div class="panel">
+  <h2>Career Navigation Audit</h2>
+  <div style="padding:1.25rem; line-height:1.9;">
+    <div><strong>Career stage:</strong> {{ lead.q1_stage|default:"—" }}</div>
+    <div><strong>Wants help with:</strong> {{ lead.q2_help|default:"—" }}{% if lead.q2_help_other %} ({{ lead.q2_help_other }}){% endif %}</div>
+    <div><strong>Biggest challenge:</strong> {{ lead.q3_challenge|default:"—" }}</div>
+    <div><strong>Hoping to achieve:</strong> {{ lead.q4_goal|default:"—" }}</div>
+    <div><strong>Investment intent:</strong> {{ lead.q6_intent|default:"—" }}</div>
+    <div><strong>Time per week:</strong> {{ lead.q7_time|default:"—" }}</div>
+    <div><strong>Mentor type wanted:</strong> {{ lead.q8_mentor_type|default:"—" }}</div>
+    <div><strong>Decides today via:</strong> {{ lead.q9_decisions|default:"—" }}</div>
+  </div>
+</div>
+{% else %}
+<div class="panel"><div class="empty">Quiz not completed — this lead registered but didn't finish the audit.</div></div>
+{% endif %}
+
+<div class="panel">
+  <h2>Follow-up</h2>
+  <div style="padding:1.25rem;">
+    {% if lead.is_contacted %}
+      <p style="margin-bottom:1rem;">✅ Marked contacted{% if lead.contacted_by %} by {{ lead.contacted_by.get_short_name }}{% endif %}{% if lead.contacted_at %} on {{ lead.contacted_at|date:"d M Y, H:i" }}{% endif %}.</p>
+    {% else %}
+      <p style="margin-bottom:1rem; color:var(--muted);">Not yet contacted.</p>
+    {% endif %}
+    <form method="post" action="{% url 'staff:lead_toggle_contacted' lead.id %}">
+      {% csrf_token %}
+      <button type="submit" style="padding:0.6rem 1.3rem; background:var(--ink); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit;">
+        {% if lead.is_contacted %}Mark as NOT contacted{% else %}Mark as contacted{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
